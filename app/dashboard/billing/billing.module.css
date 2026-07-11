@@ -1,0 +1,124 @@
+.page { padding: 32px; max-width: 720px; margin: 0 auto; }
+.inner { }
+.title { font-size: 28px; margin-bottom: 6px; }
+.sub { font-size: 15px; color: var(--ink-soft); margin-bottom: 28px; }
+
+/* Plan status */
+.planStatus {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 28px;
+}
+
+.planStatusBadge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.expiry { font-size: 13px; color: var(--ink-soft); }
+.plusPerks { font-size: 14px; color: var(--ink-soft); margin-top: 8px; line-height: 1.5; }
+
+/* Confirming */
+.confirmingBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--brass-bg);
+  border: 1px solid rgba(168,120,58,0.3);
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: var(--brass-deep);
+  margin-bottom: 24px;
+}
+
+.successBanner {
+  padding: 14px 18px;
+  background: var(--success-bg);
+  border: 1px solid rgba(75,106,82,0.3);
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: var(--success);
+  margin-bottom: 24px;
+}
+
+/* Upgrade */
+.upgradeTitle { font-size: 20px; margin-bottom: 16px; }
+
+.plansGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.planCard {
+  border: 2px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  cursor: pointer;
+  position: relative;
+  transition: border-color var(--duration), background var(--duration);
+  background: var(--card);
+}
+
+.planCard:hover { border-color: var(--ink-soft); }
+.planCardSelected { border-color: var(--brass) !important; background: var(--brass-bg); }
+.planCardHighlight { border-color: var(--brass-deep); }
+
+.planBestValue {
+  position: absolute;
+  top: -10px;
+  right: 14px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.planLabel { font-weight: 600; font-size: 15px; margin-bottom: 8px; }
+.planPrice { display: flex; align-items: baseline; gap: 6px; }
+.planAmount { font-size: 28px; font-weight: 700; font-family: var(--font-serif); }
+.planPeriod { font-size: 13px; color: var(--ink-soft); }
+.planSaving { font-size: 12px; color: var(--verified); margin-top: 4px; }
+.planDesc { font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; }
+
+/* Perks */
+.perks {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.perksTitle { font-size: 16px; margin-bottom: 14px; }
+.perksList { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.perk { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--ink-soft); }
+.perkCheck { color: var(--verified); font-weight: 600; flex-shrink: 0; }
+
+/* Pay note */
+.payNote {
+  font-size: 13px;
+  color: var(--ink-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Renew */
+.renewSection { margin-top: 24px; }
+.renewNote { font-size: 14px; color: var(--ink-soft); margin-bottom: 16px; }
+
+@media (max-width: 600px) {
+  .page { padding: 20px 16px; }
+}

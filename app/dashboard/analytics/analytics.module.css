@@ -1,0 +1,165 @@
+.page { max-width: 720px; margin: 0 auto; padding: 32px; }
+.title { font-size: 28px; margin-bottom: 6px; }
+.sub { color: var(--ink-soft); font-size: 15px; margin-bottom: 28px; }
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.statCard {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statValue {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.statLabel { font-size: 13px; font-weight: 500; }
+.statSub { font-size: 12px; color: var(--ink-muted); }
+
+.section { margin-bottom: 32px; }
+.sectionTitle { font-size: 16px; margin-bottom: 14px; }
+
+/* Sparkline */
+.sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 100px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px 8px;
+}
+
+.sparkBar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  height: 100%;
+}
+
+.sparkFill {
+  width: 100%;
+  max-width: 32px;
+  background: var(--brass);
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  transition: height 0.4s var(--ease);
+}
+
+.sparkLabel {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--ink-muted);
+}
+
+/* Bar list */
+.barList { display: flex; flex-direction: column; gap: 10px; }
+
+.barItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.barLabel {
+  font-size: 13px;
+  width: 160px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTrack {
+  flex: 1;
+  height: 8px;
+  background: var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--brass);
+  border-radius: 4px;
+  transition: width 0.5s var(--ease);
+}
+
+.barCount {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* Device grid */
+.deviceGrid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.deviceCard {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deviceName { font-size: 13px; color: var(--ink-soft); text-transform: capitalize; }
+.deviceCount { font-family: var(--font-serif); font-size: 22px; font-weight: 600; }
+
+/* Upgrade prompt */
+.upgradePrompt {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.upgradeIcon {
+  font-size: 28px;
+  margin-bottom: 12px;
+  color: var(--brass-deep);
+}
+
+.upgradePrompt h3 { font-size: 18px; margin-bottom: 8px; }
+.upgradePrompt p { font-size: 14px; color: var(--ink-soft); margin-bottom: 20px; line-height: 1.55; }
+
+.privacyNote {
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 600px) {
+  .page { padding: 20px 16px; }
+  .statValue { font-size: 28px; }
+  .barLabel { width: 100px; }
+}

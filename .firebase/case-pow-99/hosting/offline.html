@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Case — Offline</title>
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #F1EDE2;
+      color: #20281F;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+      text-align: center;
+    }
+    .card {
+      background: #FBF9F2;
+      border: 1px solid #DCD5C2;
+      border-radius: 16px;
+      padding: 40px 32px;
+      max-width: 380px;
+    }
+    h1 { font-size: 24px; margin-bottom: 10px; }
+    p { color: #57604F; font-size: 15px; margin-bottom: 24px; line-height: 1.55; }
+    button {
+      background: #20281F;
+      color: #F1EDE2;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div style="font-size: 36px; margin-bottom: 16px;">📡</div>
+    <h1>You're offline</h1>
+    <p>Case needs a connection to load. Your saved data is still here — check your signal and try again.</p>
+    <button onclick="window.location.reload()">Try again</button>
+  </div>
+</body>
+</html>

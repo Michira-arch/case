@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case — prove you've got it</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F1EDE2; --card:#FBF9F2; --ink:#20281F; --ink-soft:#57604F; --line:#DCD5C2;
+    --brass:#A8783A; --brass-deep:#7C5A2A; --brass-bg:#F3E7D5;
+    --verified:#4B6A52; --verified-bg:#E7EEE5;
+    --aim:#7A5A6E; --aim-bg:#F0E6EC;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+  .stage{max-width:780px;margin:0 auto;padding:26px 20px 60px;}
+
+  .top-controls{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+  .view-switch{display:flex;gap:6px;padding:4px;border:1px solid var(--line);border-radius:12px;width:fit-content;background:var(--card);}
+  .view-btn{font-family:'Inter';font-size:13.5px;font-weight:500;padding:8px 16px;border-radius:9px;border:none;background:transparent;color:var(--ink-soft);cursor:pointer;}
+  .view-btn.active{background:var(--ink);color:var(--paper);}
+
+  .demo-switcher{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border:1px dashed var(--line);border-radius:10px;}
+  .demo-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);margin-right:4px;}
+  .demo-btn{font-family:'Inter';font-size:13px;padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;}
+  .demo-btn.active{background:var(--ink);border-color:var(--ink);color:var(--paper);}
+
+  .app-frame{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;}
+
+  /* evidence */
+  .evidence-pill{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--brass-deep);background:var(--brass-bg);padding:3px 9px;border-radius:10px;margin-left:8px;white-space:nowrap;cursor:pointer;border:none;}
+  .evidence-pill svg{width:11px;height:11px;flex-shrink:0;}
+  .evidence-pill.none{background:transparent;color:var(--ink-soft);border:1px dashed var(--line);cursor:default;}
+  .evidence-panel{display:none;margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);}
+  .evidence-panel.open{display:flex;gap:8px;flex-wrap:wrap;}
+  .ev-chip{display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;}
+  .ev-icon{width:56px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;}
+  .ev-icon.img{background:var(--brass-bg);color:var(--brass-deep);}
+  .ev-icon.pdf{background:#E4E0D2;color:var(--ink-soft);}
+  .ev-icon.vid{background:var(--aim-bg);color:var(--aim);}
+  .ev-caption{font-size:10.5px;color:var(--ink-soft);text-align:center;line-height:1.2;}
+
+  /* ---- PUBLIC PAGE ---- */
+  .share-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 22px;background:var(--ink);color:var(--paper);}
+  .handle-tag{font-family:'IBM Plex Mono',monospace;font-size:13px;opacity:.9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .handle-tag b{color:#E7C98D;font-weight:500;}
+  .share-actions{display:flex;gap:8px;flex-shrink:0;}
+  .btn-ghost,.btn-install{font-family:'Inter';font-size:12.5px;padding:7px 12px;border-radius:8px;border:1px solid rgba(241,237,226,.25);background:transparent;color:var(--paper);cursor:pointer;white-space:nowrap;}
+  .btn-install{background:var(--brass);border-color:var(--brass);color:#2A1D0C;font-weight:500;}
+
+  .hero{display:flex;gap:20px;align-items:flex-start;padding:36px 32px 30px;border-bottom:1px solid var(--line);}
+  .avatar{width:76px;height:76px;border-radius:50%;background:var(--brass-bg);color:var(--brass-deep);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:600;font-size:26px;flex-shrink:0;}
+  .hero-text h1{font-family:'Fraunces',serif;font-weight:600;font-size:32px;margin:0 0 4px;line-height:1.1;}
+  .role{margin:0 0 10px;font-size:15px;color:var(--ink-soft);}
+  .tagline{margin:0 0 16px;font-size:15px;line-height:1.55;max-width:46ch;}
+  .social-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .social-pill{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 12px;border-radius:20px;border:1px solid var(--line);color:var(--ink-soft);}
+
+  .proof-section{padding:26px 32px;border-bottom:1px solid var(--line);}
+  .proof-section:last-of-type{border-bottom:none;}
+  .section-head{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .section-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 16px;}
+  .stamp{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;font-weight:500;padding:5px 11px;border-radius:20px;border:1.5px dashed;}
+  .stamp-did{color:var(--ink);border-color:var(--ink);}
+  .stamp-trained{color:var(--brass-deep);border-color:var(--brass);background:var(--brass-bg);}
+  .stamp-vouched{color:var(--verified);border-color:var(--verified);background:var(--verified-bg);}
+  .stamp-aiming{color:var(--aim);border-color:var(--aim);background:var(--aim-bg);}
+  .section-head h2{font-family:'Fraunces',serif;font-weight:600;font-size:19px;margin:0;}
+
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+  .work-card{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper);padding-bottom:2px;}
+  .work-thumb{height:80px;background:linear-gradient(135deg,var(--brass-bg),var(--line));}
+  .work-body{padding:12px 14px;}
+  .work-body h3{margin:0 0 4px;font-size:14.5px;font-weight:600;}
+  .work-body p{margin:0 0 4px;font-size:13px;color:var(--ink-soft);line-height:1.4;}
+
+  .trained-list{display:flex;flex-direction:column;gap:12px;}
+  .trained-row{padding:10px 0;border-bottom:1px dotted var(--line);}
+  .trained-row:last-child{border-bottom:none;}
+  .trained-top{display:flex;justify-content:space-between;gap:12px;align-items:baseline;}
+  .trained-row h3{margin:0 0 2px;font-size:14.5px;font-weight:600;display:flex;align-items:center;flex-wrap:wrap;}
+  .trained-row p{margin:0;font-size:13px;color:var(--ink-soft);}
+  .trained-row span.when{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);white-space:nowrap;}
+
+  .quote-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;}
+  .quote-card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--paper);}
+  .quote-card p.q{margin:0 0 10px;font-family:'Fraunces',serif;font-style:italic;font-size:14.5px;line-height:1.4;}
+  .quote-card p.who{margin:0;font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;flex-wrap:wrap;}
+
+  .aim-body{display:flex;flex-direction:column;gap:12px;}
+  .aim-text{font-size:14.5px;line-height:1.55;margin:0;}
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{font-size:13px;padding:6px 13px;border-radius:20px;background:var(--aim-bg);color:var(--aim);font-weight:500;}
+
+  .app-footer{display:flex;justify-content:space-between;align-items:center;padding:20px 32px;background:var(--paper);}
+  .wordmark{font-family:'Fraunces',serif;font-weight:700;font-size:17px;}
+  .footer-sub{font-size:13px;color:var(--ink-soft);}
+
+  /* ---- DASHBOARD ---- */
+  .dash{padding:28px 32px 32px;}
+  .dash-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:22px;flex-wrap:wrap;}
+  .dash-who{display:flex;gap:14px;align-items:center;}
+  .dash-avatar{width:52px;height:52px;border-radius:50%;background:var(--brass-bg);color:var(--brass-deep);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:600;font-size:18px;}
+  .dash-name{font-family:'Fraunces',serif;font-weight:600;font-size:20px;margin:0;}
+  .dash-handle{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);margin:2px 0 0;}
+  .dash-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn-dark{font-family:'Inter';font-size:13px;font-weight:500;padding:9px 16px;border-radius:9px;border:none;background:var(--ink);color:var(--paper);cursor:pointer;}
+  .btn-outline{font-family:'Inter';font-size:13px;padding:9px 16px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;}
+
+  .completeness{margin-bottom:26px;}
+  .completeness-top{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);margin-bottom:6px;}
+  .bar-track{height:8px;background:var(--line);border-radius:6px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--brass);border-radius:6px;transition:width .4s ease;}
+
+  .dash-section-title{font-family:'Inter';font-weight:600;font-size:13.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:0 0 4px;}
+  .dash-section-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 14px;}
+  .item-row{padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);margin-bottom:10px;}
+  .item-top{display:flex;align-items:center;gap:14px;}
+  .item-row .stamp{flex-shrink:0;}
+  .item-info{flex:1;min-width:0;}
+  .item-info h4{margin:0 0 2px;font-size:14px;font-weight:600;display:flex;align-items:center;flex-wrap:wrap;}
+  .item-info p{margin:0;font-size:12.5px;color:var(--ink-soft);}
+  .item-row.is-hidden{opacity:.5;}
+  .item-controls{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .vis-tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:3px 9px;border-radius:10px;}
+  .vis-public{background:var(--verified-bg);color:var(--verified);}
+  .vis-hidden{background:var(--line);color:var(--ink-soft);}
+  .edit-link{font-size:12.5px;color:var(--brass-deep);cursor:pointer;background:none;border:none;font-family:'Inter';}
+
+  .add-proof-toggle{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:1.5px dashed var(--line);border-radius:12px;background:none;color:var(--ink-soft);font-family:'Inter';font-size:13.5px;cursor:pointer;margin:6px 0 28px;}
+  .add-proof-card{border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:6px 0 28px;background:var(--paper);}
+  .type-picker{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .type-chip{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 12px;border-radius:20px;border:1.5px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;}
+  .type-chip.picked{border-color:var(--ink);color:var(--ink);background:var(--card);font-weight:500;}
+  .add-proof-card input, .add-proof-card textarea{width:100%;font-family:'Inter';font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);margin-bottom:10px;resize:vertical;}
+  .add-proof-card textarea{min-height:56px;}
+  .evidence-attach{border-top:1px dotted var(--line);padding-top:14px;margin-bottom:14px;}
+  .evidence-label{font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;}
+  .attach-btns{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .attach-btn{font-family:'Inter';font-size:12.5px;padding:7px 13px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;}
+  .attached-list{display:flex;gap:8px;flex-wrap:wrap;min-height:0;}
+  .save-row{display:flex;justify-content:flex-end;gap:8px;}
+
+  @media (max-width:520px){
+    .hero{flex-direction:column;align-items:flex-start;padding:28px 20px 24px;}
+    .share-bar{flex-direction:column;align-items:flex-start;gap:8px;}
+    .share-actions{width:100%;}
+    .proof-section{padding:22px 20px;}
+    .app-footer{padding:18px 20px;}
+    .dash{padding:22px 20px 26px;}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="top-controls">
+    <div class="view-switch">
+      <button class="view-btn active" data-view="public">Public page</button>
+      <button class="view-btn" data-view="dash">Your dashboard</button>
+    </div>
+    <div class="demo-switcher">
+      <span class="demo-label">Preview as</span>
+      <button class="demo-btn active" data-persona="service">Service provider</button>
+      <button class="demo-btn" data-persona="pro">Credentialed professional</button>
+      <button class="demo-btn" data-persona="start">Job seeker</button>
+    </div>
+  </div>
+
+  <div class="app-frame">
+
+    <!-- PUBLIC VIEW -->
+    <div id="view-public">
+      <div class="share-bar">
+        <div class="handle-tag">case.app/@<b id="handle">a.njoroge</b></div>
+        <div class="share-actions">
+          <button class="btn-ghost">Copy link</button>
+          <button class="btn-install">Install app</button>
+        </div>
+      </div>
+
+      <header class="hero">
+        <div class="avatar" id="avatar">AN</div>
+        <div class="hero-text">
+          <h1 id="name">Aisha Njoroge</h1>
+          <p class="role" id="role">Freelance hairstylist &amp; braider · Nairobi</p>
+          <p class="tagline" id="tagline"></p>
+          <div class="social-row" id="social-row"></div>
+        </div>
+      </header>
+
+      <section class="proof-section" id="sec-did">
+        <div class="section-head"><span class="stamp stamp-did">did</span><h2>What I've done</h2></div>
+        <p class="section-sub">Tap any evidence tag to see what's behind the claim.</p>
+        <div class="card-grid" id="did-grid"></div>
+      </section>
+
+      <section class="proof-section" id="sec-trained">
+        <div class="section-head"><span class="stamp stamp-trained">trained</span><h2>How I learned it</h2></div>
+        <p class="section-sub">&nbsp;</p>
+        <div class="trained-list" id="trained-list"></div>
+      </section>
+
+      <section class="proof-section" id="sec-vouched">
+        <div class="section-head"><span class="stamp stamp-vouched">vouched</span><h2>Who'll speak for me</h2></div>
+        <p class="section-sub">&nbsp;</p>
+        <div class="quote-grid" id="quote-grid"></div>
+      </section>
+
+      <section class="proof-section" id="sec-aiming">
+        <div class="section-head"><span class="stamp stamp-aiming">aiming</span><h2>What I'm looking for</h2></div>
+        <div class="aim-body">
+          <p class="aim-text" id="aim-text"></p>
+          <div class="chip-row" id="aim-chips"></div>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+        <span class="wordmark">Case</span>
+        <span class="footer-sub">Build your own, free →</span>
+      </footer>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dash" style="display:none;">
+      <div class="dash">
+        <div class="dash-head">
+          <div class="dash-who">
+            <div class="dash-avatar" id="d-avatar">AN</div>
+            <div>
+              <p class="dash-name" id="d-name">Aisha Njoroge</p>
+              <p class="dash-handle">case.app/@<span id="d-handle">a.njoroge</span></p>
+            </div>
+          </div>
+          <div class="dash-actions">
+            <button class="btn-outline">Preview public page</button>
+            <button class="btn-dark">Copy link</button>
+          </div>
+        </div>
+
+        <div class="completeness">
+          <div class="completeness-top"><span id="c-label">Your case is 75% built</span><span id="c-tip">Add evidence to your remaining claims</span></div>
+          <div class="bar-track"><div class="bar-fill" id="c-bar" style="width:75%;"></div></div>
+        </div>
+
+        <p class="dash-section-title">Your proof, all in one place</p>
+        <p class="dash-section-sub">Every claim is stronger with something behind it — a photo, a certificate, a screenshot, a video.</p>
+        <div id="item-list"></div>
+
+        <button class="add-proof-toggle" id="add-toggle">+ Add a piece of proof</button>
+        <div class="add-proof-card" id="add-card" style="display:none;">
+          <div class="type-picker" id="type-picker">
+            <button class="type-chip picked" data-t="did">did</button>
+            <button class="type-chip" data-t="trained">trained</button>
+            <button class="type-chip" data-t="vouched">vouched</button>
+            <button class="type-chip" data-t="aiming">aiming</button>
+          </div>
+          <input type="text" placeholder="Title — e.g. Rewired a home's electrical panel" id="new-title">
+          <textarea placeholder="A line or two of detail. Client, dates, what it involved." id="new-desc"></textarea>
+
+          <div class="evidence-attach">
+            <p class="evidence-label">Attach evidence — anything that backs this up. Nobody checks it for you; you decide what to show.</p>
+            <div class="attach-btns">
+              <button class="attach-btn" id="attach-photo">+ Photo</button>
+              <button class="attach-btn" id="attach-doc">+ Document</button>
+              <button class="attach-btn" id="attach-video">+ Video</button>
+            </div>
+            <div class="attached-list" id="attached-list"></div>
+          </div>
+
+          <div class="save-row">
+            <button class="btn-outline" id="cancel-add">Cancel</button>
+            <button class="btn-dark" id="save-add">Save to case</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const paperclipSvg = '<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 6.5l-6 6a2.5 2.5 0 003.5 3.5l6-6a4.5 4.5 0 00-6.5-6.5l-6 6a6.5 6.5 0 009 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function evidencePill(item){
+  const n = (item.evidence||[]).length;
+  if(!n) return `<span class="evidence-pill none">no evidence yet</span>`;
+  return `<button class="evidence-pill" data-key="${item._key}">${paperclipSvg} ${n} ${n===1?'file':'files'}</button>`;
+}
+function evidencePanel(item){
+  const ev = item.evidence||[];
+  if(!ev.length) return '';
+  return `<div class="evidence-panel" id="panel-${item._key}">${ev.map(e=>`
+    <div class="ev-chip">
+      <div class="ev-icon ${e.type}">${e.type.toUpperCase()}</div>
+      <div class="ev-caption">${e.label}</div>
+    </div>`).join('')}</div>`;
+}
+
+const personas = {
+  service: {
+    handle:"a.njoroge", avatar:"AN", name:"Aisha Njoroge",
+    role:"Freelance hairstylist &amp; braider · Nairobi",
+    tagline:"Booked out most weeks doing protective styles and treatments for natural hair.",
+    social:["Instagram","WhatsApp","TikTok"],
+    did:[
+      {t:"120+ styles this year", d:"Braids, locs maintenance, silk presses.", evidence:[{type:'img',label:'Before/after set'},{type:'img',label:'Client photos'},{type:'img',label:'Salon shots'}]},
+      {t:"Bridal party, 8 clients", d:"Full day, on-site styling for a wedding.", evidence:[{type:'img',label:'Wedding album'}]},
+      {t:"Salon pop-up, Westlands", d:"Ran a 2-day pop-up booth, fully booked.", evidence:[]}
+    ],
+    trained:[
+      {t:"2-year salon apprenticeship", s:"Under stylist Wanjiru Kamau", when:"2020–2022", evidence:[{type:'pdf',label:'Apprenticeship letter'}]},
+      {t:"Trichology short course", s:"Scalp health &amp; hair damage repair", when:"2023", evidence:[]}
+    ],
+    quotes:[
+      {q:"Aisha is the only person I trust with my hair before a big event.", w:"Faith K., client", evidence:[{type:'img',label:'WhatsApp screenshot'}]},
+      {q:"Always on time and my braids last twice as long as before.", w:"Njeri M., client", evidence:[]}
+    ],
+    aiming:null,
+    items:[
+      {type:"did",t:"120+ styles this year",s:"Braids, locs maintenance, silk presses.",visible:true,evidence:[{type:'img',label:'Before/after set'},{type:'img',label:'Client photos'},{type:'img',label:'Salon shots'}]},
+      {type:"did",t:"Bridal party, 8 clients",s:"Full day, on-site styling for a wedding.",visible:true,evidence:[{type:'img',label:'Wedding album'}]},
+      {type:"trained",t:"2-year salon apprenticeship",s:"Under stylist Wanjiru Kamau, 2020–2022",visible:true,evidence:[{type:'pdf',label:'Apprenticeship letter'}]},
+      {type:"vouched",t:"Quote from Faith K.",s:"\"The only person I trust with my hair.\"",visible:true,evidence:[{type:'img',label:'WhatsApp screenshot'}]},
+      {type:"did",t:"Home visit styling, draft",s:"Not yet public — still adding photos.",visible:false,evidence:[]}
+    ],
+    complete:75, tip:"Add evidence to your remaining claims"
+  },
+  pro: {
+    handle:"grace.mwangi.rn", avatar:"GM", name:"Grace Mwangi, RN",
+    role:"Registered nurse, ICU · Nairobi",
+    tagline:"Eight years in critical care. I keep patients stable when minutes matter.",
+    social:["LinkedIn"],
+    did:[
+      {t:"ICU lead, Aga Khan Hospital", d:"Ran night shift for a 12-bed unit.", evidence:[{type:'pdf',label:'Reference letter'}]},
+      {t:"COVID surge response", d:"Trained 6 junior nurses on ventilator protocol.", evidence:[]}
+    ],
+    trained:[
+      {t:"BSc Nursing", s:"University of Nairobi", when:"2014–2018", evidence:[{type:'pdf',label:'Degree certificate'}]},
+      {t:"Nursing Council of Kenya license", s:"Active, renewed annually", when:"2018–present", evidence:[{type:'pdf',label:'License scan'},{type:'img',label:'License photo'}]},
+      {t:"Critical care certification", s:"Kenya Critical Care Nurses Assoc.", when:"2021", evidence:[{type:'pdf',label:'Certificate'}]}
+    ],
+    quotes:[
+      {q:"Grace is the nurse other nurses ask for advice.", w:"Dr. Peter N., ICU consultant", evidence:[{type:'img',label:'Email screenshot'}]}
+    ],
+    aiming:null,
+    items:[
+      {type:"trained",t:"BSc Nursing",s:"University of Nairobi, 2014–2018",visible:true,evidence:[{type:'pdf',label:'Degree certificate'}]},
+      {type:"trained",t:"Nursing Council license",s:"Active, renewed annually",visible:true,evidence:[{type:'pdf',label:'License scan'},{type:'img',label:'License photo'}]},
+      {type:"did",t:"ICU lead, Aga Khan Hospital",s:"Ran night shift for a 12-bed unit.",visible:true,evidence:[{type:'pdf',label:'Reference letter'}]},
+      {type:"vouched",t:"Quote from Dr. Peter N.",s:"\"The nurse other nurses ask for advice.\"",visible:true,evidence:[{type:'img',label:'Email screenshot'}]},
+      {type:"did",t:"Community health drive",s:"Draft — waiting on photos from the organizer.",visible:false,evidence:[]}
+    ],
+    complete:90, tip:"You're almost fully built"
+  },
+  start: {
+    handle:"brian.otieno", avatar:"BO", name:"Brian Otieno",
+    role:"Looking for a sales or client-support role · Nairobi",
+    tagline:"Four years in customer support, switching toward sales. I know how to keep a customer calm and closing.",
+    social:["LinkedIn"],
+    did:[
+      {t:"Support lead, 3-person team", d:"Handled escalations for a fintech's app.", evidence:[{type:'pdf',label:'Performance review'}]},
+      {t:"Side hustle: resold phone accessories", d:"Ran a small WhatsApp storefront, ~200 orders.", evidence:[{type:'img',label:'Order screenshots'}]}
+    ],
+    trained:[
+      {t:"Sales fundamentals course", s:"HubSpot Academy, self-paced", when:"2026", evidence:[{type:'img',label:'Completion badge'}]},
+      {t:"Diploma, Business Administration", s:"Kenya Institute of Management", when:"2019–2021", evidence:[{type:'pdf',label:'Diploma scan'}]}
+    ],
+    quotes:[],
+    aiming:{
+      text:"Looking for an entry-level sales or client-support role, Nairobi-based or remote. Open to a 3-month trial to prove I can hit targets.",
+      chips:["Sales roles","Client support","Remote-friendly","Open to trial period"]
+    },
+    items:[
+      {type:"did",t:"Support lead, 3-person team",s:"Handled escalations for a fintech's app.",visible:true,evidence:[{type:'pdf',label:'Performance review'}]},
+      {type:"trained",t:"Diploma, Business Administration",s:"Kenya Institute of Management, 2019–2021",visible:true,evidence:[{type:'pdf',label:'Diploma scan'}]},
+      {type:"trained",t:"Sales fundamentals course",s:"HubSpot Academy, self-paced",visible:true,evidence:[{type:'img',label:'Completion badge'}]},
+      {type:"aiming",t:"Open to a 3-month trial",s:"Sales or client-support, Nairobi or remote.",visible:true,evidence:[]},
+      {type:"did",t:"Side hustle storefront",s:"Draft — writing up the numbers still.",visible:false,evidence:[{type:'img',label:'Order screenshots'}]}
+    ],
+    complete:60, tip:"Add evidence to build trust faster"
+  }
+};
+
+let current = 'service';
+let keyCounter = 0;
+function tagItems(list){ list.forEach(it=>{ it._key = 'k'+(keyCounter++); }); return list; }
+
+function renderPublic(){
+  const p = personas[current];
+  document.getElementById('handle').textContent = p.handle;
+  document.getElementById('avatar').textContent = p.avatar;
+  document.getElementById('name').textContent = p.name;
+  document.getElementById('role').innerHTML = p.role;
+  document.getElementById('tagline').textContent = p.tagline;
+  document.getElementById('social-row').innerHTML = p.social.map(s=>`<span class="social-pill">${s}</span>`).join('');
+
+  tagItems(p.did);
+  document.getElementById('did-grid').innerHTML = p.did.map(m=>`
+    <div class="work-card">
+      <div class="work-thumb"></div>
+      <div class="work-body">
+        <h3>${m.t}</h3><p>${m.d}</p>
+        ${evidencePill(m)}
+        ${evidencePanel(m)}
+      </div>
+    </div>`).join('');
+
+  tagItems(p.trained);
+  document.getElementById('trained-list').innerHTML = p.trained.map(t=>`
+    <div class="trained-row">
+      <div class="trained-top">
+        <div><h3>${t.t}</h3><p>${t.s}</p></div>
+        <span class="when">${t.when}</span>
+      </div>
+      ${evidencePill(t)}
+      ${evidencePanel(t)}
+    </div>`).join('');
+
+  const vouchedSection = document.getElementById('sec-vouched');
+  const aimingSection = document.getElementById('sec-aiming');
+
+  if(p.quotes.length){
+    vouchedSection.style.display='block';
+    tagItems(p.quotes);
+    document.getElementById('quote-grid').innerHTML = p.quotes.map(q=>`
+      <div class="quote-card">
+        <p class="q">"${q.q}"</p>
+        <p class="who">${q.w}</p>
+        ${evidencePill(q)}
+        ${evidencePanel(q)}
+      </div>`).join('');
+  } else { vouchedSection.style.display='none'; }
+
+  if(p.aiming){
+    aimingSection.style.display='block';
+    document.getElementById('aim-text').textContent = p.aiming.text;
+    document.getElementById('aim-chips').innerHTML = p.aiming.chips.map(c=>`<span class="chip">${c}</span>`).join('');
+  } else { aimingSection.style.display='none'; }
+
+  document.querySelectorAll('.evidence-pill[data-key]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const panel = document.getElementById('panel-'+btn.dataset.key);
+      if(panel) panel.classList.toggle('open');
+    });
+  });
+}
+
+function renderDash(){
+  const p = personas[current];
+  document.getElementById('d-avatar').textContent = p.avatar;
+  document.getElementById('d-name').textContent = p.name;
+  document.getElementById('d-handle').textContent = p.handle;
+  document.getElementById('c-label').textContent = `Your case is ${p.complete}% built`;
+  document.getElementById('c-tip').textContent = p.tip;
+  document.getElementById('c-bar').style.width = p.complete + '%';
+
+  tagItems(p.items);
+  document.getElementById('item-list').innerHTML = p.items.map(it=>`
+    <div class="item-row ${it.visible?'':'is-hidden'}">
+      <div class="item-top">
+        <span class="stamp stamp-${it.type}">${it.type}</span>
+        <div class="item-info">
+          <h4>${it.t}</h4>
+          <p>${it.s}</p>
+        </div>
+        <div class="item-controls">
+          <span class="vis-tag ${it.visible?'vis-public':'vis-hidden'}">${it.visible?'public':'hidden'}</span>
+          <button class="edit-link">Edit</button>
+        </div>
+      </div>
+      <div style="margin-top:8px;">${evidencePill(it)}</div>
+      ${evidencePanel(it)}
+    </div>`).join('');
+
+  document.querySelectorAll('#item-list .evidence-pill[data-key]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const panel = document.getElementById('panel-'+btn.dataset.key);
+      if(panel) panel.classList.toggle('open');
+    });
+  });
+}
+
+function renderAll(){ renderPublic(); renderDash(); }
+
+document.querySelectorAll('.demo-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.demo-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    current = btn.dataset.persona;
+    renderAll();
+  });
+});
+
+document.querySelectorAll('.view-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const v = btn.dataset.view;
+    document.getElementById('view-public').style.display = v==='public' ? 'block':'none';
+    document.getElementById('view-dash').style.display = v==='dash' ? 'block':'none';
+  });
+});
+
+const addToggle = document.getElementById('add-toggle');
+const addCard = document.getElementById('add-card');
+addToggle.addEventListener('click', ()=>{
+  addCard.style.display = addCard.style.display==='none' ? 'block':'none';
+});
+document.getElementById('cancel-add').addEventListener('click', ()=>{
+  addCard.style.display='none';
+  pendingEvidence = [];
+  document.getElementById('attached-list').innerHTML='';
+});
+
+let pickedType = 'did';
+document.querySelectorAll('.type-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.type-chip').forEach(c=>c.classList.remove('picked'));
+    chip.classList.add('picked');
+    pickedType = chip.dataset.t;
+  });
+});
+
+let pendingEvidence = [];
+function addPendingEvidence(type, label){
+  pendingEvidence.push({type,label});
+  document.getElementById('attached-list').innerHTML = pendingEvidence.map(e=>`
+    <div class="ev-chip"><div class="ev-icon ${e.type}">${e.type.toUpperCase()}</div><div class="ev-caption">${e.label}</div></div>`).join('');
+}
+let photoCount=0, docCount=0, vidCount=0;
+document.getElementById('attach-photo').addEventListener('click', ()=>{ photoCount++; addPendingEvidence('img','Photo '+photoCount); });
+document.getElementById('attach-doc').addEventListener('click', ()=>{ docCount++; addPendingEvidence('pdf','Document '+docCount); });
+document.getElementById('attach-video').addEventListener('click', ()=>{ vidCount++; addPendingEvidence('vid','Video '+vidCount); });
+
+document.getElementById('save-add').addEventListener('click', ()=>{
+  const title = document.getElementById('new-title').value.trim();
+  const desc = document.getElementById('new-desc').value.trim();
+  if(!title) return;
+  personas[current].items.unshift({type:pickedType, t:title, s: desc || 'No detail added yet.', visible:true, evidence:[...pendingEvidence]});
+  document.getElementById('new-title').value='';
+  document.getElementById('new-desc').value='';
+  pendingEvidence = [];
+  photoCount=0; docCount=0; vidCount=0;
+  document.getElementById('attached-list').innerHTML='';
+  addCard.style.display='none';
+  renderDash();
+});
+
+renderAll();
+</script>
+</body>
+</html>

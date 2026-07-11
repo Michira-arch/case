@@ -1,0 +1,218 @@
+import Link from 'next/link'
+import type { Metadata } from 'next'
+import styles from './page.module.css'
+
+export const metadata: Metadata = {
+  title: 'Case — prove you\'ve got it',
+  description: 'A proof-of-work profile for people who don\'t have a traditional resume. Show your work, back it with evidence, get vouched — and get hired or booked.',
+}
+
+export default function LandingPage() {
+  return (
+    <div className={styles.page}>
+      {/* Nav */}
+      <nav className={styles.nav}>
+        <div className={styles.navInner}>
+          <span className={styles.wordmark}>Case</span>
+          <div className={styles.navActions}>
+            <Link href="/login" className="btn btn--outline btn--sm">Log in</Link>
+            <Link href="/signup" className="btn btn--brass btn--sm">Start free</Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section className={styles.hero}>
+        <div className={styles.heroContent}>
+          <div className={styles.heroBadge}>
+            <span className="stamp stamp--vouched">Kenya-first · mobile-first</span>
+          </div>
+          <h1 className={styles.heroTitle}>
+            Prove you've got it.<br />
+            <span className={styles.heroAccent}>Not just a CV line.</span>
+          </h1>
+          <p className={styles.heroSub}>
+            Case is a proof-of-work profile — show what you've done, how you learned it,
+            who'll vouch for you, and what you're aiming for next. Every claim backed by
+            real evidence: photos, certificates, videos.
+          </p>
+          <div className={styles.heroCtas}>
+            <Link href="/signup" className="btn btn--brass btn--lg">
+              Build your Case — free
+            </Link>
+            <a href="/@a.njoroge" className="btn btn--outline btn--lg">
+              See an example
+            </a>
+          </div>
+          <p className={styles.heroNote}>
+            Free forever · takes 5 minutes · share via WhatsApp
+          </p>
+        </div>
+      </section>
+
+      {/* Social proof bar */}
+      <div className={styles.proofBar}>
+        <p className={styles.proofBarText}>Used by hairstylists, nurses, electricians, tailors, and job seekers across Nairobi</p>
+      </div>
+
+      {/* Features */}
+      <section className={styles.features}>
+        <div className="container">
+          <div className={styles.featuresGrid}>
+            <Feature
+              stamp="did"
+              title="Show your work"
+              body="Add the jobs, projects, and gigs you've actually done. Attach photos, receipts, or screenshots — not just a job title."
+            />
+            <Feature
+              stamp="trained"
+              title="Back your skills"
+              body="List your training, courses, and apprenticeships. Scan your certificate and attach it. Real credentials, not just a bullet point."
+            />
+            <Feature
+              stamp="vouched"
+              title="Get vouched"
+              body="Send a vouch link to a client or employer. They submit a testimonial directly — it lands on your Case, visible for anyone checking you."
+            />
+            <Feature
+              stamp="aiming"
+              title="Signal what you want"
+              body="Tell the people reading your Case what you're looking for. Open to bookings? Relocating? On a career switch? Say it clearly."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Personas */}
+      <section className={styles.personas}>
+        <div className="container">
+          <h2 className={styles.sectionTitle}>Built for real work</h2>
+          <div className={styles.personasGrid}>
+            <PersonaCard
+              emoji="✂️"
+              title="Service providers"
+              desc="Hairstylists, electricians, mechanics, tailors — prove your bookings, show your work, get repeat clients."
+            />
+            <PersonaCard
+              emoji="🏥"
+              title="Credentialed professionals"
+              desc="Nurses, accountants, teachers — prove your licenses are real and current. One link replaces a folder of documents."
+            />
+            <PersonaCard
+              emoji="📋"
+              title="Job seekers"
+              desc="Stand out from the CV pile. Show the recruiter exactly what you've done, who'll speak for you, and why you're ready."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className={styles.pricing}>
+        <div className="container">
+          <h2 className={styles.sectionTitle}>Simple, fair pricing</h2>
+          <p className={styles.sectionSub}>Free forever for the basics. Case+ for serious professionals.</p>
+          <div className={styles.pricingGrid}>
+            <PricingCard
+              name="Free"
+              price="0"
+              period="forever"
+              features={[
+                'Public proof-of-work profile',
+                'Up to 4 proof items per pillar',
+                '2 evidence files per item',
+                '3 open vouch requests',
+                'Basic analytics',
+                'QR code download',
+              ]}
+              cta="Start free"
+              href="/signup"
+              highlight={false}
+            />
+            <PricingCard
+              name="Case+"
+              price="70"
+              period="6 months / KES 100 per year"
+              features={[
+                'Everything in free',
+                'Unlimited proof items',
+                'Unlimited evidence files',
+                'Unlimited vouch requests',
+                'Full analytics + referrer breakdown',
+                'Remove "Built with Case" footer',
+                'Priority in Case Search',
+              ]}
+              cta="Get Case+"
+              href="/signup?plan=plus"
+              highlight={true}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className={styles.footer}>
+        <div className="container">
+          <div className={styles.footerInner}>
+            <span className={styles.wordmark}>Case</span>
+            <p className={styles.footerSub}>Built for the worker who proves their worth.</p>
+            <div className={styles.footerLinks}>
+              <a href="/privacy">Privacy</a>
+              <a href="/terms">Terms</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}
+
+function Feature({ stamp, title, body }: { stamp: string; title: string; body: string }) {
+  return (
+    <div className={styles.feature}>
+      <span className={`stamp stamp--${stamp}`}>{stamp}</span>
+      <h3 className={styles.featureTitle}>{title}</h3>
+      <p className={styles.featureBody}>{body}</p>
+    </div>
+  )
+}
+
+function PersonaCard({ emoji, title, desc }: { emoji: string; title: string; desc: string }) {
+  return (
+    <div className={`card ${styles.personaCard}`}>
+      <div className={styles.personaEmoji}>{emoji}</div>
+      <h3 className={styles.personaTitle}>{title}</h3>
+      <p className={styles.personaDesc}>{desc}</p>
+    </div>
+  )
+}
+
+function PricingCard({ name, price, period, features, cta, href, highlight }: {
+  name: string; price: string; period: string; features: string[];
+  cta: string; href: string; highlight: boolean;
+}) {
+  return (
+    <div className={`card ${styles.pricingCard} ${highlight ? styles.pricingCardHighlight : ''}`}>
+      <div className={styles.pricingCardHead}>
+        <h3 className={styles.pricingName}>{name}</h3>
+        <div className={styles.pricingPrice}>
+          <span className={styles.pricingAmount}>
+            {price === '0' ? 'Free' : `KES ${price}`}
+          </span>
+          {price !== '0' && <span className={styles.pricingPeriod}>/ {period}</span>}
+        </div>
+      </div>
+      <ul className={styles.pricingFeatures}>
+        {features.map((f) => (
+          <li key={f} className={styles.pricingFeature}>
+            <span className={styles.pricingCheck}>✓</span>
+            {f}
+          </li>
+        ))}
+      </ul>
+      <Link href={href} className={`btn btn--full ${highlight ? 'btn--brass' : 'btn--outline'}`}>
+        {cta}
+      </Link>
+    </div>
+  )
+}

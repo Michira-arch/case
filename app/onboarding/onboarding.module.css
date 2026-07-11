@@ -1,0 +1,559 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--paper);
+  font-family: var(--font-sans);
+}
+
+.chatBox {
+  width: 100%;
+  max-width: 540px;
+  height: 640px;
+  max-height: calc(100vh - 40px);
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeIn 0.4s var(--ease);
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 0;
+  }
+  .chatBox {
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    border: none;
+  }
+}
+
+/* Header */
+.chatHeader {
+  padding: 16px 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.genieIcon {
+  font-size: 28px;
+  background: var(--brass-bg);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-soft);
+}
+
+.headerTitle h3 {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.headerTitle p {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 1px;
+}
+
+/* Progress bar */
+.progressContainer {
+  height: 4px;
+  background: var(--line-soft);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background: var(--brass);
+  border-radius: var(--radius-full);
+  transition: width 0.4s var(--ease);
+}
+
+/* Message Log */
+.messageLog {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--paper-light);
+}
+
+.messageWrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 85%;
+  animation: messageSlideIn 0.3s var(--ease) both;
+}
+
+.genieWrapper {
+  align-self: flex-start;
+}
+
+.userWrapper {
+  align-self: flex-end;
+  justify-content: flex-end;
+  max-width: 75%;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--brass-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border: 1px solid var(--line-soft);
+  flex-shrink: 0;
+}
+
+.bubble {
+  padding: 12px 16px;
+  box-shadow: var(--shadow-sm);
+  line-height: 1.5;
+  font-size: 14.5px;
+}
+
+.genieBubble {
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line-soft);
+  border-radius: 16px 16px 16px 4px;
+}
+
+.userBubble {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 16px 16px 4px 16px;
+}
+
+.bubbleText {
+  white-space: pre-wrap;
+}
+
+/* Typing indicator */
+.typingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+}
+
+.typingDot {
+  width: 6px;
+  height: 6px;
+  background: var(--ink-muted);
+  border-radius: 50%;
+  animation: typingBounce 1.4s infinite both;
+}
+
+.typingDot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typingDot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Error Notice */
+.errorNotice {
+  padding: 10px 16px;
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: 13.5px;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  font-weight: 500;
+}
+
+/* Input Panel */
+.inputPanel {
+  padding: 16px 20px;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Form Styles */
+.inputForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.inputWrapper {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.textInput {
+  flex: 1;
+  font-size: 14.5px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-light);
+  color: var(--ink);
+  transition: all var(--duration) var(--ease);
+}
+
+.textInput:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(32, 40, 31, 0.08);
+  background: var(--card);
+}
+
+.sendButton {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 0 20px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+}
+
+.sendButton:hover:not(:disabled) {
+  background: #2E3A2D;
+}
+
+.sendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Step 1: Persona Card styling */
+.personaOptionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.personaOptionCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--paper-light);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--duration) var(--ease);
+  width: 100%;
+}
+
+.personaOptionCard:hover {
+  border-color: var(--ink-soft);
+  transform: translateY(-1px);
+  background: var(--card);
+}
+
+.personaOptionCard:active {
+  transform: translateY(0);
+}
+
+.personaEmoji {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-soft);
+  flex-shrink: 0;
+}
+
+.personaOptionDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.personaLabel {
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+.personaDesc {
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+
+/* Step 3: Handle Panel & Suggestion Chips */
+.handlePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.suggestionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.suggestionTitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.suggestionsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.suggestionChip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px dashed var(--line);
+  background: var(--paper-light);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+}
+
+.suggestionChip:hover {
+  border-color: var(--brass);
+  color: var(--brass-deep);
+  background: var(--brass-bg);
+}
+
+.activeChip {
+  border-color: var(--brass);
+  border-style: solid;
+  color: var(--brass-deep);
+  background: var(--brass-bg);
+  font-weight: 500;
+}
+
+.handleInputContainer {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-light);
+  overflow: hidden;
+  transition: border-color var(--duration) var(--ease);
+}
+
+.handleInputContainer:focus-within {
+  border-color: var(--ink);
+  background: var(--card);
+}
+
+.handleAtPrefix {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  padding: 12px 0 12px 14px;
+  user-select: none;
+}
+
+.handleTextInput {
+  flex: 1;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  padding: 12px 14px 12px 4px;
+  background: transparent;
+  color: var(--ink);
+}
+
+.handleTextInput:focus {
+  outline: none;
+}
+
+.handleStatusLine {
+  font-size: 12px;
+  min-height: 16px;
+  margin-top: -4px;
+  padding-left: 2px;
+}
+
+.statusChecking {
+  color: var(--ink-muted);
+}
+
+.statusAvailable {
+  color: var(--verified);
+  font-weight: 500;
+}
+
+.statusTaken {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.fullWidthButton {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 12px;
+  border-radius: var(--radius);
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+  width: 100%;
+}
+
+.fullWidthButton:hover:not(:disabled) {
+  background: #2E3A2D;
+}
+
+.fullWidthButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Step Label badge inside input area */
+.inputLabelLine {
+  display: flex;
+  margin-bottom: 2px;
+}
+
+/* Skip/Utility buttons */
+.skipButton {
+  background: transparent;
+  color: var(--ink-soft);
+  border: none;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: center;
+  padding: 4px;
+  transition: color var(--duration) var(--ease);
+}
+
+.skipButton:hover {
+  color: var(--ink);
+}
+
+/* Step 7: Final Panel styles */
+.finalPanel {
+  width: 100%;
+}
+
+.publishButton {
+  width: 100%;
+  background: var(--brass);
+  color: #2A1D0C;
+  border: none;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+  box-shadow: 0 4px 12px rgba(168, 120, 58, 0.15);
+}
+
+.publishButton:hover:not(:disabled) {
+  background: var(--brass-hover);
+  transform: translateY(-1px);
+}
+
+.publishButton:active {
+  transform: translateY(0);
+}
+
+.publishButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Back navigation */
+.backStepButton {
+  align-self: center;
+  background: transparent;
+  color: var(--ink-muted);
+  border: none;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: color var(--duration) var(--ease);
+  margin-top: 4px;
+}
+
+.backStepButton:hover {
+  color: var(--ink-soft);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
