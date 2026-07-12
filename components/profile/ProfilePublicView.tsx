@@ -167,6 +167,53 @@ export default function ProfilePublicView({ profile, handle }: Props) {
           </ProofSection>
         )}
 
+        {/* Physical Attributes Section */}
+        {profile.physical_attributes && 
+         (profile.physical_attributes.height || 
+          profile.physical_attributes.build || 
+          profile.physical_attributes.bio || 
+          profile.physical_attributes.photo_url) && (
+          <section className={styles.physicalSection}>
+            <div className={styles.physicalHead}>
+              <span className="stamp stamp--vouched">Physical Attributes</span>
+              <h2 className={styles.physicalHeading}>Appearance Details</h2>
+            </div>
+            
+            <div className={styles.physicalGrid}>
+              <div className={styles.physicalTextDetails}>
+                {profile.physical_attributes.height && (
+                  <div className={styles.physicalField}>
+                    <span className={styles.physicalLabel}>Height</span>
+                    <span className={styles.physicalValue}>{profile.physical_attributes.height}</span>
+                  </div>
+                )}
+                {profile.physical_attributes.build && (
+                  <div className={styles.physicalField}>
+                    <span className={styles.physicalLabel}>Build</span>
+                    <span className={styles.physicalValue}>{profile.physical_attributes.build}</span>
+                  </div>
+                )}
+                {profile.physical_attributes.bio && (
+                  <div className={styles.physicalBioField}>
+                    <span className={styles.physicalLabel}>Additional Notes</span>
+                    <p className={styles.physicalBioText}>{profile.physical_attributes.bio}</p>
+                  </div>
+                )}
+              </div>
+              
+              {profile.physical_attributes.photo_url && (
+                <div className={styles.physicalPhotoContainer}>
+                  <img
+                    src={getMediaUrl(profile.physical_attributes.photo_url)}
+                    alt={`${profile.display_name} appearance`}
+                    className={styles.physicalPhoto}
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Footer */}
         <footer className={styles.footer}>
           <span className={styles.footerWordmark}>Case</span>
@@ -201,7 +248,6 @@ function ProofSection({ pillar, heading, subtext, children }: {
 
 /* ---- Work card (did pillar) ---- */
 function WorkCard({ item }: { item: PublicProofItem }) {
-  const [open, setOpen] = useState(false)
   const hasEvidence = (item.evidence?.length ?? 0) > 0
 
   return (
@@ -219,20 +265,7 @@ function WorkCard({ item }: { item: PublicProofItem }) {
       <div className={styles.workBody}>
         <h3 className={styles.workTitle}>{item.title}</h3>
         {item.detail && <p className={styles.workDetail}>{item.detail}</p>}
-        {hasEvidence ? (
-          <button
-            className="evidence-pill"
-            onClick={() => setOpen(o => !o)}
-            aria-expanded={open}
-            aria-label={`${open ? 'Hide' : 'Show'} evidence for ${item.title}`}
-          >
-            <PaperclipIcon />
-            {item.evidence!.length} {item.evidence!.length === 1 ? 'file' : 'files'}
-          </button>
-        ) : (
-          <span className="evidence-pill evidence-pill--empty">no evidence yet</span>
-        )}
-        {open && hasEvidence && (
+        {hasEvidence && (
           <EvidencePanel evidence={item.evidence!} />
         )}
       </div>
@@ -242,59 +275,33 @@ function WorkCard({ item }: { item: PublicProofItem }) {
 
 /* ---- Trained row ---- */
 function TrainedRow({ item }: { item: PublicProofItem }) {
-  const [open, setOpen] = useState(false)
   const hasEvidence = (item.evidence?.length ?? 0) > 0
 
   return (
     <div className={styles.trainedRow}>
       <div className={styles.trainedTop}>
         <div>
-          <h3 className={styles.trainedTitle}>
-            {item.title}
-            {hasEvidence && (
-              <button
-                className={`evidence-pill ${styles.inlineEvidencePill}`}
-                onClick={() => setOpen(o => !o)}
-                aria-expanded={open}
-              >
-                <PaperclipIcon />
-                {item.evidence!.length}
-              </button>
-            )}
-          </h3>
+          <h3 className={styles.trainedTitle}>{item.title}</h3>
           {item.detail && <p className={styles.trainedDetail}>{item.detail}</p>}
         </div>
         {item.when_label && (
           <span className={styles.whenLabel}>{item.when_label}</span>
         )}
       </div>
-      {open && hasEvidence && <EvidencePanel evidence={item.evidence!} />}
+      {hasEvidence && <EvidencePanel evidence={item.evidence!} />}
     </div>
   )
 }
 
 /* ---- Quote card (vouched) ---- */
 function QuoteCard({ item }: { item: PublicProofItem }) {
-  const [open, setOpen] = useState(false)
   const hasEvidence = (item.evidence?.length ?? 0) > 0
 
   return (
     <div className={styles.quoteCard}>
       <p className={styles.quoteText}>{item.title}</p>
       <p className={styles.quoteWho}>{item.detail}</p>
-      {hasEvidence && (
-        <>
-          <button
-            className="evidence-pill"
-            onClick={() => setOpen(o => !o)}
-            style={{ marginTop: 8 }}
-          >
-            <PaperclipIcon />
-            {item.evidence!.length} {item.evidence!.length === 1 ? 'file' : 'files'}
-          </button>
-          {open && <EvidencePanel evidence={item.evidence!} />}
-        </>
-      )}
+      {hasEvidence && <EvidencePanel evidence={item.evidence!} />}
     </div>
   )
 }
@@ -305,20 +312,53 @@ function EvidencePanel({ evidence }: { evidence: PublicEvidence[] }) {
 
   return (
     <>
-      <div className={styles.evidencePanel}>
-        {evidence.map(e => (
-          <div
-            key={e.id}
-            className={`${styles.evChip} ${styles.evChipInteractive}`}
-            onClick={() => setPreviewingEv(e)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') setPreviewingEv(e) }}
-          >
-            <EvidenceIcon type={e.type} storageKey={e.storage_key} />
-            <span className={styles.evCaption}>{e.caption || e.type.toUpperCase()}</span>
-          </div>
-        ))}
+      <div className={styles.evidencePanelInline}>
+        {evidence.map(e => {
+          const isMedia = e.type === 'img' || e.type === 'vid'
+          const mediaUrl = getMediaUrl(e.storage_key)
+
+          if (isMedia) {
+            return (
+              <div
+                key={e.id}
+                className={styles.evMediaCard}
+                onClick={() => setPreviewingEv(e)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') setPreviewingEv(e) }}
+              >
+                {e.type === 'img' ? (
+                  <img src={mediaUrl} alt={e.caption || 'Evidence'} className={styles.evInlineImg} />
+                ) : (
+                  <div className={styles.evVideoContainer}>
+                    <video src={mediaUrl} className={styles.evInlineVideo} muted playsInline />
+                    <div className={styles.playOverlay}>▶</div>
+                  </div>
+                )}
+                {e.caption && <div className={styles.evInlineCaption}>{e.caption}</div>}
+              </div>
+            )
+          } else {
+            // PDF Document
+            return (
+              <div
+                key={e.id}
+                className={styles.evDocCard}
+                onClick={() => setPreviewingEv(e)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') setPreviewingEv(e) }}
+              >
+                <div className={styles.docIconWrap}>📄</div>
+                <div className={styles.docInfo}>
+                  <span className={styles.docLabel}>Document Proof (PDF)</span>
+                  <span className={styles.docName}>{e.caption || 'View Certificate / Document'}</span>
+                </div>
+                <span className={styles.docActionBadge}>View →</span>
+              </div>
+            )
+          }
+        })}
       </div>
 
       {previewingEv && (

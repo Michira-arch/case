@@ -23,6 +23,11 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [uploadingShowcase, setUploadingShowcase] = useState(false)
   const [subscription, setSubscription] = useState<any>(null)
+  const [height, setHeight] = useState('')
+  const [build, setBuild] = useState('')
+  const [physicalBio, setPhysicalBio] = useState('')
+  const [physicalPhotoUrl, setPhysicalPhotoUrl] = useState('')
+  const [uploadingPhysicalPhoto, setUploadingPhysicalPhoto] = useState(false)
   const [isPublic, setIsPublic]       = useState(true)
   const [discoverable, setDiscoverable] = useState(true)
 
@@ -48,6 +53,11 @@ export default function SettingsPage() {
         setLocationArea(data.location_area || '')
         setAvatarUrl(data.avatar_url || '')
         setShowcaseImages(data.showcase_images || [])
+        const phys = data.physical_attributes || {}
+        setHeight(phys.height || '')
+        setBuild(phys.build || '')
+        setPhysicalBio(phys.bio || '')
+        setPhysicalPhotoUrl(phys.photo_url || '')
         setIsPublic(data.is_public)
         setDiscoverable(data.discoverable)
 
@@ -77,6 +87,12 @@ export default function SettingsPage() {
       location_area: locationArea,
       avatar_url:    avatarUrl,
       showcase_images: showcaseImages,
+      physical_attributes: {
+        height,
+        build,
+        bio: physicalBio,
+        photo_url: physicalPhotoUrl,
+      },
       is_public:     isPublic,
       discoverable,
     }).eq('id', profile.id)
@@ -103,6 +119,25 @@ export default function SettingsPage() {
 
   const handleRemoveAvatar = () => {
     setAvatarUrl('')
+  }
+
+  const handlePhysicalPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !profile) return
+
+    setUploadingPhysicalPhoto(true)
+    try {
+      const storageKey = await uploadAvatar(file, profile.id)
+      setPhysicalPhotoUrl(storageKey)
+    } catch (err: any) {
+      alert(`Upload failed: ${err.message}`)
+    } finally {
+      setUploadingPhysicalPhoto(false)
+    }
+  }
+
+  const handleRemovePhysicalPhoto = () => {
+    setPhysicalPhotoUrl('')
   }
 
   const isPlus = subscription?.plan === 'plus'
@@ -255,6 +290,58 @@ export default function SettingsPage() {
           <div className="field">
             <label className="label">Location area</label>
             <input type="text" className="input" placeholder="Westlands, Nairobi" value={locationArea} onChange={e => setLocationArea(e.target.value)} />
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Physical Attributes <span className={styles.optional}>(Optional)</span></h2>
+          <p className={styles.hint} style={{ marginTop: 2, marginBottom: 12, fontSize: 12.5, color: 'var(--ink-soft)' }}>
+            Mainly for roles where physical representation is relevant.
+          </p>
+
+          <div className="field">
+            <label className="label">Height</label>
+            <input type="text" className="input" placeholder="e.g. 5'11 / 180cm" value={height} onChange={e => setHeight(e.target.value)} />
+          </div>
+
+          <div className="field">
+            <label className="label">Build</label>
+            <input type="text" className="input" placeholder="e.g. Athletic / Medium" value={build} onChange={e => setBuild(e.target.value)} />
+          </div>
+
+          <div className="field">
+            <label className="label">Physical Bio / Appearance details</label>
+            <textarea className="input textarea" placeholder="Add any details about hair, scars, tattoos, or other features of your choice…" value={physicalBio} onChange={e => setPhysicalBio(e.target.value)} rows={3} />
+          </div>
+
+          <div className={styles.avatarUploadField} style={{ marginTop: 16 }}>
+            <label className="label">Appearance photo <span className={styles.optional}>(1 photo max)</span></label>
+            <div className={styles.avatarRow}>
+              <div className={styles.avatarPreviewWrap} style={{ borderRadius: 'var(--radius)' }}>
+                {physicalPhotoUrl ? (
+                  <img src={getMediaUrl(physicalPhotoUrl)} alt="Physical aspect" className={styles.avatarPreview} />
+                ) : (
+                  <span style={{ fontSize: 24 }}>👤</span>
+                )}
+              </div>
+              <div className={styles.avatarUploadActions}>
+                <input
+                  type="file"
+                  id="physicalPhotoFile"
+                  accept="image/*"
+                  onChange={handlePhysicalPhotoChange}
+                  style={{ display: 'none' }}
+                />
+                <label htmlFor="physicalPhotoFile" className="btn btn--outline btn--sm" style={{ cursor: 'pointer' }}>
+                  {uploadingPhysicalPhoto ? 'Uploading…' : 'Upload photo'}
+                </label>
+                {physicalPhotoUrl && (
+                  <button type="button" onClick={handleRemovePhysicalPhoto} className={styles.removeAvatarBtn}>
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </section>
 

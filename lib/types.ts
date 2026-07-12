@@ -25,6 +25,12 @@ export interface Profile {
   location_area: string | null
   discoverable: boolean
   showcase_images: string[]
+  physical_attributes?: {
+    height?: string
+    build?: string
+    bio?: string
+    photo_url?: string
+  }
   created_at: string
   updated_at: string
 }
@@ -122,6 +128,12 @@ export interface PublicProfile {
   plan: Plan
   plan_expires: string | null
   showcase_images?: string[]
+  physical_attributes?: {
+    height?: string
+    build?: string
+    bio?: string
+    photo_url?: string
+  }
   proof_items: PublicProofItem[]
 }
 

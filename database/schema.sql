@@ -32,6 +32,7 @@ create table if not exists public.profiles (
   tagline         text,
   avatar_url      text,
   showcase_images text[] not null default '{}',
+  physical_attributes jsonb not null default '{}'::jsonb,
   socials         jsonb not null default '[]', -- [{platform, url}]
   is_public       boolean not null default true,
   locale          text not null default 'en'
@@ -320,6 +321,7 @@ begin
     'tagline',      v_profile.tagline,
     'avatar_url',   v_profile.avatar_url,
     'showcase_images', v_profile.showcase_images,
+    'physical_attributes', v_profile.physical_attributes,
     'socials',      v_profile.socials,
     'category',     v_profile.category,
     'tags',         v_profile.tags,

@@ -63,9 +63,6 @@ export async function uploadEvidence(opts: UploadOptions): Promise<UploadResult>
     }
   }
 
-  // Step 2: Get signed URL
-  onProgress?.('Getting upload URL…', 35)
-
   // Use webp extension for compressed images
   const filename = type === 'img'
     ? `image.webp`
@@ -73,29 +70,24 @@ export async function uploadEvidence(opts: UploadOptions): Promise<UploadResult>
 
   const storageKey = generateStorageKey(profileId, proofItemId, filename)
 
-  const signRes = await fetch('/api/upload/sign', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      storageKey,
-      contentType: type === 'img' ? 'image/webp' : uploadFile.type,
-      fileSizeBytes: bytesCompressed,
-    }),
-  })
-
-  if (!signRes.ok) {
-    const err = await signRes.json()
-    throw new Error(err.error || 'Failed to get upload URL')
-  }
-
-  const { uploadUrl, publicUrl } = await signRes.json()
-
-  // Step 3: Upload to R2 directly with progress tracking
+  // Step 2: Upload to our backend proxy (bypasses direct-to-R2 client CORS limits)
   onProgress?.('Uploading…', 40)
 
-  await uploadWithProgress(uploadFile, uploadUrl, type === 'img' ? 'image/webp' : uploadFile.type, (p) => {
-    onProgress?.('Uploading…', 40 + Math.round(p * 0.55))  // 40-95%
+  const formData = new FormData()
+  formData.append('file', uploadFile)
+  formData.append('storageKey', storageKey)
+
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData,
   })
+
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(err.error || 'Failed to upload file')
+  }
+
+  const { publicUrl } = await res.json()
 
   onProgress?.('Done', 100)
 
@@ -176,30 +168,19 @@ export async function uploadAvatar(file: File, profileId: string): Promise<strin
   const ext = 'webp'
   const storageKey = `avatars/${profileId}/${Date.now()}.${ext}`
 
-  // 1. Get signed URL
-  const signRes = await fetch('/api/upload/sign', {
+  const formData = new FormData()
+  formData.append('file', uploadFile)
+  formData.append('storageKey', storageKey)
+
+  const res = await fetch('/api/upload', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      storageKey,
-      contentType: 'image/webp',
-      fileSizeBytes: uploadFile.size,
-    }),
+    body: formData,
   })
 
-  if (!signRes.ok) {
-    const err = await signRes.json()
-    throw new Error(err.error || 'Failed to get upload URL')
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(err.error || 'Failed to upload avatar')
   }
-
-  const { uploadUrl } = await signRes.json()
-
-  // 2. PUT directly to R2
-  await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'image/webp' },
-    body: uploadFile,
-  })
 
   return storageKey
 }
