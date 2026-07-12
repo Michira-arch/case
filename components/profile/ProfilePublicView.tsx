@@ -12,7 +12,9 @@ interface Props {
 }
 
 export default function ProfilePublicView({ profile, handle }: Props) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://case.app'
+  const appUrl = typeof window !== 'undefined'
+    ? window.location.origin
+    : (process.env.NEXT_PUBLIC_APP_URL || 'https://case.app')
   const profileUrl = `${appUrl}/@${handle}`
 
   const handleShare = async () => {
