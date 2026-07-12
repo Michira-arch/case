@@ -16,6 +16,7 @@ interface Props {
   activeProfile: Profile | null
   subscription: Subscription | null
   proofItems: ProofItem[]
+  monthlyViews?: number
 }
 
 const PILLAR_ORDER = ['did', 'trained', 'vouched', 'aiming'] as const
@@ -26,6 +27,7 @@ export default function DashboardClient({
   activeProfile,
   subscription,
   proofItems,
+  monthlyViews = 0,
 }: Props) {
   const router = useRouter()
   const [items, setItems] = useState<ProofItem[]>(proofItems)
@@ -142,10 +144,33 @@ export default function DashboardClient({
         </div>
       </div>
 
+      {/* Views limit bar (only for free plan) */}
+      {plan === 'free' && (
+        <div className={styles.completeness} style={{ marginTop: '16px' }}>
+          <div className={styles.completenessTop}>
+            <span>Monthly Views: <b>{monthlyViews} / 100</b></span>
+            <span className={styles.tip} style={{ color: monthlyViews >= 80 ? '#c81e1e' : 'var(--brass-deep)' }}>
+              {monthlyViews >= 80 
+                ? "Warning: Approaching limit! Upgrade to avoid profile suspension."
+                : "Resetting on the 1st of next month. Upgrade for unlimited views."}
+            </span>
+          </div>
+          <div className="progress-track">
+            <div 
+              className="progress-fill" 
+              style={{ 
+                width: `${Math.min(100, monthlyViews)}%`,
+                backgroundColor: monthlyViews >= 80 ? '#c81e1e' : 'var(--brass-deep)'
+              }} 
+            />
+          </div>
+        </div>
+      )}
+
       {/* Plan banner */}
       {plan === 'free' && (
         <div className={styles.planBanner}>
-          <span>You're on the free plan — limited to 4 items per pillar and 2 evidence files per item.</span>
+          <span>You're on the free plan — limited to 100 profile views/mo, 4 items per pillar, and 2 evidence files per item.</span>
           <Link href="/dashboard/billing" className="btn btn--brass btn--sm">
             Upgrade to Case+
           </Link>

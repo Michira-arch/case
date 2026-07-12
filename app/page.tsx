@@ -15,6 +15,7 @@ export default function LandingPage() {
         <div className={styles.navInner}>
           <span className={styles.wordmark}>Case</span>
           <div className={styles.navActions}>
+            <Link href="/search" className="btn btn--outline btn--sm" style={{ marginRight: 4 }}>Search Cases</Link>
             <Link href="/login" className="btn btn--outline btn--sm">Log in</Link>
             <Link href="/signup" className="btn btn--brass btn--sm">Start free</Link>
           </div>
@@ -40,8 +41,11 @@ export default function LandingPage() {
             <Link href="/signup" className="btn btn--brass btn--lg">
               Build your Case — free
             </Link>
+            <Link href="/search" className="btn btn--outline btn--lg">
+              Search Cases
+            </Link>
             <a href="/@a.njoroge" className="btn btn--outline btn--lg">
-              See an example
+              See example
             </a>
           </div>
           <p className={styles.heroNote}>

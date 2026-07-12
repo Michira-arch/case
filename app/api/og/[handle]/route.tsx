@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { ImageResponse } from 'next/og'
 
+export const dynamic = 'force-dynamic'
+
 
 
 interface Props {

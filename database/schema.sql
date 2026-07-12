@@ -684,11 +684,32 @@ begin
         p.tags,
         p.location_area,
         coalesce(s.plan, 'free') as plan,
-        -- Completeness score (simplified — full calc in app)
+        -- Calculate completeness score matching app logic
         (
-          select count(*) from public.proof_items pi
-          where pi.profile_id = p.id and pi.visible = true
-        ) as proof_count,
+          (case when p.display_name is not null and p.display_name != '' and p.role_line is not null and p.role_line != '' and p.tagline is not null and p.tagline != '' then 20 else 0 end) +
+          (case when p.avatar_url is not null and p.avatar_url != '' then 5 else 0 end) +
+          coalesce(
+            (
+              select least(75, count(*) * 10)
+              from public.proof_items pi
+              where pi.profile_id = p.id
+                and pi.visible = true
+                and exists (
+                  select 1 from public.evidence e where e.proof_item_id = pi.id
+                )
+            ), 0
+          )
+        ) as completeness_score,
+        -- Total views count (engagement)
+        coalesce(
+          (
+            select count(*)
+            from public.analytics_events ae
+            where ae.profile_id = p.id
+              and ae.event_type = 'profile_view'
+          ), 0
+        ) as view_count,
+        -- Keyword relevance
         ts_rank(
           to_tsvector('english',
             coalesce(p.display_name,'') || ' ' ||
@@ -704,17 +725,53 @@ begin
         and p.discoverable = true
         and (p_category is null or p.category ilike '%' || p_category || '%')
         and (p_location  is null or p.location_area ilike '%' || p_location || '%')
-        and (p_query = '' or
-             to_tsvector('english',
-               coalesce(p.display_name,'') || ' ' ||
-               coalesce(p.category,'') || ' ' ||
-               coalesce(p.role_line,'')
-             ) @@ plainto_tsquery('english', p_query))
+        and (
+          p_query = '' or
+          p.handle ilike '%' || p_query || '%' or
+          p.display_name ilike '%' || p_query || '%' or
+          p.role_line ilike '%' || p_query || '%' or
+          to_tsvector('english',
+            coalesce(p.display_name,'') || ' ' ||
+            coalesce(p.category,'') || ' ' ||
+            coalesce(p.role_line,'')
+          ) @@ plainto_tsquery('english', p_query)
+        )
       order by
-        -- Case+ gets a moderate boost (§6.14 — bounded, not pure pay-to-rank)
-        (case when coalesce(s.plan,'free') = 'plus' then 0.2 else 0 end) +
-        relevance desc,
-        proof_count desc
+        -- Sorting Rank
+        (case when p.handle ilike p_query then 10.0 when p.handle ilike '%' || p_query || '%' then 3.0 else 0.0 end) +
+        (case when coalesce(s.plan,'free') = 'plus' then 1.5 else 0.0 end) +
+        ts_rank(
+          to_tsvector('english',
+            coalesce(p.display_name,'') || ' ' ||
+            coalesce(p.category,'') || ' ' ||
+            coalesce(p.role_line,'') || ' ' ||
+            coalesce(p.location_area,'')
+          ),
+          plainto_tsquery('english', coalesce(nullif(p_query,''), 'the'))
+        ) * 2.0 +
+        (((
+          (case when p.display_name is not null and p.display_name != '' and p.role_line is not null and p.role_line != '' and p.tagline is not null and p.tagline != '' then 20 else 0 end) +
+          (case when p.avatar_url is not null and p.avatar_url != '' then 5 else 0 end) +
+          coalesce(
+            (
+              select least(75, count(*) * 10)
+              from public.proof_items pi
+              where pi.profile_id = p.id
+                and pi.visible = true
+                and exists (
+                  select 1 from public.evidence e where e.proof_item_id = pi.id
+                )
+            ), 0
+          )
+        )::float / 100.0) * 1.5) +
+        (log(1.0 + coalesce(
+          (
+            select count(*)
+            from public.analytics_events ae
+            where ae.profile_id = p.id
+              and ae.event_type = 'profile_view'
+          ), 0
+        )::float) * 0.5) desc
       limit p_limit
       offset p_offset
     ) r

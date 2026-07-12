@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import type { PublicProfile } from '@/lib/types'
 import ProfilePublicView from '@/components/profile/ProfilePublicView'
@@ -76,9 +77,73 @@ export default async function PublicProfilePage({ params }: Props) {
     notFound()
   }
 
+  const supabase = createClient()
+
+  // Limit check (only for non-mock, free-tier profiles)
+  let viewLimitExceeded = false
+  const isMock = handle.toLowerCase() === 'a.njoroge' || handle.toLowerCase() === 'm.obwaka' || handle.toLowerCase() === 'j.kimani'
+
+  if (profile.plan === 'free' && !isMock) {
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
+
+    const { count } = await supabase
+      .from('analytics_events')
+      .select('*', { count: 'exact', head: true })
+      .eq('profile_id', profile.id)
+      .eq('event_type', 'profile_view')
+      .gte('created_at', startOfMonth.toISOString())
+
+    const currentViews = count || 0
+    if (currentViews >= 100) {
+      viewLimitExceeded = true
+    }
+  }
+
+  if (viewLimitExceeded) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'var(--paper)',
+        color: 'var(--ink)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        textAlign: 'center',
+      }}>
+        <div style={{
+          maxWidth: '480px',
+          background: 'var(--card)',
+          border: '1px solid var(--line)',
+          borderRadius: 'var(--radius-xl)',
+          padding: '40px 32px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+        }}>
+          <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>🔒</span>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: '700', marginBottom: '16px' }}>
+            Profile View Limit Reached
+          </h1>
+          <p style={{ color: 'var(--ink-soft)', fontSize: '14.5px', lineHeight: '1.6', marginBottom: '24px' }}>
+            This Case profile has reached its monthly view limit of <b>100 views</b> on the free tier.
+            To restore access and unlock unlimited views, custom domains, and full analytics, upgrade to <b>Case+</b>.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Link href="/login" className="btn btn--brass btn--full">
+              Log in to upgrade to Case+
+            </Link>
+            <Link href="/" className="btn btn--outline btn--full">
+              Back to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Log profile view server-side (not losable to adblockers)
   // Fire-and-forget — don't await
-  const supabase = createClient()
   void (async () => {
     try {
       await supabase.rpc('log_event', {

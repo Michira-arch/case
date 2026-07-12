@@ -18,9 +18,14 @@ export default async function DashboardPage() {
   const firstProfile = profiles?.[0]
   let subscription = null
   let proofItems: any[] = []
+  let monthlyViews = 0
 
   if (firstProfile) {
-    const [subResult, itemsResult] = await Promise.all([
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
+
+    const [subResult, itemsResult, viewsResult] = await Promise.all([
       supabase
         .from('subscriptions')
         .select('*')
@@ -32,9 +37,16 @@ export default async function DashboardPage() {
         .eq('profile_id', firstProfile.id)
         .order('sort_order')
         .order('created_at'),
+      supabase
+        .from('analytics_events')
+        .select('*', { count: 'exact', head: true })
+        .eq('profile_id', firstProfile.id)
+        .eq('event_type', 'profile_view')
+        .gte('created_at', startOfMonth.toISOString()),
     ])
     subscription = subResult.data
     proofItems = itemsResult.data || []
+    monthlyViews = viewsResult.count || 0
   }
 
   return (
@@ -44,6 +56,7 @@ export default async function DashboardPage() {
       activeProfile={firstProfile || null}
       subscription={subscription}
       proofItems={proofItems}
+      monthlyViews={monthlyViews}
     />
   )
 }
