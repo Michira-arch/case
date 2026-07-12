@@ -195,17 +195,17 @@ export default function DashboardClient({
         </Link>
       </div>
 
-      {/* Vouch request section */}
+      {/* Recommendation request section */}
       <div className={styles.vouchSection}>
         <div className={styles.vouchHead}>
           <div>
-            <p className={styles.sectionTitle}>Vouch requests</p>
+            <p className={styles.sectionTitle}>Recommendation requests</p>
             <p className={styles.sectionSub}>
-              Send a link to a client or employer — they submit a testimonial directly.
+              Send a link to a client or employer — they submit a recommendation directly.
             </p>
           </div>
           <Link href="/dashboard/vouch/new" className="btn btn--outline btn--sm">
-            New vouch request
+            Request recommendation
           </Link>
         </div>
       </div>

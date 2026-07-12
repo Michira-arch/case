@@ -176,16 +176,24 @@ function NewProofPageContent() {
 
         {/* Pillar picker */}
         <div className={styles.pillarPicker}>
-          {(['did', 'trained', 'vouched', 'aiming'] as Pillar[]).map(p => (
-            <button
-              key={p}
-              type="button"
-              className={`${styles.pillarBtn} ${pillar === p ? styles.pillarBtnActive : ''}`}
-              onClick={() => setPillar(p)}
-            >
-              <span className={`stamp stamp--${p}`}>{p}</span>
-            </button>
-          ))}
+          {(['did', 'trained', 'vouched', 'aiming'] as Pillar[]).map(p => {
+            const labels: Record<string, string> = {
+              did: 'did',
+              trained: 'trained',
+              vouched: 'recommendation',
+              aiming: 'aiming',
+            }
+            return (
+              <button
+                key={p}
+                type="button"
+                className={`${styles.pillarBtn} ${pillar === p ? styles.pillarBtnActive : ''}`}
+                onClick={() => setPillar(p)}
+              >
+                <span className={`stamp stamp--${p}`}>{labels[p]}</span>
+              </button>
+            )
+          })}
         </div>
 
         {/* Form */}

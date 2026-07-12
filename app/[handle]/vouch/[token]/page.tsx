@@ -7,7 +7,7 @@ interface Props {
 }
 
 export const metadata = {
-  title: 'Leave a vouch',
+  title: 'Leave a recommendation',
   robots: { index: false, follow: false },
 }
 
@@ -26,7 +26,7 @@ export default async function VouchPage({ params }: Props) {
   if (!vouchReq) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
-        <h1>This vouch link is invalid or expired</h1>
+        <h1>This recommendation link is invalid or expired</h1>
         <p style={{ color: 'var(--ink-soft)', marginTop: 12 }}>
           It may have already been used or expired (links are valid for 30 days).
         </p>

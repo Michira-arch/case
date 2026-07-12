@@ -9,7 +9,7 @@ export default function NewVouchPage() {
   const router = useRouter()
   const [profile, setProfile] = useState<any>(null)
   const [recipient, setRecipient] = useState('')
-  const [message, setMessage] = useState('Hey! Could you leave a quick vouch on my profile for the work we did recently? It takes a minute and really helps me build credibility.')
+  const [message, setMessage] = useState('Hey! Could you leave a quick recommendation on my profile for the work we did recently? It takes a minute and really helps me build credibility.')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -72,11 +72,11 @@ export default function NewVouchPage() {
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(generatedLink)
-    alert('Vouch link copied to clipboard!')
+    alert('Recommendation link copied!')
   }
 
   const handleShareWhatsApp = () => {
-    const text = `Hey! Could you vouch for my work? Tap this link to leave a short review on my Case: ${generatedLink}`
+    const text = `Hey! Could you write a recommendation for my work? Tap this link to leave a short review on my Case: ${generatedLink}`
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`
     window.open(url, '_blank')
   }
@@ -96,8 +96,8 @@ export default function NewVouchPage() {
       <div className={styles.inner}>
         <div className={styles.header}>
           <button onClick={() => router.back()} className={styles.backBtn}>← Back</button>
-          <h1 className={styles.title}>New vouch request</h1>
-          <p className={styles.sub}>Generate a single-use testimonial link for a client or colleague</p>
+          <h1 className={styles.title}>New recommendation request</h1>
+          <p className={styles.sub}>Generate a single-use recommendation link for a client or colleague</p>
         </div>
 
         {error && <div className={styles.error}>{error}</div>}
@@ -105,9 +105,9 @@ export default function NewVouchPage() {
         {generatedLink ? (
           <div className={styles.successCard}>
             <div className={styles.successIcon}>✓</div>
-            <h2 className={styles.successTitle}>Vouch request ready!</h2>
+            <h2 className={styles.successTitle}>Recommendation request ready!</h2>
             <p className={styles.successSub}>
-              Send this private link to <b>{recipient}</b>. They can leave a quote without creating an account.
+              Send this private link to <b>{recipient}</b>. They can leave a recommendation without creating an account.
             </p>
 
             <div className={styles.linkDisplay}>
@@ -158,7 +158,7 @@ export default function NewVouchPage() {
                 Cancel
               </button>
               <button type="submit" className="btn btn--brass" disabled={submitting || !recipient.trim()}>
-                {submitting ? 'Generating…' : 'Generate vouch link'}
+                {submitting ? 'Generating…' : 'Generate recommendation link'}
               </button>
             </div>
           </form>

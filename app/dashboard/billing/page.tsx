@@ -142,7 +142,7 @@ export default function BillingPage() {
             </div>
             {isPlus && (
               <p className={styles.plusPerks}>
-                You have unlimited proof items, evidence files, vouch requests, full analytics, and no footer branding.
+                You have unlimited proof items, evidence files, recommendation requests, full analytics, and no footer branding.
               </p>
             )}
           </div>
@@ -183,7 +183,7 @@ export default function BillingPage() {
                   {[
                     'Unlimited proof items per pillar (free: 4)',
                     'Unlimited evidence files per item (free: 2)',
-                    'Unlimited vouch requests open at once (free: 3)',
+                    'Unlimited recommendation requests open at once (free: 3)',
                     'Full analytics — referrer breakdown, device split, per-item stats',
                     'Remove "Built with Case" footer from your public profile',
                     'Priority placement in Case Search results',

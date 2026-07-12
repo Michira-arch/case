@@ -59,9 +59,9 @@ export default function VouchForm({ vouchRequest }: Props) {
       <div className={styles.page}>
         <div className={styles.card}>
           <div className={styles.successIcon}>✓</div>
-          <h1 className={styles.successTitle}>Vouch submitted!</h1>
+          <h1 className={styles.successTitle}>Recommendation submitted!</h1>
           <p className={styles.successSub}>
-            {profile?.display_name} will review your vouch before it appears on their Case.
+            {profile?.display_name} will review your recommendation before it appears on their Case.
             Thank you for taking the time.
           </p>
           <a href={`/@${profile?.handle}`} className="btn btn--outline">
@@ -78,7 +78,7 @@ export default function VouchForm({ vouchRequest }: Props) {
         {/* Header */}
         <div className={styles.header}>
           <span className={styles.wordmark}>Case</span>
-          <p className={styles.headerSub}>You've been asked to vouch</p>
+          <p className={styles.headerSub}>You've been asked for a recommendation</p>
         </div>
 
         {/* Who asked */}
@@ -161,7 +161,7 @@ export default function VouchForm({ vouchRequest }: Props) {
             className="btn btn--brass btn--full btn--lg"
             disabled={loading || !quote.trim() || !name.trim() || !relationship.trim()}
           >
-            {loading ? 'Submitting…' : 'Submit vouch'}
+            {loading ? 'Submitting…' : 'Submit recommendation'}
           </button>
         </form>
 

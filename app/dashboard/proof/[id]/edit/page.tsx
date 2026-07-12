@@ -236,6 +236,13 @@ export default function EditProofPage() {
 
   const isAimingOrVouched = item.pillar === 'aiming' || item.pillar === 'vouched'
 
+  const PILLAR_LABELS: Record<string, string> = {
+    did: 'did',
+    trained: 'trained',
+    vouched: 'recommendation',
+    aiming: 'aiming',
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
@@ -243,7 +250,7 @@ export default function EditProofPage() {
           <button onClick={() => router.back()} className={styles.backBtn}>← Back</button>
           <h1 className={styles.title}>Edit proof</h1>
           <div style={{ marginTop: 8 }}>
-            <span className={`stamp stamp--${item.pillar}`}>{item.pillar}</span>
+            <span className={`stamp stamp--${item.pillar}`}>{PILLAR_LABELS[item.pillar] || item.pillar}</span>
           </div>
         </div>
 
