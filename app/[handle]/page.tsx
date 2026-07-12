@@ -10,12 +10,14 @@ interface Props {
 
 export const revalidate = 60 // ISR: revalidate every 60s
 
-async function getProfile(handle: string): Promise<PublicProfile | null> {
+import { cache } from 'react'
+
+const getProfile = cache(async (handle: string): Promise<PublicProfile | null> => {
   const supabase = createClient()
   const { data, error } = await supabase.rpc('get_public_profile', { p_handle: handle })
   if (error || !data) return null
   return data as PublicProfile
-}
+})
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await params

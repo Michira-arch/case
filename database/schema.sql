@@ -31,6 +31,7 @@ create table if not exists public.profiles (
   role_line       text,                       -- "Freelance hairstylist & braider · Nairobi"
   tagline         text,
   avatar_url      text,
+  showcase_images text[] not null default '{}',
   socials         jsonb not null default '[]', -- [{platform, url}]
   is_public       boolean not null default true,
   locale          text not null default 'en'
@@ -318,6 +319,7 @@ begin
     'role_line',    v_profile.role_line,
     'tagline',      v_profile.tagline,
     'avatar_url',   v_profile.avatar_url,
+    'showcase_images', v_profile.showcase_images,
     'socials',      v_profile.socials,
     'category',     v_profile.category,
     'tags',         v_profile.tags,

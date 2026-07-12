@@ -105,6 +105,11 @@ export default function ProfilePublicView({ profile, handle }: Props) {
           </div>
         </header>
 
+        {/* Showcase Images Gallery */}
+        {profile.showcase_images && profile.showcase_images.length > 0 && (
+          <ShowcaseGallery images={profile.showcase_images} name={profile.display_name} />
+        )}
+
         {/* DID section */}
         {byPillar.did.length > 0 && (
           <ProofSection
@@ -396,5 +401,45 @@ function PaperclipIcon() {
         strokeLinejoin="round"
       />
     </svg>
+  )
+}
+
+function ShowcaseGallery({ images, name }: { images: string[]; name: string }) {
+  const [activeImg, setActiveImg] = useState<string | null>(null)
+
+  return (
+    <>
+      <div className={styles.showcaseGallery}>
+        {images.map((imgUrl, idx) => (
+          <div
+            key={idx}
+            className={styles.showcaseItem}
+            onClick={() => setActiveImg(imgUrl)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setActiveImg(imgUrl) }}
+          >
+            <img
+              src={getMediaUrl(imgUrl)}
+              alt={`${name} Showcase ${idx + 1}`}
+              className={styles.showcaseImg}
+            />
+          </div>
+        ))}
+      </div>
+
+      {activeImg && (
+        <div className={styles.modalOverlay} onClick={() => setActiveImg(null)}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <button className={styles.modalClose} onClick={() => setActiveImg(null)} aria-label="Close preview">
+              ✕
+            </button>
+            <div className={styles.modalBody}>
+              <img src={getMediaUrl(activeImg)} alt="Showcase full size" className={styles.modalImg} />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

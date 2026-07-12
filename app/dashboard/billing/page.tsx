@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Script from 'next/script'
+
 import { createClient } from '@/lib/supabase/client'
 import { generateReference, PRICING, openPaystackCheckout } from '@/lib/paystack'
 import styles from './billing.module.css'
@@ -25,6 +25,12 @@ export default function BillingPage() {
   const [selectedPlan, setSelectedPlan] = useState<'6m' | '12m'>('12m')
 
   useEffect(() => {
+    // Dynamically inject Paystack inline script to avoid Next.js script form element warning
+    const script = document.createElement('script')
+    script.src = 'https://js.paystack.co/v1/inline.js'
+    script.async = true
+    document.body.appendChild(script)
+
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -49,6 +55,10 @@ export default function BillingPage() {
       setLoading(false)
     }
     load()
+
+    return () => {
+      document.body.removeChild(script)
+    }
   }, [])
 
   const handleCheckout = async (planId: '6m' | '12m') => {
@@ -110,14 +120,9 @@ export default function BillingPage() {
   }
 
   return (
-    <>
-      <Script
-        src="https://js.paystack.co/v1/inline.js"
-        strategy="afterInteractive"
-      />
-      <div className={styles.page}>
-        <div className={styles.inner}>
-          <h1 className={styles.title}>Billing</h1>
+    <div className={styles.page}>
+      <div className={styles.inner}>
+        <h1 className={styles.title}>Billing</h1>
           <p className={styles.sub}>Manage your Case+ subscription</p>
 
           {/* Current plan status */}
@@ -218,7 +223,6 @@ export default function BillingPage() {
           )}
         </div>
       </div>
-    </>
   )
 }
 

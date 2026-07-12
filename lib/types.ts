@@ -24,6 +24,7 @@ export interface Profile {
   tags: string[]
   location_area: string | null
   discoverable: boolean
+  showcase_images: string[]
   created_at: string
   updated_at: string
 }
@@ -120,6 +121,7 @@ export interface PublicProfile {
   locale: string
   plan: Plan
   plan_expires: string | null
+  showcase_images?: string[]
   proof_items: PublicProofItem[]
 }
 

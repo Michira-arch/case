@@ -158,4 +158,50 @@ export function getMediaUrl(storageKeyOrUrl: string): string {
   return `${domain}/${storageKeyOrUrl}`
 }
 
+export async function uploadAvatar(file: File, profileId: string): Promise<string> {
+  // Compress first using basic options
+  let uploadFile = file
+  try {
+    const compressed = await imageCompression(file, {
+      maxSizeMB: 0.2, // 200KB target for avatar
+      maxWidthOrHeight: 400,
+      useWebWorker: true,
+      fileType: 'image/webp',
+    })
+    uploadFile = compressed
+  } catch (err) {
+    console.warn('Avatar compression failed, using original', err)
+  }
+
+  const ext = 'webp'
+  const storageKey = `avatars/${profileId}/${Date.now()}.${ext}`
+
+  // 1. Get signed URL
+  const signRes = await fetch('/api/upload/sign', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      storageKey,
+      contentType: 'image/webp',
+      fileSizeBytes: uploadFile.size,
+    }),
+  })
+
+  if (!signRes.ok) {
+    const err = await signRes.json()
+    throw new Error(err.error || 'Failed to get upload URL')
+  }
+
+  const { uploadUrl } = await signRes.json()
+
+  // 2. PUT directly to R2
+  await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'image/webp' },
+    body: uploadFile,
+  })
+
+  return storageKey
+}
+
 export { generateStorageKey }

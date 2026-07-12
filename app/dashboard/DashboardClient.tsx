@@ -7,6 +7,7 @@ import type { Profile, ProofItem, Subscription } from '@/lib/types'
 import type { User } from '@supabase/supabase-js'
 import { calculateCompleteness } from '@/lib/completeness'
 import { createClient } from '@/lib/supabase/client'
+import { getMediaUrl } from '@/lib/r2'
 import styles from './DashboardClient.module.css'
 
 interface Props {
@@ -96,7 +97,13 @@ export default function DashboardClient({
       {/* Header */}
       <div className={styles.head}>
         <div className={styles.who}>
-          <div className={styles.avatar}>{initials}</div>
+          <Link href="/dashboard/settings" className={styles.avatarLink} title="Change profile photo">
+            {profile.avatar_url ? (
+              <img src={getMediaUrl(profile.avatar_url)} alt="" className={styles.avatarImg} />
+            ) : (
+              <div className={styles.avatar}>{initials}</div>
+            )}
+          </Link>
           <div>
             <p className={styles.name}>{profile.display_name}</p>
             <p className={styles.handle}>
