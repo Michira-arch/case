@@ -185,6 +185,82 @@
   line-height: 1.6;
 }
 
+/* Examples */
+.examples {
+  padding: 72px 0;
+  background: var(--paper);
+}
+
+.examplesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  max-width: 960px;
+  margin: 36px auto 0;
+}
+
+.exampleCard {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-decoration: none;
+  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.exampleCard:hover {
+  transform: translateY(-3px);
+  border-color: var(--brass);
+  box-shadow: var(--shadow);
+}
+
+.exampleHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.exampleAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--brass-bg);
+  color: var(--brass-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 15px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+}
+
+.exampleName {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.exampleRole {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.exampleSnippet {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.exampleLink {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brass-deep);
+  margin-top: auto;
+}
+
 /* Pricing */
 .pricing {
   padding: 72px 0;

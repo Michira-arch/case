@@ -11,8 +11,14 @@ interface Props {
 export const revalidate = 60 // ISR: revalidate every 60s
 
 import { cache } from 'react'
+import { MOCK_EXAMPLES } from '@/lib/mock-examples'
 
 const getProfile = cache(async (handle: string): Promise<PublicProfile | null> => {
+  const normHandle = handle.toLowerCase()
+  if (MOCK_EXAMPLES[normHandle]) {
+    return MOCK_EXAMPLES[normHandle]
+  }
+
   const supabase = createClient()
   const { data, error } = await supabase.rpc('get_public_profile', { p_handle: handle })
   if (error || !data) return null

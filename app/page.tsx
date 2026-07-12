@@ -107,6 +107,42 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Examples Section */}
+      <section className={styles.examples}>
+        <div className="container">
+          <h2 className={styles.sectionTitle}>Explore example profiles</h2>
+          <p className={styles.sectionSub} style={{ textAlign: 'center', marginBottom: 32 }}>
+            See how real workers from Nairobi showcase their skills, training, and customer reviews.
+          </p>
+          <div className={styles.examplesGrid}>
+            <ExampleCard
+              handle="a.njoroge"
+              name="Aisha Njoroge"
+              role="Freelance Braider & Stylist"
+              avatar="AN"
+              emoji="✂️"
+              snippet="Has 4 vouches and 5 pieces of photo evidence showing client braids."
+            />
+            <ExampleCard
+              handle="m.obwaka"
+              name="Dr. Moses Obwaka"
+              role="ICU Nurse Practitioner"
+              avatar="MO"
+              emoji="🏥"
+              snippet="Showcases credential documents and university degrees."
+            />
+            <ExampleCard
+              handle="j.kimani"
+              name="Joy Kimani"
+              role="Junior Web Developer"
+              avatar="JK"
+              emoji="💻"
+              snippet="Features GitHub screenshots, portfolio links, and supervisor references."
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Pricing */}
       <section className={styles.pricing}>
         <div className="container">
@@ -214,5 +250,23 @@ function PricingCard({ name, price, period, features, cta, href, highlight }: {
         {cta}
       </Link>
     </div>
+  )
+}
+
+function ExampleCard({ handle, name, role, avatar, emoji, snippet }: {
+  handle: string; name: string; role: string; avatar: string; emoji: string; snippet: string;
+}) {
+  return (
+    <Link href={`/@${handle}`} className={`card ${styles.exampleCard}`}>
+      <div className={styles.exampleHeader}>
+        <div className={styles.exampleAvatar}>{avatar}</div>
+        <div>
+          <h3 className={styles.exampleName}>{name} {emoji}</h3>
+          <p className={styles.exampleRole}>{role}</p>
+        </div>
+      </div>
+      <p className={styles.exampleSnippet}>{snippet}</p>
+      <span className={styles.exampleLink}>View Profile →</span>
+    </Link>
   )
 }
