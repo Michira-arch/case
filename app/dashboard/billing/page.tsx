@@ -112,8 +112,8 @@ export default function BillingPage() {
   return (
     <>
       <Script
-        src="https://js.paystack.co/v2/inline.js"
-        strategy="beforeInteractive"
+        src="https://js.paystack.co/v1/inline.js"
+        strategy="afterInteractive"
       />
       <div className={styles.page}>
         <div className={styles.inner}>
