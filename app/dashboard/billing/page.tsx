@@ -73,9 +73,34 @@ export default function BillingPage() {
       reference,
       profileId: profile.id,
       planPeriod: planId,
-      onSuccess: (ref) => {
+      onSuccess: async (ref) => {
         setPaymentStatus('confirming')
-        // Poll for subscription update (webhook may take a few seconds)
+
+        // 1. Immediately request manual verification (server-to-server with Paystack API)
+        try {
+          const verifyRes = await fetch('/api/billing/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reference: ref }),
+          })
+
+          if (verifyRes.ok) {
+            // Upgrade was successful! Refresh subscription info.
+            const { data: sub } = await supabase
+              .from('subscriptions')
+              .select('*')
+              .eq('profile_id', profile.id)
+              .single()
+
+            setSubscription(sub)
+            setPaymentStatus('success')
+            return
+          }
+        } catch (err) {
+          console.warn('Manual verification failed, falling back to polling', err)
+        }
+
+        // 2. Fallback polling for subscription update
         let attempts = 0
         const poll = setInterval(async () => {
           attempts++
