@@ -89,27 +89,42 @@ export default function ProfilePublicView({ profile, handle }: Props) {
             {profile.tagline && (
               <p className={styles.tagline}>{profile.tagline}</p>
             )}
-            {profile.socials?.length > 0 && (
-              <div className={styles.socialRow}>
-                {profile.socials.map((s: SocialLink) => (
-                  <a
-                    key={s.platform}
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.socialPill}
-                  >
-                    {s.platform}
-                  </a>
-                ))}
-              </div>
-            )}
+            {profile.socials?.length > 0 && (() => {
+              const cv = profile.contact_visibility
+              const visibleSocials = profile.socials.filter((s: SocialLink) => {
+                const p = s.platform.toLowerCase()
+                if (p === 'whatsapp') return cv?.whatsapp !== false
+                if (p === 'email')    return cv?.email !== false
+                if (p === 'phone')    return cv?.phone !== false
+                return true
+              })
+              return visibleSocials.length > 0 ? (
+                <div className={styles.socialRow}>
+                  {visibleSocials.map((s: SocialLink) => (
+                    <a
+                      key={s.platform}
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.socialPill}
+                    >
+                      {s.platform}
+                    </a>
+                  ))}
+                </div>
+              ) : null
+            })()}
           </div>
         </header>
 
         {/* Showcase Images Gallery */}
         {profile.showcase_images && profile.showcase_images.length > 0 && (
           <ShowcaseGallery images={profile.showcase_images} name={profile.display_name} />
+        )}
+
+        {/* Claim section */}
+        {profile.claim_text && (
+          <ClaimSection text={profile.claim_text} />
         )}
 
         {/* DID section */}
@@ -227,6 +242,17 @@ export default function ProfilePublicView({ profile, handle }: Props) {
         </footer>
       </div>
     </div>
+  )
+}
+
+/* ---- Claim section ---- */
+function ClaimSection({ text }: { text: string }) {
+  return (
+    <section className={styles.claimSection}>
+      <span className={styles.claimQuote}>&ldquo;</span>
+      <p className={styles.claimText}>{text}</p>
+      <p className={styles.claimMeta}>This is their claim. Everything below is the proof.</p>
+    </section>
   )
 }
 

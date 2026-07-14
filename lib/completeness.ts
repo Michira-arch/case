@@ -24,6 +24,9 @@ export function calculateCompleteness(
   // +5% if avatar set
   if (profile.avatar_url) score += 5
 
+  // +5% if claim is set
+  if (profile.claim_text) score += 5
+
   // Proof items with evidence
   const itemsWithEvidence = proofItems.filter(
     (item) => item.visible && (item.evidence?.length ?? 0) > 0
@@ -46,6 +49,7 @@ function getTip(
 ): string {
   if (score >= 90) return "Your Case is looking great — share it!"
   if (!profile.avatar_url) return "Add a photo to your profile"
+  if (!profile.claim_text) return "Add your claim — the one thing you want people to believe about you"
   if (!profile.tagline) return "Add a tagline to tell your story"
 
   const withoutEvidence = proofItems.filter(

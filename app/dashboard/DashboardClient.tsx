@@ -8,6 +8,8 @@ import type { User } from '@supabase/supabase-js'
 import { calculateCompleteness } from '@/lib/completeness'
 import { createClient } from '@/lib/supabase/client'
 import { getMediaUrl } from '@/lib/r2'
+import { applyFreeTierDisplay, getDowngradeMessage } from '@/lib/downgrade'
+import WeeklyReport from '@/components/WeeklyReport/WeeklyReport'
 import styles from './DashboardClient.module.css'
 
 interface Props {
@@ -17,6 +19,12 @@ interface Props {
   subscription: Subscription | null
   proofItems: ProofItem[]
   monthlyViews?: number
+  weekViews?: number
+  prevWeekViews?: number
+  evidenceTapsWeek?: number
+  socialClicksWeek?: number
+  vouchCount?: number
+  itemsWithoutEvidence?: number
 }
 
 const PILLAR_ORDER = ['did', 'trained', 'vouched', 'aiming'] as const
@@ -28,11 +36,19 @@ export default function DashboardClient({
   subscription,
   proofItems,
   monthlyViews = 0,
+  weekViews = 0,
+  prevWeekViews = 0,
+  evidenceTapsWeek = 0,
+  socialClicksWeek = 0,
+  vouchCount = 0,
+  itemsWithoutEvidence = 0,
 }: Props) {
   const router = useRouter()
   const [items, setItems] = useState<ProofItem[]>(proofItems)
   const plan = subscription?.plan || 'free'
   const profile = activeProfile
+
+  const displayItems = applyFreeTierDisplay(items, plan)
 
   const { score, tip } = calculateCompleteness(profile || {}, items)
 
@@ -98,6 +114,19 @@ export default function DashboardClient({
 
   return (
     <div className={styles.dash}>
+      {/* Weekly report card */}
+      <WeeklyReport
+        profile={profile}
+        weekViews={weekViews}
+        prevWeekViews={prevWeekViews}
+        evidenceTaps={evidenceTapsWeek}
+        socialClicks={socialClicksWeek}
+        vouchCount={vouchCount}
+        itemsWithoutEvidence={itemsWithoutEvidence}
+        totalItems={items.length}
+        plan={plan as 'free' | 'plus'}
+      />
+
       {/* Header */}
       <div className={styles.head}>
         <div className={styles.who}>
@@ -185,12 +214,19 @@ export default function DashboardClient({
         </p>
 
         {PILLAR_ORDER.map(pillar => {
-          const pillarItems = items.filter(i => i.pillar === pillar)
+          const pillarItems = displayItems.filter(i => i.pillar === pillar)
+          const visibleCount = pillarItems.filter(i => !(i as any).__downgraded).length
+          const hiddenCount = pillarItems.length - visibleCount
           return (
             <div key={pillar} className={styles.pillarGroup}>
               <div className={styles.pillarHeader}>
                 <span className={`stamp stamp--${pillar}`}>{pillar}</span>
-                <span className={styles.pillarCount}>{pillarItems.length}</span>
+                <span className={styles.pillarCount}>
+                  {hiddenCount > 0 ? `${visibleCount}/${pillarItems.length} shown` : pillarItems.length}
+                </span>
+                {hiddenCount > 0 && (
+                  <span className={styles.pillarCountHidden}>(+{hiddenCount} hidden)</span>
+                )}
               </div>
               {pillarItems.length === 0 ? (
                 <div className={styles.pillarEmpty}>
@@ -203,6 +239,7 @@ export default function DashboardClient({
                   <ProofItemRow
                     key={item.id}
                     item={item}
+                    downgraded={(item as any).__downgraded}
                     onToggle={() => handleToggleVisibility(item.id, item.visible)}
                     onDelete={() => handleDeleteItem(item.id)}
                   />
@@ -239,12 +276,35 @@ export default function DashboardClient({
 }
 
 /* ---- Proof item row ---- */
-function ProofItemRow({ item, onToggle, onDelete }: {
+function ProofItemRow({ item, downgraded, onToggle, onDelete }: {
   item: ProofItem
+  downgraded?: boolean
   onToggle: () => void
   onDelete: () => void
 }) {
   const evidenceCount = (item as any).evidence?.length ?? 0
+
+  if (downgraded) {
+    return (
+      <div className={`${styles.itemRow} ${styles.itemDowngraded}`}>
+        <div className={styles.itemTop}>
+          <div className={styles.itemInfo}>
+            <h4 className={styles.itemTitle}>{item.title}</h4>
+            <p className={styles.downgradeMsg}>{getDowngradeMessage(item.pillar)}</p>
+          </div>
+          <div className={styles.itemControls}>
+            <span className="badge badge--muted">hidden: upgrade needed</span>
+          </div>
+        </div>
+        <div className={styles.itemBottom}>
+          <span />
+          <Link href="/dashboard/billing" className="btn btn--brass btn--sm">
+            Upgrade →
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={`${styles.itemRow} ${!item.visible ? styles.itemHidden : ''}`}>

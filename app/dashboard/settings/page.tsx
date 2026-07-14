@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { uploadAvatar, getMediaUrl } from '@/lib/r2'
 import Link from 'next/link'
+import type { ContactVisibility } from '@/lib/types'
 import styles from './settings.module.css'
 
 export default function SettingsPage() {
@@ -30,6 +31,8 @@ export default function SettingsPage() {
   const [uploadingPhysicalPhoto, setUploadingPhysicalPhoto] = useState(false)
   const [isPublic, setIsPublic]       = useState(true)
   const [discoverable, setDiscoverable] = useState(true)
+  const [contactVisibility, setContactVisibility] = useState<ContactVisibility>({ phone: true, email: true, whatsapp: true, location: true })
+  const [claimText, setClaimText]     = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -60,6 +63,8 @@ export default function SettingsPage() {
         setPhysicalPhotoUrl(phys.photo_url || '')
         setIsPublic(data.is_public)
         setDiscoverable(data.discoverable)
+        setContactVisibility(data.contact_visibility || { phone: true, email: true, whatsapp: true, location: true })
+        setClaimText(data.claim_text || '')
 
         // Fetch subscription to verify tier
         const { data: sub } = await supabase
@@ -95,6 +100,8 @@ export default function SettingsPage() {
       },
       is_public:     isPublic,
       discoverable,
+      contact_visibility: contactVisibility,
+      claim_text:    claimText,
     }).eq('id', profile.id)
 
     setSaving(false)
@@ -284,12 +291,33 @@ export default function SettingsPage() {
             <textarea className="input textarea" placeholder="A short intro paragraph…" value={tagline} onChange={e => setTagline(e.target.value)} rows={3} />
           </div>
           <div className="field">
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+              <label className="label">Your claim <span className={styles.optional}>(optional)</span></label>
+              <span className={`${styles.charCounter} ${claimText.length > 450 ? styles.charCounterWarn : ''}`}>
+                {claimText.length}/500
+              </span>
+            </div>
+            <textarea
+              className="input textarea"
+              placeholder="I've been doing natural hair care in Nairobi for 5 years. I specialise in protective styles that actually protect. Everything below proves it."
+              value={claimText}
+              onChange={e => setClaimText(e.target.value.slice(0, 500))}
+              rows={4}
+            />
+            <p className={styles.hint} style={{ marginTop: 4, fontSize: 12.5, color: 'var(--ink-soft)' }}>
+              In your own words — what do you want people to know about you, and believe? All your proof below backs this up.
+            </p>
+          </div>
+          <div className="field">
             <label className="label">Category <span className={styles.optional}>(for Case Search)</span></label>
             <input type="text" className="input" placeholder="hairstylist · electrician · nurse" value={category} onChange={e => setCategory(e.target.value)} />
           </div>
           <div className="field">
             <label className="label">Location area</label>
             <input type="text" className="input" placeholder="Westlands, Nairobi" value={locationArea} onChange={e => setLocationArea(e.target.value)} />
+            <p style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 4 }}>
+              💡 Use your neighbourhood or area — not your home address. This is publicly visible.
+            </p>
           </div>
         </section>
 
@@ -343,6 +371,76 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Contact &amp; Visibility</h2>
+          <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 16, lineHeight: 1.5 }}>
+            Your Case is visible to anyone with your link. Choose carefully what contact information to include.
+          </p>
+
+          <div className={styles.publicInfoBox}>
+            <span className={styles.publicInfoIcon}>⚠️</span>
+            <div>
+              <strong>Public information</strong><br />
+              Everything on your public profile is visible to anyone who visits your link — including search engines.
+            </div>
+          </div>
+
+          {profile?.socials?.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ fontSize: 13, fontWeight: 500, marginBottom: 6, color: 'var(--ink)' }}>Your social links</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {profile.socials.map((s: { platform: string; url: string }) => (
+                  <span
+                    key={s.platform}
+                    style={{
+                      fontSize: 12.5,
+                      padding: '4px 10px',
+                      borderRadius: 'var(--radius)',
+                      background: 'var(--card)',
+                      border: '1px solid var(--line)',
+                      color: 'var(--ink-soft)',
+                    }}
+                  >
+                    {s.platform}
+                  </span>
+                ))}
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 6 }}>
+                Your social links are always shown when added — only add accounts you&apos;re comfortable being public.
+              </p>
+            </div>
+          )}
+
+          <Toggle
+            id="cv_location"
+            label="Show location area"
+            desc="Shows your neighbourhood (e.g. Westlands, Nairobi). Never add a home address to the location field."
+            checked={contactVisibility.location ?? true}
+            onChange={v => setContactVisibility(prev => ({ ...prev, location: v }))}
+          />
+          <Toggle
+            id="cv_whatsapp"
+            label="Show WhatsApp link"
+            desc="Lets visitors message you directly on WhatsApp."
+            checked={contactVisibility.whatsapp ?? true}
+            onChange={v => setContactVisibility(prev => ({ ...prev, whatsapp: v }))}
+          />
+          <Toggle
+            id="cv_email"
+            label="Show email address"
+            desc="Your email address will be visible to anyone who visits your profile."
+            checked={contactVisibility.email ?? true}
+            onChange={v => setContactVisibility(prev => ({ ...prev, email: v }))}
+          />
+          <Toggle
+            id="cv_phone"
+            label="Show phone number"
+            desc="Your phone number will be visible to anyone who visits your profile."
+            checked={contactVisibility.phone ?? true}
+            onChange={v => setContactVisibility(prev => ({ ...prev, phone: v }))}
+          />
         </section>
 
         <section className={styles.section}>

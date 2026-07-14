@@ -1,5 +1,12 @@
 // Supabase client types matching our database schema
 
+export interface ContactVisibility {
+  phone?: boolean
+  email?: boolean
+  whatsapp?: boolean
+  location?: boolean
+}
+
 export type Persona = 'service' | 'professional' | 'jobseeker'
 export type Pillar = 'did' | 'trained' | 'vouched' | 'aiming'
 export type EvidenceType = 'img' | 'pdf' | 'vid'
@@ -16,6 +23,7 @@ export interface Profile {
   display_name: string
   role_line: string | null
   tagline: string | null
+  claim_text: string | null
   avatar_url: string | null
   socials: SocialLink[]
   is_public: boolean
@@ -31,6 +39,7 @@ export interface Profile {
     bio?: string
     photo_url?: string
   }
+  contact_visibility: ContactVisibility | null
   created_at: string
   updated_at: string
 }
@@ -119,6 +128,7 @@ export interface PublicProfile {
   display_name: string
   role_line: string | null
   tagline: string | null
+  claim_text: string | null
   avatar_url: string | null
   socials: SocialLink[]
   category: string | null
@@ -134,6 +144,7 @@ export interface PublicProfile {
     bio?: string
     photo_url?: string
   }
+  contact_visibility: ContactVisibility | null
   proof_items: PublicProofItem[]
 }
 
