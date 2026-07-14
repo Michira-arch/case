@@ -42,7 +42,7 @@ Thumbs.db
 next-env.d.ts
 
 # Cloudflare R2 key configuration
-# Cloudflare R2 (stc-media bucket).env
+\# Cloudflare R2 (stc-media bucket).env
 
 # Local scratch and DB migration scripts
 scratch/
