@@ -470,3 +470,43 @@ h1, h2, h3, h4, h5 {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--ink-muted); }
+
+/* ==========================================
+   PRINT STYLESHEET
+   Isolates only the business card for printing
+   ========================================== */
+@media print {
+  /* Hide all dashboard/web UI elements */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Make the card container and children visible */
+  .printableCard, .printableCard * {
+    visibility: visible !important;
+  }
+
+  /* Target specifically the print viewport */
+  @page {
+    size: 3.5in 2in;
+    margin: 0;
+  }
+
+  .printableCard {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 3.5in;
+    height: 2in;
+    border: 1px solid #DCD5C2 !important;
+    background: #FCFBF9 !important;
+    border-radius: 0;
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    padding: 0.18in;
+    box-sizing: border-box;
+    display: flex !important;
+    flex-direction: row !important;
+  }
+}

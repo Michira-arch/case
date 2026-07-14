@@ -11,6 +11,7 @@ import { getMediaUrl } from '@/lib/r2'
 import { applyFreeTierDisplay, getDowngradeMessage } from '@/lib/downgrade'
 import { GUIDE_PROOF_ITEMS } from '@/lib/guide-examples'
 import WeeklyReport from '@/components/WeeklyReport/WeeklyReport'
+import BusinessCardModal from '@/components/profile/BusinessCardModal'
 import styles from './DashboardClient.module.css'
 
 interface Props {
@@ -50,6 +51,7 @@ export default function DashboardClient({
   const profile = activeProfile
 
   const [showGuide, setShowGuide] = useState(false)
+  const [showCardModal, setShowCardModal] = useState(false)
   const isGuideMode = showGuide && items.length === 0
   const displayItems = isGuideMode 
     ? applyFreeTierDisplay(GUIDE_PROOF_ITEMS, plan)
@@ -154,6 +156,13 @@ export default function DashboardClient({
           </div>
         </div>
         <div className={styles.actions}>
+          <button 
+            onClick={() => setShowCardModal(true)} 
+            className="btn btn--outline btn--sm"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            💳 Card
+          </button>
           <a
             href={profileUrl}
             target="_blank"
@@ -377,6 +386,9 @@ export default function DashboardClient({
           </Link>
         </div>
       </div>
+      {showCardModal && (
+        <BusinessCardModal profile={profile} onClose={() => setShowCardModal(false)} />
+      )}
     </div>
   )
 }
