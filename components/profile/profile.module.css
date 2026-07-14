@@ -806,3 +806,211 @@
   }
   .footer { padding: 18px 20px; }
 }
+
+/* ---- Skeleton Loader CSS ---- */
+.skeletonFrame {
+  min-height: 80vh;
+}
+
+.heroSkeleton {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 36px 32px 30px;
+  border-bottom: 1px solid var(--line);
+}
+
+.avatarSkeleton {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: var(--line);
+  flex-shrink: 0;
+}
+
+.heroTextSkeleton {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lineSkeleton {
+  height: 12px;
+  background: var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.lineSkeletonName {
+  width: 180px;
+  height: 22px;
+}
+
+.lineSkeletonRole {
+  width: 240px;
+  height: 15px;
+}
+
+.lineSkeletonTagline {
+  width: 90%;
+  height: 12px;
+  margin-top: 4px;
+}
+
+.socialRowSkeleton {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.socialPillSkeleton {
+  height: 24px;
+  width: 76px;
+  border-radius: var(--radius-full);
+  background: var(--line);
+}
+
+/* Claim Skeleton */
+.claimSkeleton {
+  margin: 20px 32px;
+  padding: 18px 20px;
+  border-left: 3px solid var(--line);
+  background: var(--line-soft);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.claimLineSkeleton {
+  height: 14px;
+  background: var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.claimMetaSkeleton {
+  height: 10px;
+  width: 120px;
+  background: var(--line);
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
+
+/* Proof Section Skeleton */
+.proofSectionSkeleton {
+  padding: 32px 32px 20px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.sectionHeaderSkeleton {
+  width: 140px;
+  height: 18px;
+  background: var(--line);
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+}
+
+.cardGridSkeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.workCardSkeleton {
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  min-height: 90px;
+}
+
+.workThumbSkeleton {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius);
+  background: var(--line-soft);
+  flex-shrink: 0;
+}
+
+.workBodySkeleton {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cardTitleSkeleton {
+  height: 13px;
+  width: 80%;
+  background: var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.cardDetailSkeleton {
+  height: 11px;
+  width: 95%;
+  background: var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+
+.evidencePillSkeleton {
+  height: 16px;
+  width: 60px;
+  background: var(--line);
+  border-radius: var(--radius-full);
+}
+
+.trainedListSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trainedRowSkeleton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.trainedTextSkeleton {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.whenLabelSkeleton {
+  width: 80px;
+  height: 16px;
+  background: var(--line);
+  border-radius: var(--radius-full);
+}
+
+/* loading tip */
+.loadingTip {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--brass-deep);
+  background: var(--brass-bg);
+  padding: 8px 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* Animations */
+.pulse {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 0.85; }
+  100% { opacity: 0.6; }
+}

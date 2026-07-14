@@ -49,7 +49,8 @@ export default function DashboardClient({
   const plan = subscription?.plan || 'free'
   const profile = activeProfile
 
-  const isGuideMode = items.length === 0
+  const [showGuide, setShowGuide] = useState(false)
+  const isGuideMode = showGuide && items.length === 0
   const displayItems = isGuideMode 
     ? applyFreeTierDisplay(GUIDE_PROOF_ITEMS, plan)
     : applyFreeTierDisplay(items, plan)
@@ -278,6 +279,26 @@ export default function DashboardClient({
           Every claim is stronger with something behind it — a photo, a certificate, a screenshot, a video.
         </p>
 
+        {items.length === 0 && !showGuide && (
+          <div className={styles.emptyFeedCard}>
+            <p className={styles.emptyFeedTitle}>Your Case File is Empty</p>
+            <p className={styles.emptyFeedDesc}>
+              A strong Case needs evidence. Add your first piece of proof (a project, credential, or recommendation) or explore a reference blueprint to see how to organize your page.
+            </p>
+            <div className={styles.emptyFeedActions}>
+              <Link href="/dashboard/proof/new" className="btn btn--brass btn--sm">
+                + Add your first proof
+              </Link>
+              <button 
+                onClick={() => setShowGuide(true)} 
+                className="btn btn--outline btn--sm"
+              >
+                Show Reference Blueprint
+              </button>
+            </div>
+          </div>
+        )}
+
         {isGuideMode && (
           <div className={styles.guideBanner}>
             <div className={styles.guideIcon}>💡</div>
@@ -285,8 +306,14 @@ export default function DashboardClient({
               <p className={styles.guideTitle}>Guided Blueprint: Alex Rivera (Spatial Flow Coordinator)</p>
               <p className={styles.guideDesc}>
                 This is a mock blueprint of a complete profile to show you how a Case is built. 
-                Click <b>Edit</b> on any item to customize it with your own details. Saving it will publish it to your live page.
+                Click <b>Customize</b> on any item to edit and save it as your own.
               </p>
+              <button 
+                onClick={() => setShowGuide(false)} 
+                className={styles.hideGuideBtn}
+              >
+                Hide Reference Blueprint
+              </button>
             </div>
           </div>
         )}

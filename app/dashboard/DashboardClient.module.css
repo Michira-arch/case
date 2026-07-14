@@ -453,8 +453,63 @@
   color: var(--ink-muted);
 }
 
+.hideGuideBtn {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--brass-deep);
+  background: transparent;
+  border: 1px solid var(--brass);
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all var(--duration) var(--ease);
+}
+.hideGuideBtn:hover {
+  background: var(--brass);
+  color: var(--paper);
+}
+
+/* Empty Dashboard Feed Card */
+.emptyFeedCard {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.emptyFeedTitle {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.emptyFeedDesc {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.emptyFeedActions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 600px) {
   .dash { padding: 20px 16px 32px; }
   .head { gap: 14px; }
   .actions { width: 100%; }
+  .emptyFeedActions { flex-direction: column; width: 100%; }
+  .emptyFeedActions > * { width: 100%; }
 }

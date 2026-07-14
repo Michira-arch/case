@@ -179,6 +179,74 @@
   border-top: 1px solid var(--line);
 }
 
+/* Guide Blueprint Card */
+.guideBlueprintCard {
+  background: var(--brass-bg);
+  border: 1px dashed var(--brass);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 24px;
+  font-family: var(--font-sans);
+}
+
+.guideBlueprintHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.guideBlueprintLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brass-deep);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.useTemplateBtn {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brass-deep);
+  border: 1.5px solid var(--brass);
+  background: transparent;
+  border-radius: var(--radius-full);
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+}
+
+.useTemplateBtn:hover {
+  background: var(--brass);
+  color: var(--paper);
+}
+
+.guideBlueprintTitle {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+  font-family: var(--font-serif);
+}
+
+.guideBlueprintDetail {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+
+.guideBlueprintWhen {
+  font-size: 11px;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+}
+
 @media (max-width: 600px) {
   .page { padding: 20px 16px; }
+  .guideBlueprintHeader { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .useTemplateBtn { width: 100%; text-align: center; }
 }

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { uploadEvidence, generateStorageKey } from '@/lib/r2'
+import { GUIDE_PROOF_ITEMS } from '@/lib/guide-examples'
 import styles from './new.module.css'
 
 type Pillar = 'did' | 'trained' | 'vouched' | 'aiming'
@@ -163,6 +164,7 @@ function NewProofPageContent() {
   }
 
   const prompts = PILLAR_PROMPTS[pillar]
+  const guideItem = GUIDE_PROOF_ITEMS.find(item => item.pillar === pillar)
 
   return (
     <div className={styles.page}>
@@ -195,6 +197,31 @@ function NewProofPageContent() {
             )
           })}
         </div>
+
+        {/* Guided template blueprint hint */}
+        {guideItem && (
+          <div className={styles.guideBlueprintCard}>
+            <div className={styles.guideBlueprintHeader}>
+              <span className={styles.guideBlueprintLabel}>💡 Template Blueprint (Alex Rivera — Spatial Flow Coordinator)</span>
+              <button 
+                type="button" 
+                className={styles.useTemplateBtn}
+                onClick={() => {
+                  setTitle(guideItem.title)
+                  setDetail(guideItem.detail || '')
+                  setWhenLabel(guideItem.when_label || '')
+                }}
+              >
+                Use blueprint
+              </button>
+            </div>
+            <p className={styles.guideBlueprintTitle}>"{guideItem.title}"</p>
+            {guideItem.detail && <p className={styles.guideBlueprintDetail}>{guideItem.detail}</p>}
+            {guideItem.when_label && (
+              <span className={styles.guideBlueprintWhen}>Recommended Date: {guideItem.when_label}</span>
+            )}
+          </div>
+        )}
 
         {/* Form */}
         <div className="field">

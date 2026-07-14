@@ -81,7 +81,7 @@ function OnboardingPageContent() {
       {
         id: 'genie-intro',
         sender: 'genie',
-        text: "✨ Jambo! I'm your Case setup guide. I'll help you build your digital profile in under a minute. Let's start by choosing what best describes your work.",
+        text: "✨ Jambo! I'm your automated Case setup guide. I am not an AI and cannot understand questions or chat, but I will walk you through building your digital profile in under a minute. Let's start by choosing what best describes your work.",
       }
     ])
   }, [])
@@ -483,13 +483,17 @@ function OnboardingPageContent() {
   return (
     <div className={styles.page}>
       <div className={styles.chatBox}>
+        {/* Non-AI Disclaimer Banner */}
+        <div className={styles.disclaimerBanner}>
+          🤖 Automated Step-by-Step Wizard (Not AI). Follow the prompts to build your profile.
+        </div>
         {/* Progress Bar Header */}
         <div className={styles.chatHeader}>
           <div className={styles.headerTitle}>
             <span className={styles.genieIcon}>🧞</span>
             <div>
               <h3>Case Guide</h3>
-              <p>Setting up your portfolio</p>
+              <p>Automated Setup Wizard (Not AI)</p>
             </div>
           </div>
           <div className={styles.progressContainer}>

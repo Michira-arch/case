@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import type { PublicProfile, PublicProofItem, PublicEvidence, SocialLink } from '@/lib/types'
 import { getMediaUrl } from '@/lib/r2'
@@ -12,6 +12,18 @@ interface Props {
 }
 
 export default function ProfilePublicView({ profile, handle }: Props) {
+  const [loadingState, setLoadingState] = useState<'rough' | 'refined' | 'detailed' | 'done'>('rough')
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setLoadingState('refined'), 1000)
+    const t2 = setTimeout(() => setLoadingState('detailed'), 2000)
+    const t3 = setTimeout(() => setLoadingState('done'), 3000)
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
+    }
+  }, [])
   const appUrl = typeof window !== 'undefined'
     ? window.location.origin
     : (process.env.NEXT_PUBLIC_APP_URL || 'https://case.app')
@@ -45,6 +57,112 @@ export default function ProfilePublicView({ profile, handle }: Props) {
     .join('')
     .slice(0, 2)
     .toUpperCase()
+
+  if (loadingState !== 'done') {
+    return (
+      <div className={styles.page}>
+        {/* Top bar */}
+        <div className={styles.shareBar}>
+          <div className={styles.handleTag}>
+            <span className={styles.handleText}>
+              case.app/<b>@{handle}</b>
+            </span>
+          </div>
+          <div className={styles.shareActions}>
+            <button className={styles.btnGhost} disabled>
+              Share
+            </button>
+            <button className={styles.btnInstall} disabled>
+              Build yours free →
+            </button>
+          </div>
+        </div>
+
+        <div className={`${styles.frame} ${styles.skeletonFrame}`}>
+          {/* Hero Skeleton */}
+          <header className={styles.heroSkeleton}>
+            <div className={`${styles.avatarSkeleton} ${styles.pulse}`} />
+            <div className={styles.heroTextSkeleton}>
+              <div className={`${styles.lineSkeleton} ${styles.lineSkeletonName} ${styles.pulse}`} />
+              <div className={`${styles.lineSkeleton} ${styles.lineSkeletonRole} ${styles.pulse}`} />
+              {(loadingState === 'refined' || loadingState === 'detailed') && (
+                <div className={`${styles.lineSkeleton} ${styles.lineSkeletonTagline} ${styles.pulse}`} />
+              )}
+              {loadingState === 'detailed' && (
+                <div className={styles.socialRowSkeleton}>
+                  <div className={`${styles.socialPillSkeleton} ${styles.pulse}`} />
+                  <div className={`${styles.socialPillSkeleton} ${styles.pulse}`} />
+                </div>
+              )}
+            </div>
+          </header>
+
+          {/* Claim Section Skeleton (only in refined & detailed) */}
+          {(loadingState === 'refined' || loadingState === 'detailed') && (
+            <div className={`${styles.claimSkeleton} ${styles.pulse}`}>
+              <div className={styles.claimLineSkeleton} />
+              <div className={styles.claimLineSkeleton} style={{ width: '80%' }} />
+              {loadingState === 'detailed' && (
+                <div className={styles.claimMetaSkeleton} />
+              )}
+            </div>
+          )}
+
+          {/* Main Sections Skeletons */}
+          <div className={styles.proofSectionSkeleton}>
+            {/* Stamp / Section Title */}
+            <div className={`${styles.sectionHeaderSkeleton} ${styles.pulse}`} />
+            
+            {/* Rough: just blocks. Refined: layout lines. Detailed: full cards with evidence capsules */}
+            <div className={styles.cardGridSkeleton}>
+              <div className={`${styles.workCardSkeleton} ${styles.pulse}`}>
+                <div className={styles.workThumbSkeleton} />
+                <div className={styles.workBodySkeleton}>
+                  <div className={styles.cardTitleSkeleton} />
+                  <div className={styles.cardDetailSkeleton} />
+                  {loadingState === 'detailed' && (
+                    <div className={styles.evidencePillSkeleton} />
+                  )}
+                </div>
+              </div>
+
+              {(loadingState === 'refined' || loadingState === 'detailed') && (
+                <div className={`${styles.workCardSkeleton} ${styles.pulse}`}>
+                  <div className={styles.workThumbSkeleton} />
+                  <div className={styles.workBodySkeleton}>
+                    <div className={styles.cardTitleSkeleton} />
+                    <div className={styles.cardDetailSkeleton} style={{ width: '60%' }} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {(loadingState === 'refined' || loadingState === 'detailed') && (
+            <div className={styles.proofSectionSkeleton}>
+              <div className={`${styles.sectionHeaderSkeleton} ${styles.pulse}`} style={{ width: '120px' }} />
+              <div className={styles.trainedListSkeleton}>
+                <div className={styles.trainedRowSkeleton}>
+                  <div className={styles.trainedTextSkeleton}>
+                    <div className={styles.cardTitleSkeleton} style={{ width: '70%' }} />
+                    <div className={styles.cardDetailSkeleton} style={{ width: '40%' }} />
+                  </div>
+                  {loadingState === 'detailed' && <div className={styles.whenLabelSkeleton} />}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Psychological Status Tip during progressive load */}
+        <div className={styles.loadingTip}>
+          {loadingState === 'rough' && <span>⚡ Connecting to Case registry...</span>}
+          {loadingState === 'refined' && <span>🔒 Verifying cryptographic signatures...</span>}
+          {loadingState === 'detailed' && <span>📄 Retrieving certified evidence...</span>}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.page}>
