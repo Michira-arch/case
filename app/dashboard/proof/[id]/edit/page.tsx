@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { uploadEvidence, getMediaUrl } from '@/lib/r2'
+import { getGuideItem } from '@/lib/guide-examples'
 import type { ProofItem, Evidence } from '@/lib/types'
 import styles from './edit.module.css'
 
@@ -47,6 +48,34 @@ export default function EditProofPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
           router.push('/login')
+          return
+        }
+
+        if (itemId && itemId.startsWith('guide-')) {
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('owner_id', user.id)
+            .limit(1)
+            .single()
+
+          const guideItem = getGuideItem(itemId)
+          if (!guideItem || !userProfile) {
+            throw new Error('Guide item or user profile not found')
+          }
+
+          const mockItem: ProofItem = {
+            ...guideItem,
+            profile_id: userProfile.id
+          }
+
+          setItem(mockItem)
+          setTitle(mockItem.title)
+          setDetail(mockItem.detail || '')
+          setWhenLabel(mockItem.when_label || '')
+          setVisible(mockItem.visible)
+          setExistingEvidence([])
+          setLoading(false)
           return
         }
 
@@ -139,19 +168,40 @@ export default function EditProofPage() {
     setSuccess(false)
 
     try {
-      // Update proof item
-      const { error: updateErr } = await supabase
-        .from('proof_items')
-        .update({
-          title: title.trim(),
-          detail: detail.trim() || null,
-          when_label: whenLabel.trim() || null,
-          visible,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', itemId)
+      if (itemId && itemId.startsWith('guide-')) {
+        // Create (Insert) the item instead of updating!
+        const { data: newDbItem, error: insertErr } = await supabase
+          .from('proof_items')
+          .insert({
+            profile_id: item.profile_id,
+            pillar: item.pillar,
+            title: title.trim(),
+            detail: detail.trim() || null,
+            when_label: whenLabel.trim() || null,
+            visible,
+            source: 'owner',
+          })
+          .select()
+          .single()
 
-      if (updateErr) throw updateErr
+        if (insertErr) throw insertErr
+        // Assign the new ID to our item object so evidence uploads link correctly
+        item.id = newDbItem.id
+      } else {
+        // Update proof item
+        const { error: updateErr } = await supabase
+          .from('proof_items')
+          .update({
+            title: title.trim(),
+            detail: detail.trim() || null,
+            when_label: whenLabel.trim() || null,
+            visible,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', itemId)
+
+        if (updateErr) throw updateErr
+      }
 
       // Process pending uploads
       for (let i = 0; i < uploads.length; i++) {

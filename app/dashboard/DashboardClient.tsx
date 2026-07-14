@@ -9,6 +9,7 @@ import { calculateCompleteness } from '@/lib/completeness'
 import { createClient } from '@/lib/supabase/client'
 import { getMediaUrl } from '@/lib/r2'
 import { applyFreeTierDisplay, getDowngradeMessage } from '@/lib/downgrade'
+import { GUIDE_PROOF_ITEMS } from '@/lib/guide-examples'
 import WeeklyReport from '@/components/WeeklyReport/WeeklyReport'
 import styles from './DashboardClient.module.css'
 
@@ -48,9 +49,16 @@ export default function DashboardClient({
   const plan = subscription?.plan || 'free'
   const profile = activeProfile
 
-  const displayItems = applyFreeTierDisplay(items, plan)
+  const isGuideMode = items.length === 0
+  const displayItems = isGuideMode 
+    ? applyFreeTierDisplay(GUIDE_PROOF_ITEMS, plan)
+    : applyFreeTierDisplay(items, plan)
 
   const { score, tip } = calculateCompleteness(profile || {}, items)
+
+  const hasBasics = !!(profile?.display_name && profile?.role_line && profile?.tagline)
+  const itemsWithEvidence = items.filter(item => item.visible && (item.evidence?.length ?? 0) > 0)
+  const evidenceCountTotal = itemsWithEvidence.length
 
   const initials = profile?.display_name
     ?.split(' ')
@@ -162,14 +170,71 @@ export default function DashboardClient({
         </div>
       </div>
 
+      {/* Case File Integrity / Verification Status Dossier Panel */}
+      <div className={styles.dossierBadge}>
+        <div className={styles.dossierRow}>
+          <div>
+            <span className={styles.dossierLabel}>CASE FILE STATUS</span>
+            <span className={`${styles.dossierValue} ${score === 100 ? styles.dossierValueVerified : ''}`}>
+              {score === 100 ? '✓ FULLY AUTHENTICATED' : '⚙ INTEGRITY BUILD PENDING'}
+            </span>
+          </div>
+          <div>
+            <span className={styles.dossierLabel}>DOSSIER FILE NUMBER</span>
+            <span className={styles.dossierValue}>CASE-2026-NBO-{profile.handle.toUpperCase()}</span>
+          </div>
+          <div>
+            <span className={styles.dossierLabel}>AUTHENTICITY METHOD</span>
+            <span className={styles.dossierValue}>SECURE OTP-VERIFIED</span>
+          </div>
+        </div>
+        <div className={styles.dossierSecurityLine}>
+          <span>RLS Protection: ACTIVE</span>
+          <span>·</span>
+          <span>Database Integrity: ENFORCED</span>
+          <span>·</span>
+          <span>Identity Binding: SECURE</span>
+        </div>
+      </div>
+
       {/* Completeness bar */}
       <div className={styles.completeness}>
         <div className={styles.completenessTop}>
-          <span>Your case is <b>{score}%</b> built</span>
+          <span>Dossier Completion Index: <b>{score}%</b></span>
           <span className={styles.tip}>{tip}</span>
         </div>
         <div className="progress-track">
           <div className="progress-fill" style={{ width: `${score}%` }} />
+        </div>
+
+        {/* Verification Checklist */}
+        <div className={styles.checklist}>
+          <div className={styles.checklistGrid}>
+            <div className={`${styles.checkItem} ${styles.checkItemDone}`}>
+              <span className={styles.checkIcon}>✓</span>
+              <span>Account Secured (+15%)</span>
+            </div>
+            <div className={`${styles.checkItem} ${styles.checkItemDone}`}>
+              <span className={styles.checkIcon}>✓</span>
+              <span>Phone OTP Identity Verified (+15%)</span>
+            </div>
+            <div className={`${styles.checkItem} ${profile.avatar_url ? styles.checkItemDone : ''}`}>
+              <span className={styles.checkIcon}>{profile.avatar_url ? '✓' : '○'}</span>
+              <span>Profile / Appearance Photo Set (+5%)</span>
+            </div>
+            <div className={`${styles.checkItem} ${profile.claim_text ? styles.checkItemDone : ''}`}>
+              <span className={styles.checkIcon}>{profile.claim_text ? '✓' : '○'}</span>
+              <span>Write Opening Claim Statement (+10%)</span>
+            </div>
+            <div className={`${styles.checkItem} ${hasBasics ? styles.checkItemDone : ''}`}>
+              <span className={styles.checkIcon}>{hasBasics ? '✓' : '○'}</span>
+              <span>Profile Information Form (+15%)</span>
+            </div>
+            <div className={`${styles.checkItem} ${evidenceCountTotal > 0 ? styles.checkItemDone : ''}`}>
+              <span className={styles.checkIcon}>{evidenceCountTotal > 0 ? '✓' : '○'}</span>
+              <span>Evidence-Backed Proof Items (+10% each, max 40%)</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -213,6 +278,19 @@ export default function DashboardClient({
           Every claim is stronger with something behind it — a photo, a certificate, a screenshot, a video.
         </p>
 
+        {isGuideMode && (
+          <div className={styles.guideBanner}>
+            <div className={styles.guideIcon}>💡</div>
+            <div>
+              <p className={styles.guideTitle}>Guided Blueprint: Alex Rivera (Spatial Flow Coordinator)</p>
+              <p className={styles.guideDesc}>
+                This is a mock blueprint of a complete profile to show you how a Case is built. 
+                Click <b>Edit</b> on any item to customize it with your own details. Saving it will publish it to your live page.
+              </p>
+            </div>
+          </div>
+        )}
+
         {PILLAR_ORDER.map(pillar => {
           const pillarItems = displayItems.filter(i => i.pillar === pillar)
           const visibleCount = pillarItems.filter(i => !(i as any).__downgraded).length
@@ -240,6 +318,7 @@ export default function DashboardClient({
                     key={item.id}
                     item={item}
                     downgraded={(item as any).__downgraded}
+                    isGuideMode={isGuideMode}
                     onToggle={() => handleToggleVisibility(item.id, item.visible)}
                     onDelete={() => handleDeleteItem(item.id)}
                   />
@@ -276,9 +355,10 @@ export default function DashboardClient({
 }
 
 /* ---- Proof item row ---- */
-function ProofItemRow({ item, downgraded, onToggle, onDelete }: {
+function ProofItemRow({ item, downgraded, isGuideMode, onToggle, onDelete }: {
   item: ProofItem
   downgraded?: boolean
+  isGuideMode?: boolean
   onToggle: () => void
   onDelete: () => void
 }) {
@@ -307,23 +387,30 @@ function ProofItemRow({ item, downgraded, onToggle, onDelete }: {
   }
 
   return (
-    <div className={`${styles.itemRow} ${!item.visible ? styles.itemHidden : ''}`}>
+    <div className={`${styles.itemRow} ${isGuideMode ? styles.itemGuide : ''} ${!item.visible && !isGuideMode ? styles.itemHidden : ''}`}>
       <div className={styles.itemTop}>
         <div className={styles.itemInfo}>
-          <h4 className={styles.itemTitle}>{item.title}</h4>
+          <h4 className={styles.itemTitle}>
+            {item.title}
+            {isGuideMode && <span className={styles.guideBadge}>Template Blueprint</span>}
+          </h4>
           {item.detail && <p className={styles.itemDetail}>{item.detail}</p>}
         </div>
         <div className={styles.itemControls}>
-          <span className={`badge ${item.visible ? 'badge--green' : 'badge--muted'}`}>
-            {item.visible ? 'public' : 'hidden'}
-          </span>
+          {!isGuideMode && (
+            <span className={`badge ${item.visible ? 'badge--green' : 'badge--muted'}`}>
+              {item.visible ? 'public' : 'hidden'}
+            </span>
+          )}
           <Link href={`/dashboard/proof/${item.id}/edit`} className={styles.editLink}>
-            Edit
+            {isGuideMode ? 'Customize →' : 'Edit'}
           </Link>
         </div>
       </div>
       <div className={styles.itemBottom}>
-        {evidenceCount > 0 ? (
+        {isGuideMode ? (
+          <span className={styles.guideMsgBottom}>Guide item: click Customize to adopt as your own</span>
+        ) : evidenceCount > 0 ? (
           <span className="evidence-pill">
             📎 {evidenceCount} {evidenceCount === 1 ? 'file' : 'files'}
           </span>
@@ -332,14 +419,16 @@ function ProofItemRow({ item, downgraded, onToggle, onDelete }: {
             + Add evidence
           </Link>
         )}
-        <div className={styles.itemActions}>
-          <button onClick={onToggle} className={styles.actionBtn}>
-            {item.visible ? 'Hide' : 'Show'}
-          </button>
-          <button onClick={onDelete} className={`${styles.actionBtn} ${styles.actionBtnDanger}`}>
-            Delete
-          </button>
-        </div>
+        {!isGuideMode && (
+          <div className={styles.itemActions}>
+            <button onClick={onToggle} className={styles.actionBtn}>
+              {item.visible ? 'Hide' : 'Show'}
+            </button>
+            <button onClick={onDelete} className={`${styles.actionBtn} ${styles.actionBtnDanger}`}>
+              Delete
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

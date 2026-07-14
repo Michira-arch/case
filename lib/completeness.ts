@@ -12,26 +12,27 @@ export function calculateCompleteness(
   profile: Partial<Profile>,
   proofItems: ProofItem[]
 ): { score: number; tip: string } {
-  let score = 0
+  // Endowed Progress: Start at 30% for account creation and phone OTP verification
+  let score = 30
 
-  // Base: profile basics (20%)
+  // Base: profile basics (15%)
   const hasBasics =
     profile.display_name &&
     profile.role_line &&
     profile.tagline
-  if (hasBasics) score += 20
+  if (hasBasics) score += 15
 
   // +5% if avatar set
   if (profile.avatar_url) score += 5
 
-  // +5% if claim is set
-  if (profile.claim_text) score += 5
+  // +10% if claim is set
+  if (profile.claim_text) score += 10
 
-  // Proof items with evidence
+  // Proof items with evidence (+10% per item, cap at 40%)
   const itemsWithEvidence = proofItems.filter(
     (item) => item.visible && (item.evidence?.length ?? 0) > 0
   )
-  const evidenceScore = Math.min(75, itemsWithEvidence.length * 10)
+  const evidenceScore = Math.min(40, itemsWithEvidence.length * 10)
   score += evidenceScore
 
   score = Math.min(100, score)

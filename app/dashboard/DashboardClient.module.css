@@ -292,6 +292,167 @@
   margin-left: 4px;
 }
 
+/* Dossier Badge & Case File Status */
+.dossierBadge {
+  background: var(--ink);
+  color: var(--paper-light);
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-sans);
+}
+
+.dossierRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(220, 213, 194, 0.15);
+  padding-bottom: 12px;
+}
+
+.dossierLabel {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-family: var(--font-mono);
+}
+
+.dossierValue {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--paper);
+  font-family: var(--font-mono);
+}
+
+.dossierValueVerified {
+  color: #a3e635; /* bright lime green for verified status */
+}
+
+.dossierSecurityLine {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  flex-wrap: wrap;
+}
+
+/* Verification Checklist */
+.checklist {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--line);
+}
+
+.checklistTitle {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.checklistGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-muted);
+  padding: 6px 10px;
+  background: var(--paper-light);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  transition: all var(--duration) var(--ease);
+}
+
+.checkItemDone {
+  color: var(--ink);
+  border-color: var(--line);
+  background: var(--card);
+  font-weight: 500;
+}
+
+.checkIcon {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--brass);
+}
+
+.checkItemDone .checkIcon {
+  color: var(--verified);
+}
+
+/* Guide Mode styling */
+.guideBanner {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px 20px;
+  background: var(--brass-bg);
+  border: 1.5px dashed var(--brass);
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+}
+
+.guideIcon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.guideTitle {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--brass-deep);
+  margin-bottom: 4px;
+}
+
+.guideDesc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--brass-deep);
+}
+
+.itemGuide {
+  background: var(--paper-light);
+  border-style: dotted;
+  border-width: 1.5px;
+}
+
+.guideBadge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--brass-deep);
+  background: var(--brass-bg);
+  border: 1px solid rgba(168, 120, 58, 0.2);
+  border-radius: var(--radius-full);
+  padding: 2px 8px;
+  margin-left: 8px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.guideMsgBottom {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-muted);
+}
+
 @media (max-width: 600px) {
   .dash { padding: 20px 16px 32px; }
   .head { gap: 14px; }
