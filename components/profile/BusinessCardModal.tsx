@@ -84,7 +84,7 @@ export default function BusinessCardModal({ profile, onClose }: BusinessCardModa
               <div className={styles.branding}>
                 {profile.avatar_url ? (
                   <img
-                    src={getMediaUrl(profile.avatar_url)}
+                    src={`/api/proxy-avatar?key=${encodeURIComponent(profile.avatar_url)}`}
                     alt=""
                     className={styles.avatar}
                   />
