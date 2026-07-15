@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import type { PublicProfile, PublicProofItem, PublicEvidence, SocialLink } from '@/lib/types'
 import { getMediaUrl } from '@/lib/r2'
+import { logAnalyticsEvent } from '@/lib/analytics'
 import styles from './profile.module.css'
 
 interface Props {
@@ -15,6 +16,9 @@ export default function ProfilePublicView({ profile, handle }: Props) {
   const [loadingState, setLoadingState] = useState<'rough' | 'refined' | 'detailed' | 'done'>('rough')
 
   useEffect(() => {
+    // Log profile view to Firebase Analytics and Supabase
+    logAnalyticsEvent(profile.id, 'profile_view', { referrerHost: document.referrer ? new URL(document.referrer).hostname : '' })
+
     const t1 = setTimeout(() => setLoadingState('refined'), 1000)
     const t2 = setTimeout(() => setLoadingState('detailed'), 2000)
     const t3 = setTimeout(() => setLoadingState('done'), 3000)
@@ -225,6 +229,7 @@ export default function ProfilePublicView({ profile, handle }: Props) {
                       target="_blank"
                       rel="noopener noreferrer"
                       className={styles.socialPill}
+                      onClick={() => logAnalyticsEvent(profile.id, 'social_click', { referrerHost: s.platform })}
                     >
                       {s.platform}
                     </a>
@@ -254,7 +259,7 @@ export default function ProfilePublicView({ profile, handle }: Props) {
           >
             <div className={styles.cardGrid}>
               {byPillar.did.map(item => (
-                <WorkCard key={item.id} item={item} />
+                <WorkCard key={item.id} item={item} profileId={profile.id} />
               ))}
             </div>
           </ProofSection>
@@ -265,7 +270,7 @@ export default function ProfilePublicView({ profile, handle }: Props) {
           <ProofSection pillar="trained" heading="How I learned it">
             <div className={styles.trainedList}>
               {byPillar.trained.map(item => (
-                <TrainedRow key={item.id} item={item} />
+                <TrainedRow key={item.id} item={item} profileId={profile.id} />
               ))}
             </div>
           </ProofSection>
@@ -276,7 +281,7 @@ export default function ProfilePublicView({ profile, handle }: Props) {
           <ProofSection pillar="vouched" heading="Who'll speak for me">
             <div className={styles.quoteGrid}>
               {byPillar.vouched.map(item => (
-                <QuoteCard key={item.id} item={item} />
+                <QuoteCard key={item.id} item={item} profileId={profile.id} />
               ))}
             </div>
           </ProofSection>
@@ -391,7 +396,7 @@ function ProofSection({ pillar, heading, subtext, children }: {
 }
 
 /* ---- Work card (did pillar) ---- */
-function WorkCard({ item }: { item: PublicProofItem }) {
+function WorkCard({ item, profileId }: { item: PublicProofItem; profileId: string }) {
   const hasEvidence = (item.evidence?.length ?? 0) > 0
 
   return (
@@ -410,7 +415,7 @@ function WorkCard({ item }: { item: PublicProofItem }) {
         <h3 className={styles.workTitle}>{item.title}</h3>
         {item.detail && <p className={styles.workDetail}>{item.detail}</p>}
         {hasEvidence && (
-          <EvidencePanel evidence={item.evidence!} />
+          <EvidencePanel evidence={item.evidence!} proofItemId={item.id} profileId={profileId} />
         )}
       </div>
     </div>
@@ -418,7 +423,7 @@ function WorkCard({ item }: { item: PublicProofItem }) {
 }
 
 /* ---- Trained row ---- */
-function TrainedRow({ item }: { item: PublicProofItem }) {
+function TrainedRow({ item, profileId }: { item: PublicProofItem; profileId: string }) {
   const hasEvidence = (item.evidence?.length ?? 0) > 0
 
   return (
@@ -432,26 +437,26 @@ function TrainedRow({ item }: { item: PublicProofItem }) {
           <span className={styles.whenLabel}>{item.when_label}</span>
         )}
       </div>
-      {hasEvidence && <EvidencePanel evidence={item.evidence!} />}
+      {hasEvidence && <EvidencePanel evidence={item.evidence!} proofItemId={item.id} profileId={profileId} />}
     </div>
   )
 }
 
 /* ---- Quote card (vouched) ---- */
-function QuoteCard({ item }: { item: PublicProofItem }) {
+function QuoteCard({ item, profileId }: { item: PublicProofItem; profileId: string }) {
   const hasEvidence = (item.evidence?.length ?? 0) > 0
 
   return (
     <div className={styles.quoteCard}>
       <p className={styles.quoteText}>{item.title}</p>
       <p className={styles.quoteWho}>{item.detail}</p>
-      {hasEvidence && <EvidencePanel evidence={item.evidence!} />}
+      {hasEvidence && <EvidencePanel evidence={item.evidence!} proofItemId={item.id} profileId={profileId} />}
     </div>
   )
 }
 
 /* ---- Evidence panel ---- */
-function EvidencePanel({ evidence }: { evidence: PublicEvidence[] }) {
+function EvidencePanel({ evidence, proofItemId, profileId }: { evidence: PublicEvidence[]; proofItemId: string; profileId: string }) {
   const [previewingEv, setPreviewingEv] = useState<PublicEvidence | null>(null)
 
   return (
@@ -466,10 +471,13 @@ function EvidencePanel({ evidence }: { evidence: PublicEvidence[] }) {
               <div
                 key={e.id}
                 className={styles.evMediaCard}
-                onClick={() => setPreviewingEv(e)}
+                onClick={() => {
+                  setPreviewingEv(e)
+                  logAnalyticsEvent(profileId, 'evidence_tap', { proofItemId })
+                }}
                 role="button"
                 tabIndex={0}
-                onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') setPreviewingEv(e) }}
+                onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') { setPreviewingEv(e); logAnalyticsEvent(profileId, 'evidence_tap', { proofItemId }) } }}
               >
                 {e.type === 'img' ? (
                   <img src={mediaUrl} alt={e.caption || 'Evidence'} className={styles.evInlineImg} />
@@ -488,10 +496,13 @@ function EvidencePanel({ evidence }: { evidence: PublicEvidence[] }) {
               <div
                 key={e.id}
                 className={styles.evDocCard}
-                onClick={() => setPreviewingEv(e)}
+                onClick={() => {
+                  setPreviewingEv(e)
+                  logAnalyticsEvent(profileId, 'evidence_tap', { proofItemId })
+                }}
                 role="button"
                 tabIndex={0}
-                onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') setPreviewingEv(e) }}
+                onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') { setPreviewingEv(e); logAnalyticsEvent(profileId, 'evidence_tap', { proofItemId }) } }}
               >
                 <div className={styles.docIconWrap}>📄</div>
                 <div className={styles.docInfo}>

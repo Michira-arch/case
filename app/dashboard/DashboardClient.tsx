@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { requestNotificationPermissionAndGetToken } from '@/lib/firebase'
 import type { Profile, ProofItem, Subscription } from '@/lib/types'
 import type { User } from '@supabase/supabase-js'
 import { calculateCompleteness } from '@/lib/completeness'
@@ -54,6 +55,27 @@ export default function DashboardClient({
 
   const [activeDrawer, setActiveDrawer] = useState<'avatar' | 'claim' | 'basics' | 'proof' | null>(null)
   const [localProfile, setLocalProfile] = useState(activeProfile)
+
+  useEffect(() => {
+    const registerPush = async () => {
+      if (!activeProfile) return
+      try {
+        const token = await requestNotificationPermissionAndGetToken()
+        if (token) {
+          const supabase = createClient()
+          await supabase.from('fcm_tokens').upsert({
+            profile_id: activeProfile.id,
+            token: token,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'token' })
+        }
+      } catch (err) {
+        console.warn('FCM token registration failed (migration may be pending):', err)
+      }
+    }
+    const timer = setTimeout(registerPush, 2000)
+    return () => clearTimeout(timer)
+  }, [activeProfile])
 
   const [showGuide, setShowGuide] = useState(false)
   const [showCardModal, setShowCardModal] = useState(false)
