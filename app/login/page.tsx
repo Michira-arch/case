@@ -103,7 +103,7 @@ export default function LoginPage() {
         const text = await navigator.clipboard.readText()
         const cleanText = text.trim().replace(/\D/g, '')
         
-        if (cleanText.length === 6 && /^\d{6}$/.test(cleanText)) {
+        if (cleanText.length >= 6 && cleanText.length <= 8 && /^\d{6,8}$/.test(cleanText)) {
           setOtp(cleanText)
           setSuccess('Code detected from clipboard! Logging you in...')
           setLoading(true)
@@ -234,17 +234,17 @@ export default function LoginPage() {
         ) : (
           <form onSubmit={handleVerifyOtp} className={styles.form}>
             <div className="field">
-              <label className="label" htmlFor="otp">6-digit code</label>
+              <label className="label" htmlFor="otp">Verification code</label>
               <input
                 id="otp"
                 type="text"
                 inputMode="numeric"
-                pattern="[0-9]{6}"
-                maxLength={6}
+                pattern="[0-9]{6,8}"
+                maxLength={8}
                 className={`input ${styles.otpInput}`}
-                placeholder="000000"
+                placeholder="Enter 6-8 digit code"
                 value={otp}
-                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
                 required
                 autoFocus
               />
