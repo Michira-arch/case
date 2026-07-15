@@ -16,6 +16,7 @@ import BusinessCardModal from '@/components/profile/BusinessCardModal'
 import QuickActionDrawer from '@/components/dashboard/QuickActionDrawer'
 import TrustQuest from '@/components/dashboard/TrustQuest'
 import VisitorSimulator from '@/components/dashboard/VisitorSimulator'
+import PwaManager from '@/components/dashboard/PwaManager'
 import styles from './DashboardClient.module.css'
 
 interface Props {
@@ -56,26 +57,6 @@ export default function DashboardClient({
   const [activeDrawer, setActiveDrawer] = useState<'avatar' | 'claim' | 'basics' | 'proof' | null>(null)
   const [localProfile, setLocalProfile] = useState(activeProfile)
 
-  useEffect(() => {
-    const registerPush = async () => {
-      if (!activeProfile) return
-      try {
-        const token = await requestNotificationPermissionAndGetToken()
-        if (token) {
-          const supabase = createClient()
-          await supabase.from('fcm_tokens').upsert({
-            profile_id: activeProfile.id,
-            token: token,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'token' })
-        }
-      } catch (err) {
-        console.warn('FCM token registration failed (migration may be pending):', err)
-      }
-    }
-    const timer = setTimeout(registerPush, 2000)
-    return () => clearTimeout(timer)
-  }, [activeProfile])
 
   const [showGuide, setShowGuide] = useState(false)
   const [showCardModal, setShowCardModal] = useState(false)
@@ -153,6 +134,9 @@ export default function DashboardClient({
 
   return (
     <div className={styles.dash}>
+      {/* PWA Install & Push Permission Manager */}
+      <PwaManager profileId={profile.id} />
+
       {/* Weekly report card */}
       <WeeklyReport
         profile={profile}
