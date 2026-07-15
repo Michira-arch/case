@@ -305,7 +305,7 @@ export default function SettingsPage() {
               rows={4}
             />
             <p className={styles.hint} style={{ marginTop: 4, fontSize: 12.5, color: 'var(--ink-soft)' }}>
-              In your own words — what do you want people to know about you, and believe? All your proof below backs this up.
+              Define what you say you can do, or the skill/knowledge you posit that you possess. All your proof below serves as evidence for this claim.
             </p>
           </div>
           <div className="field">

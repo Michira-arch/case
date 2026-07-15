@@ -369,7 +369,7 @@ function ClaimSection({ text }: { text: string }) {
     <section className={styles.claimSection}>
       <span className={styles.claimQuote}>&ldquo;</span>
       <p className={styles.claimText}>{text}</p>
-      <p className={styles.claimMeta}>This is their claim. Everything below is the proof.</p>
+      <p className={styles.claimMeta}>This is what they say they can do. Everything below is the proof.</p>
     </section>
   )
 }

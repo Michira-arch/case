@@ -130,7 +130,7 @@ export default function VisitorSimulator({ profile, proofItems, onEdit }: Visito
                   onMouseLeave={() => setTooltip(null)}
                 >
                   <p className={styles.claimMissingText}>
-                    Your claim is missing. Visitors won&apos;t know what to believe.
+                    Your claim is missing. Visitors won&apos;t know what skills or capabilities you are trying to prove.
                   </p>
                   <button
                     className={styles.claimWriteBtn}

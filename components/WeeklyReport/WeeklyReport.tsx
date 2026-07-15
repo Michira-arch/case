@@ -62,9 +62,9 @@ export default function WeeklyReport({
     }
     if (!(profile as any).claim_text) {
       return {
-        text: `Your profile doesn't have a claim yet — the one thing you want people to believe about you.`,
+        text: `Your profile doesn't have a claim yet — state what you can do or the skill/knowledge you posit you possess.`,
         cta: 'Add your claim →',
-        href: '/dashboard/settings',
+        href: '/dashboard',
       }
     }
     if (weekViews === 0 || weekViews < 5) {

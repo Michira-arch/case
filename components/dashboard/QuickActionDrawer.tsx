@@ -23,8 +23,8 @@ const WHY_CONTENT = {
     text: 'Profiles with a clear, friendly photo receive 4× more engagement. People make decisions based on recognising and trusting a face before they read a single word.',
   },
   claim: {
-    title: 'Your opening argument',
-    text: "Your claim is the thesis that all your proof below supports. Without it, visitors leave in 5 seconds because they don't know what to believe about you. With it, your whole profile clicks into place.",
+    title: 'State your capabilities',
+    text: "Your claim is where you declare what you can do, or the skill/knowledge you posit that you possess. Without it, visitors won't understand what you are trying to prove. Your proof items below will serve as evidence backing this up.",
   },
   basics: {
     title: 'Tell them who you are',
@@ -189,7 +189,7 @@ export default function QuickActionDrawer({
             {type === 'claim' && (
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="claim-input">
-                  Claim Statement
+                  Stated Capability / Skill Claim
                 </label>
                 <textarea
                   id="claim-input"
@@ -197,7 +197,7 @@ export default function QuickActionDrawer({
                   value={claimText}
                   onChange={e => setClaimText(e.target.value)}
                   maxLength={CLAIM_MAX}
-                  placeholder="I've been doing X for Y years. I specialise in Z. Everything below proves it."
+                  placeholder="e.g., I build responsive, accessible web applications in React. I specialize in state management and web performance. Everything below proves it."
                   rows={5}
                 />
                 <span
