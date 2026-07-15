@@ -35,12 +35,26 @@ export async function POST(request: NextRequest) {
 
     const tokens = tokenRecords.map((r: { token: string }) => r.token)
 
-    // 3. Send multicast push notification
+    // 3. Send multicast push notification with maximum delivery reliability parameters
     const response = await adminMessaging.sendEachForMulticast({
       tokens,
       notification: {
         title,
         body,
+      },
+      android: {
+        priority: 'high',
+        ttl: 604800 * 1000, // 7 days in milliseconds
+      },
+      webpush: {
+        headers: {
+          Urgency: 'high', // Bypasses browser throttle sleep states
+          TTL: '604800',   // Store offline message for up to 7 days
+        },
+        notification: {
+          requireInteraction: true, // Keep on screen until user dismisses or clicks
+          icon: '/logo.png',
+        }
       },
       data: data || {},
     })
