@@ -10,10 +10,33 @@ try {
     const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY
 
     if (serviceAccountKey) {
-      const serviceAccount = JSON.parse(serviceAccountKey)
-      app = initializeApp({
-        credential: cert(serviceAccount),
-      })
+      let credentialsStr = serviceAccountKey.trim()
+
+      // Handle Base64 decoding automatically if it's encoded
+      if (!credentialsStr.startsWith('{')) {
+        try {
+          credentialsStr = Buffer.from(credentialsStr, 'base64').toString('utf8')
+        } catch (e) {
+          console.error('Failed to decode Base64 Firebase credentials:', e)
+        }
+      }
+
+      // Safeguard: handle literal unescaped newlines in copy-pasted keys
+      // (replacing raw newlines inside JSON with \n is standard)
+      try {
+        const serviceAccount = JSON.parse(credentialsStr)
+        app = initializeApp({
+          credential: cert(serviceAccount),
+        })
+      } catch (parseError) {
+        // Fallback for copy-pasted raw private keys with raw newline control characters
+        // Escape newlines inside quotes safely
+        const sanitized = credentialsStr.replace(/\n/g, '\\n').replace(/\r/g, '')
+        const serviceAccount = JSON.parse(sanitized)
+        app = initializeApp({
+          credential: cert(serviceAccount),
+        })
+      }
     } else {
       // Fallback/local development: init with default options / projectId
       app = initializeApp({
