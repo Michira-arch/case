@@ -1,0 +1,368 @@
+/* VisitorSimulator.module.css */
+
+/* Outer wrapper card */
+.wrapper {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--card);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+/* Toggle header row */
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  text-align: left;
+  gap: 12px;
+  transition: background var(--duration) var(--ease);
+}
+.toggleRow:hover {
+  background: var(--paper);
+}
+
+.toggleLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  letter-spacing: 0.01em;
+}
+
+/* Chevron icon */
+.chevron {
+  color: var(--ink-muted);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: transform var(--duration) var(--ease);
+}
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Expand / collapse body */
+.expandBody {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 320ms var(--ease);
+}
+.expandBodyOpen {
+  max-height: 700px;
+}
+
+/* Browser frame */
+.browserFrame {
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  overflow: hidden;
+}
+
+/* Chrome bar */
+.chrome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #20281F;
+  min-height: 36px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.urlBar {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 3px 10px;
+  margin-left: 8px;
+}
+
+.urlText {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(241, 237, 226, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+/* Mini profile area */
+.miniProfile {
+  padding: 20px 20px 18px;
+  background: var(--paper-light);
+}
+
+/* Hero */
+.hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+/* Avatar */
+.avatarWrap {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+}
+
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--line);
+}
+
+.avatarEmpty {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--brass-bg);
+  border: 1.5px dashed var(--brass);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.avatarEmpty:hover .addOverlay {
+  opacity: 1;
+}
+
+.avatarInitials {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--brass-deep);
+}
+
+.addOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(168, 120, 58, 0.85);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  opacity: 0;
+  transition: opacity var(--duration) var(--ease);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4px;
+}
+
+/* Hero text column */
+.heroText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.name {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.role {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.tagline {
+  font-size: 11.5px;
+  color: var(--ink-muted);
+  line-height: 1.4;
+}
+
+/* Amber "add field" inline button */
+.addField {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: 1px dashed var(--brass);
+  border-radius: var(--radius-sm);
+  color: var(--brass-deep);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: background var(--duration) var(--ease), color var(--duration);
+  width: fit-content;
+}
+.addField:hover {
+  background: var(--brass-bg);
+  color: var(--brass-deep);
+}
+
+/* Claim section */
+.claimSection {
+  margin-bottom: 14px;
+}
+
+.claim {
+  border-left: 3px solid var(--brass);
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.55;
+  background: var(--brass-bg);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-style: italic;
+}
+
+/* Missing claim box */
+.claimMissing {
+  position: relative;
+  border: 1.5px dashed var(--brass);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  background: var(--brass-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.claimMissingText {
+  font-size: 12px;
+  color: var(--brass-deep);
+  line-height: 1.45;
+}
+
+.claimWriteBtn {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  background: var(--brass-deep);
+  color: var(--paper);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background var(--duration) var(--ease);
+}
+.claimWriteBtn:hover {
+  background: var(--brass);
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: var(--shadow);
+}
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--ink);
+}
+
+/* Proof row */
+.proofRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Proof pill */
+.proofPill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  padding: 4px 10px 4px 8px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  font-family: var(--font-sans);
+  cursor: default;
+}
+
+.proofPillWeak {
+  opacity: 0.65;
+  border-style: dashed;
+}
+
+.pillarDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pillTitle {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.warnIcon {
+  font-size: 10px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Proof empty state */
+.proofEmpty {
+  font-size: 12px;
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+@media (max-width: 600px) {
+  .miniProfile {
+    padding: 14px 14px 12px;
+  }
+  .proofRow {
+    gap: 5px;
+  }
+}

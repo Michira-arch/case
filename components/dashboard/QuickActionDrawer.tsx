@@ -1,0 +1,273 @@
+'use client'
+
+import { useState, useRef } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { uploadAvatar } from '@/lib/r2'
+import styles from './QuickActionDrawer.module.css'
+
+export interface QuickActionDrawerProps {
+  type: 'avatar' | 'claim' | 'basics'
+  profileId: string
+  currentValue?: string
+  currentRoleLine?: string
+  currentTagline?: string
+  onClose: () => void
+  onSaved: (newValue: any) => void
+}
+
+const CLAIM_MAX = 500
+
+const WHY_CONTENT = {
+  avatar: {
+    title: 'Your face builds trust',
+    text: 'Profiles with a clear, friendly photo receive 4× more engagement. People make decisions based on recognising and trusting a face before they read a single word.',
+  },
+  claim: {
+    title: 'Your opening argument',
+    text: "Your claim is the thesis that all your proof below supports. Without it, visitors leave in 5 seconds because they don't know what to believe about you. With it, your whole profile clicks into place.",
+  },
+  basics: {
+    title: 'Tell them who you are',
+    text: 'Your name, role, and tagline are the first three things a visitor reads. They decide in under 3 seconds if this profile is worth their time. Make it sharp and honest.',
+  },
+}
+
+const DRAWER_TITLES = {
+  avatar: 'Profile Photo',
+  claim: 'Opening Claim',
+  basics: 'Profile Basics',
+}
+
+export default function QuickActionDrawer({
+  type,
+  profileId,
+  currentValue = '',
+  currentRoleLine = '',
+  currentTagline = '',
+  onClose,
+  onSaved,
+}: QuickActionDrawerProps) {
+  const why = WHY_CONTENT[type]
+
+  // ---- avatar state ----
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
+
+  // ---- claim state ----
+  const [claimText, setClaimText] = useState(currentValue)
+
+  // ---- basics state ----
+  const [displayName, setDisplayName] = useState(currentValue)
+  const [roleLine, setRoleLine] = useState(currentRoleLine)
+  const [tagline, setTagline] = useState(currentTagline)
+
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarFile(file)
+    const url = URL.createObjectURL(file)
+    setAvatarPreviewUrl(url)
+    setError(null)
+  }
+
+  const handleSave = async () => {
+    setError(null)
+    setSaving(true)
+    try {
+      if (type === 'avatar') {
+        if (!avatarFile) {
+          setError('Please select an image file.')
+          setSaving(false)
+          return
+        }
+        const storageKey = await uploadAvatar(avatarFile, profileId)
+        onSaved(storageKey)
+      } else if (type === 'claim') {
+        const supabase = createClient()
+        const { error: dbError } = await supabase
+          .from('profiles')
+          .update({ claim_text: claimText.trim() || null })
+          .eq('id', profileId)
+        if (dbError) throw dbError
+        onSaved(claimText.trim())
+      } else if (type === 'basics') {
+        const supabase = createClient()
+        const updates = {
+          display_name: displayName.trim(),
+          role_line: roleLine.trim() || null,
+          tagline: tagline.trim() || null,
+        }
+        const { error: dbError } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', profileId)
+        if (dbError) throw dbError
+        onSaved(updates)
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Something went wrong. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const isSaveDisabled = saving || (
+    type === 'avatar' ? !avatarFile :
+    type === 'claim' ? claimText.trim().length === 0 || claimText.length > CLAIM_MAX :
+    displayName.trim().length === 0
+  )
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div className={styles.backdrop} onClick={onClose} aria-hidden="true" />
+
+      {/* Panel */}
+      <div
+        className={styles.panel}
+        role="dialog"
+        aria-modal="true"
+        aria-label={DRAWER_TITLES[type]}
+      >
+        {/* Header */}
+        <div className={styles.header}>
+          <span className={styles.headerTitle}>{DRAWER_TITLES[type]}</span>
+          <button
+            className={styles.closeBtn}
+            onClick={onClose}
+            aria-label="Close drawer"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className={styles.body}>
+          {/* The Why */}
+          <div className={styles.why}>
+            <p className={styles.whyTitle}>{why.title}</p>
+            <p className={styles.whyText}>{why.text}</p>
+          </div>
+
+          {/* Form */}
+          <div className={styles.form}>
+            {type === 'avatar' && (
+              <>
+                {(avatarPreviewUrl || currentValue) && (
+                  <div className={styles.avatarPreviewWrap}>
+                    <img
+                      src={avatarPreviewUrl ?? `/api/proxy-avatar?key=${encodeURIComponent(currentValue)}`}
+                      alt="Current avatar"
+                      className={styles.avatarPreview}
+                    />
+                    <span className={styles.avatarPreviewLabel}>
+                      {avatarPreviewUrl ? 'New photo (not yet saved)' : 'Current photo'}
+                    </span>
+                  </div>
+                )}
+                <div className={styles.dropZone}>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    aria-label="Upload avatar image"
+                  />
+                  <span className={styles.dropZoneText}>
+                    {avatarFile ? avatarFile.name : 'Click or drag & drop a photo'}
+                  </span>
+                  <span className={styles.dropZoneHint}>JPG, PNG, WebP — max 5 MB</span>
+                </div>
+              </>
+            )}
+
+            {type === 'claim' && (
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="claim-input">
+                  Claim Statement
+                </label>
+                <textarea
+                  id="claim-input"
+                  className={`${styles.input} ${styles.textarea}`}
+                  value={claimText}
+                  onChange={e => setClaimText(e.target.value)}
+                  maxLength={CLAIM_MAX}
+                  placeholder="I've been doing X for Y years. I specialise in Z. Everything below proves it."
+                  rows={5}
+                />
+                <span
+                  className={`${styles.charCounter} ${claimText.length > CLAIM_MAX * 0.9 ? styles.charCounterWarn : ''}`}
+                >
+                  {claimText.length}/{CLAIM_MAX}
+                </span>
+              </div>
+            )}
+
+            {type === 'basics' && (
+              <>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="basics-name">
+                    Display Name
+                  </label>
+                  <input
+                    id="basics-name"
+                    type="text"
+                    className={styles.input}
+                    value={displayName}
+                    onChange={e => setDisplayName(e.target.value)}
+                    placeholder="Your full name"
+                    autoComplete="name"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="basics-role">
+                    Role / Title
+                  </label>
+                  <input
+                    id="basics-role"
+                    type="text"
+                    className={styles.input}
+                    value={roleLine}
+                    onChange={e => setRoleLine(e.target.value)}
+                    placeholder="e.g. Senior UX Designer"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="basics-tagline">
+                    Tagline
+                  </label>
+                  <input
+                    id="basics-tagline"
+                    type="text"
+                    className={styles.input}
+                    value={tagline}
+                    onChange={e => setTagline(e.target.value)}
+                    placeholder="One-liner bio — your story in a sentence"
+                  />
+                </div>
+              </>
+            )}
+
+            {error && <p className={styles.errorMsg}>{error}</p>}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className={styles.footer}>
+          <button
+            className={styles.saveBtn}
+            onClick={handleSave}
+            disabled={isSaveDisabled}
+          >
+            {saving ? 'Saving…' : 'Save changes'}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}

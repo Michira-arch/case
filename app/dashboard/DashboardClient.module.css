@@ -378,6 +378,18 @@
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm);
   transition: all var(--duration) var(--ease);
+  width: 100%;
+  text-align: left;
+}
+
+button.checkItem {
+  cursor: pointer;
+}
+
+button.checkItem:hover {
+  border-color: var(--brass);
+  background: var(--brass-bg);
+  color: var(--brass-deep);
 }
 
 .checkItemDone {

@@ -12,6 +12,9 @@ import { applyFreeTierDisplay, getDowngradeMessage } from '@/lib/downgrade'
 import { GUIDE_PROOF_ITEMS } from '@/lib/guide-examples'
 import WeeklyReport from '@/components/WeeklyReport/WeeklyReport'
 import BusinessCardModal from '@/components/profile/BusinessCardModal'
+import QuickActionDrawer from '@/components/dashboard/QuickActionDrawer'
+import TrustQuest from '@/components/dashboard/TrustQuest'
+import VisitorSimulator from '@/components/dashboard/VisitorSimulator'
 import styles from './DashboardClient.module.css'
 
 interface Props {
@@ -48,7 +51,9 @@ export default function DashboardClient({
   const router = useRouter()
   const [items, setItems] = useState<ProofItem[]>(proofItems)
   const plan = subscription?.plan || 'free'
-  const profile = activeProfile
+
+  const [activeDrawer, setActiveDrawer] = useState<'avatar' | 'claim' | 'basics' | null>(null)
+  const [localProfile, setLocalProfile] = useState(activeProfile)
 
   const [showGuide, setShowGuide] = useState(false)
   const [showCardModal, setShowCardModal] = useState(false)
@@ -57,13 +62,14 @@ export default function DashboardClient({
     ? applyFreeTierDisplay(GUIDE_PROOF_ITEMS, plan)
     : applyFreeTierDisplay(items, plan)
 
-  const { score, tip } = calculateCompleteness(profile || {}, items)
+  const { score, tip } = calculateCompleteness(localProfile || {}, items)
 
-  const hasBasics = !!(profile?.display_name && profile?.role_line && profile?.tagline)
+  const profile = localProfile
+  const hasBasics = !!(localProfile?.display_name && localProfile?.role_line && localProfile?.tagline)
   const itemsWithEvidence = items.filter(item => item.visible && (item.evidence?.length ?? 0) > 0)
   const evidenceCountTotal = itemsWithEvidence.length
 
-  const initials = profile?.display_name
+  const initials = localProfile?.display_name
     ?.split(' ')
     .map(w => w[0])
     .join('')
@@ -73,7 +79,7 @@ export default function DashboardClient({
   const appUrl = typeof window !== 'undefined'
     ? window.location.origin
     : (process.env.NEXT_PUBLIC_APP_URL || '')
-  const profileUrl = profile ? `${appUrl}/@${profile.handle}` : ''
+  const profileUrl = localProfile ? `${appUrl}/@${localProfile.handle}` : ''
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(profileUrl)
@@ -209,6 +215,7 @@ export default function DashboardClient({
 
       {/* Completeness bar */}
       <div className={styles.completeness}>
+        <TrustQuest score={score} plan={plan as 'free' | 'plus'} />
         <div className={styles.completenessTop}>
           <span>Dossier Completion Index: <b>{score}%</b></span>
           <span className={styles.tip}>{tip}</span>
@@ -228,18 +235,51 @@ export default function DashboardClient({
               <span className={styles.checkIcon}>✓</span>
               <span>Phone OTP Identity Verified (+15%)</span>
             </div>
-            <div className={`${styles.checkItem} ${profile.avatar_url ? styles.checkItemDone : ''}`}>
-              <span className={styles.checkIcon}>{profile.avatar_url ? '✓' : '○'}</span>
-              <span>Profile / Appearance Photo Set (+5%)</span>
-            </div>
-            <div className={`${styles.checkItem} ${profile.claim_text ? styles.checkItemDone : ''}`}>
-              <span className={styles.checkIcon}>{profile.claim_text ? '✓' : '○'}</span>
-              <span>Write Opening Claim Statement (+10%)</span>
-            </div>
-            <div className={`${styles.checkItem} ${hasBasics ? styles.checkItemDone : ''}`}>
-              <span className={styles.checkIcon}>{hasBasics ? '✓' : '○'}</span>
-              <span>Profile Information Form (+15%)</span>
-            </div>
+            {localProfile?.avatar_url ? (
+              <div className={`${styles.checkItem} ${styles.checkItemDone}`}>
+                <span className={styles.checkIcon}>✓</span>
+                <span>Profile / Appearance Photo Set (+5%)</span>
+              </div>
+            ) : (
+              <button
+                className={styles.checkItem}
+                onClick={() => setActiveDrawer('avatar')}
+                type="button"
+              >
+                <span className={styles.checkIcon}>○</span>
+                <span>Profile / Appearance Photo Set (+5%)</span>
+              </button>
+            )}
+            {localProfile?.claim_text ? (
+              <div className={`${styles.checkItem} ${styles.checkItemDone}`}>
+                <span className={styles.checkIcon}>✓</span>
+                <span>Write Opening Claim Statement (+10%)</span>
+              </div>
+            ) : (
+              <button
+                className={styles.checkItem}
+                onClick={() => setActiveDrawer('claim')}
+                type="button"
+              >
+                <span className={styles.checkIcon}>○</span>
+                <span>Write Opening Claim Statement (+10%)</span>
+              </button>
+            )}
+            {hasBasics ? (
+              <div className={`${styles.checkItem} ${styles.checkItemDone}`}>
+                <span className={styles.checkIcon}>✓</span>
+                <span>Profile Information Form (+15%)</span>
+              </div>
+            ) : (
+              <button
+                className={styles.checkItem}
+                onClick={() => setActiveDrawer('basics')}
+                type="button"
+              >
+                <span className={styles.checkIcon}>○</span>
+                <span>Profile Information Form (+15%)</span>
+              </button>
+            )}
             <div className={`${styles.checkItem} ${evidenceCountTotal > 0 ? styles.checkItemDone : ''}`}>
               <span className={styles.checkIcon}>{evidenceCountTotal > 0 ? '✓' : '○'}</span>
               <span>Evidence-Backed Proof Items (+10% each, max 40%)</span>
@@ -247,6 +287,13 @@ export default function DashboardClient({
           </div>
         </div>
       </div>
+
+      {/* Visitor Simulator */}
+      <VisitorSimulator
+        profile={localProfile || {}}
+        proofItems={items}
+        onEdit={(field) => setActiveDrawer(field)}
+      />
 
       {/* Views limit bar (only for free plan) */}
       {plan === 'free' && (
@@ -388,6 +435,29 @@ export default function DashboardClient({
       </div>
       {showCardModal && (
         <BusinessCardModal profile={profile} onClose={() => setShowCardModal(false)} />
+      )}
+      {activeDrawer && localProfile && (
+        <QuickActionDrawer
+          type={activeDrawer}
+          profileId={localProfile.id}
+          currentValue={
+            activeDrawer === 'avatar' ? localProfile.avatar_url || '' :
+            activeDrawer === 'claim'  ? localProfile.claim_text  || '' :
+            localProfile.display_name || ''
+          }
+          currentRoleLine={localProfile.role_line || ''}
+          currentTagline={localProfile.tagline || ''}
+          onClose={() => setActiveDrawer(null)}
+          onSaved={(newValue) => {
+            setLocalProfile((prev: any) => ({
+              ...prev,
+              ...(activeDrawer === 'avatar' ? { avatar_url: newValue }  : {}),
+              ...(activeDrawer === 'claim'  ? { claim_text: newValue }  : {}),
+              ...(activeDrawer === 'basics' ? newValue                  : {}),
+            }))
+            setActiveDrawer(null)
+          }}
+        />
       )}
     </div>
   )
