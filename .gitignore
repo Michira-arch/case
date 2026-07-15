@@ -49,3 +49,6 @@ scratch/
 
 supabase_agents.txt
 
+# Playwright E2E test results & reports
+test-results/
+playwright-report/
