@@ -47,3 +47,5 @@ next-env.d.ts
 # Local scratch and DB migration scripts
 scratch/
 
+supabase_agents.txt
+
