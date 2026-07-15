@@ -3,13 +3,13 @@ import { getAnalytics, isSupported } from 'firebase/analytics'
 import { getMessaging, Messaging, getToken } from 'firebase/messaging'
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyC1oh4-GS3-x6NUSqGJQA4lxQnY4R1H194',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'case-pow-99.firebaseapp.com',
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'case-pow-99',
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'case-pow-99.firebasestorage.app',
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '5247771290',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:5247771290:web:225ccef2dd88c42aecf523',
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || 'G-FL1BDF70FK',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
 // Initialize Firebase
