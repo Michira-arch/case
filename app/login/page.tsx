@@ -40,10 +40,10 @@ export default function LoginPage() {
       } else {
         const { error } = await supabase.auth.signInWithOtp({
           email,
-          options: { emailRedirectTo: `${window.location.origin}/dashboard` }
         })
         if (error) throw error
-        setSuccess(`Check your email at ${email} for your magic link!`)
+        setStep('verify')
+        setSuccess(`OTP code sent to your email at ${email}`)
       }
     } catch (err: any) {
       setError(err.message)
@@ -58,16 +58,32 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const formatted = phone.startsWith('+') ? phone
-        : phone.startsWith('0') ? `+254${phone.slice(1)}`
-        : `+254${phone}`
+      if (mode === 'phone') {
+        const formatted = phone.startsWith('+') ? phone
+          : phone.startsWith('0') ? `+254${phone.slice(1)}`
+          : `+254${phone}`
 
-      const { error } = await supabase.auth.verifyOtp({
-        phone: formatted,
-        token: otp,
-        type: 'sms',
-      })
-      if (error) throw error
+        const { error } = await supabase.auth.verifyOtp({
+          phone: formatted,
+          token: otp,
+          type: 'sms',
+        })
+        if (error) throw error
+      } else {
+        const { error: emailError } = await supabase.auth.verifyOtp({
+          email,
+          token: otp,
+          type: 'email',
+        })
+        if (emailError) {
+          const { error: fallbackError } = await supabase.auth.verifyOtp({
+            email,
+            token: otp,
+            type: 'magiclink',
+          })
+          if (fallbackError) throw emailError
+        }
+      }
       router.push('/dashboard')
     } catch (err: any) {
       setError(err.message)

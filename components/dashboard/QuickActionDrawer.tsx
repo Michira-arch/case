@@ -56,7 +56,11 @@ export default function QuickActionDrawer({
 
   // ---- avatar state ----
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
-  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
+  const [croppingImageSrc, setCroppingImageSrc] = useState<string | null>(null)
+  const [zoom, setZoom] = useState(1)
+  const [offsetX, setOffsetX] = useState(0)
+  const [offsetY, setOffsetY] = useState(0)
+  const cropImgRef = useRef<HTMLImageElement>(null)
 
   // ---- claim state ----
   const [claimText, setClaimText] = useState(currentValue)
@@ -80,9 +84,17 @@ export default function QuickActionDrawer({
     const file = e.target.files?.[0]
     if (!file) return
     setAvatarFile(file)
-    const url = URL.createObjectURL(file)
-    setAvatarPreviewUrl(url)
     setError(null)
+    
+    // Read the file as a data URL for cropping
+    const reader = new FileReader()
+    reader.onload = () => {
+      setCroppingImageSrc(reader.result as string)
+      setZoom(1)
+      setOffsetX(0)
+      setOffsetY(0)
+    }
+    reader.readAsDataURL(file)
   }
 
   const handleProofFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,12 +109,54 @@ export default function QuickActionDrawer({
     setSaving(true)
     try {
       if (type === 'avatar') {
-        if (!avatarFile) {
+        let fileToUpload = avatarFile
+
+        if (croppingImageSrc && cropImgRef.current) {
+          const croppedBlob = await new Promise<Blob | null>((resolve) => {
+            const canvas = document.createElement('canvas')
+            canvas.width = 400
+            canvas.height = 400
+            const ctx = canvas.getContext('2d')
+            if (!ctx || !cropImgRef.current) {
+              resolve(null)
+              return
+            }
+            const img = cropImgRef.current
+            const imgWidth = img.naturalWidth
+            const imgHeight = img.naturalHeight
+            const size = Math.min(imgWidth, imgHeight)
+
+            // Zoom determines size of the crop box inside source coordinates
+            const cropSize = size / zoom
+
+            // Horizontal & vertical offsets in source coordinates
+            const xMaxOffset = (imgWidth - cropSize) / 2
+            const yMaxOffset = (imgHeight - cropSize) / 2
+
+            // Sliders represent pixel values on 250px UI scale, convert back to source scale
+            const uiToSourceRatio = imgWidth / 250
+            const xOffset = offsetX * uiToSourceRatio
+            const yOffset = offsetY * uiToSourceRatio
+
+            // Clamp sx and sy so they do not go outside source boundary
+            const sx = Math.max(0, Math.min(imgWidth - cropSize, (imgWidth - cropSize) / 2 + xOffset))
+            const sy = Math.max(0, Math.min(imgHeight - cropSize, (imgHeight - cropSize) / 2 + yOffset))
+
+            ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, 400, 400)
+            canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.9)
+          })
+
+          if (croppedBlob) {
+            fileToUpload = new File([croppedBlob], 'avatar-cropped.jpg', { type: 'image/jpeg' })
+          }
+        }
+
+        if (!fileToUpload) {
           setError('Please select an image file.')
           setSaving(false)
           return
         }
-        const storageKey = await uploadAvatar(avatarFile, profileId)
+        const storageKey = await uploadAvatar(fileToUpload, profileId)
         onSaved(storageKey)
       } else if (type === 'claim') {
         const supabase = createClient()
@@ -196,7 +250,7 @@ export default function QuickActionDrawer({
   }
 
   const isSaveDisabled = saving || (
-    type === 'avatar' ? !avatarFile :
+    type === 'avatar' ? !croppingImageSrc :
     type === 'claim' ? claimText.trim().length === 0 || claimText.length > CLAIM_MAX :
     type === 'proof' ? !proofTitle.trim() || !proofFile :
     displayName.trim().length === 0
@@ -238,31 +292,108 @@ export default function QuickActionDrawer({
           <div className={styles.form}>
             {type === 'avatar' && (
               <>
-                {(avatarPreviewUrl || currentValue) && (
-                  <div className={styles.avatarPreviewWrap}>
-                    <img
-                      src={avatarPreviewUrl ?? `/api/proxy-avatar?key=${encodeURIComponent(currentValue)}`}
-                      alt="Current avatar"
-                      className={styles.avatarPreview}
-                    />
-                    <span className={styles.avatarPreviewLabel}>
-                      {avatarPreviewUrl ? 'New photo (not yet saved)' : 'Current photo'}
-                    </span>
+                {croppingImageSrc ? (
+                  <div className={styles.cropWrapper}>
+                    <span className={styles.cropTitle}>Position and Zoom Your Photo</span>
+                    <div className={styles.cropContainer}>
+                      <img
+                        ref={cropImgRef}
+                        src={croppingImageSrc}
+                        alt="Crop Preview"
+                        style={{
+                          transform: `scale(${zoom}) translate(${offsetX}px, ${offsetY}px)`,
+                          transformOrigin: 'center center',
+                        }}
+                        className={styles.cropImg}
+                      />
+                      <div className={styles.cropCircleOverlay} />
+                    </div>
+
+                    <div className={styles.cropControls}>
+                      <div className={styles.cropSliderField}>
+                        <div className={styles.cropSliderHeader}>
+                          <span className={styles.cropSliderLabel}>Zoom</span>
+                          <span className={styles.cropSliderVal}>{Math.round(zoom * 100)}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="3"
+                          step="0.05"
+                          value={zoom}
+                          onChange={(e) => setZoom(parseFloat(e.target.value))}
+                          className={styles.cropSlider}
+                        />
+                      </div>
+
+                      <div className={styles.cropSliderField}>
+                        <div className={styles.cropSliderHeader}>
+                          <span className={styles.cropSliderLabel}>Horizontal Offset</span>
+                          <span className={styles.cropSliderVal}>{offsetX}px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-150"
+                          max="150"
+                          step="1"
+                          value={offsetX}
+                          onChange={(e) => setOffsetX(parseInt(e.target.value))}
+                          className={styles.cropSlider}
+                        />
+                      </div>
+
+                      <div className={styles.cropSliderField}>
+                        <div className={styles.cropSliderHeader}>
+                          <span className={styles.cropSliderLabel}>Vertical Offset</span>
+                          <span className={styles.cropSliderVal}>{offsetY}px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-150"
+                          max="150"
+                          step="1"
+                          value={offsetY}
+                          onChange={(e) => setOffsetY(parseInt(e.target.value))}
+                          className={styles.cropSlider}
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className={styles.changePhotoBtn}
+                      onClick={() => setCroppingImageSrc(null)}
+                    >
+                      Choose different photo
+                    </button>
                   </div>
+                ) : (
+                  <>
+                    {currentValue && (
+                      <div className={styles.avatarPreviewWrap}>
+                        <img
+                          src={`/api/proxy-avatar?key=${encodeURIComponent(currentValue)}`}
+                          alt="Current avatar"
+                          className={styles.avatarPreview}
+                        />
+                        <span className={styles.avatarPreviewLabel}>Current photo</span>
+                      </div>
+                    )}
+                    <div className={styles.dropZone}>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        aria-label="Upload avatar image"
+                      />
+                      <span className={styles.dropZoneText}>
+                        Click or drag & drop a photo to upload
+                      </span>
+                      <span className={styles.dropZoneHint}>JPG, PNG, WebP — max 5 MB</span>
+                    </div>
+                  </>
                 )}
-                <div className={styles.dropZone}>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    aria-label="Upload avatar image"
-                  />
-                  <span className={styles.dropZoneText}>
-                    {avatarFile ? avatarFile.name : 'Click or drag & drop a photo'}
-                  </span>
-                  <span className={styles.dropZoneHint}>JPG, PNG, WebP — max 5 MB</span>
-                </div>
               </>
             )}
 

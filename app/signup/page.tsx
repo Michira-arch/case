@@ -44,12 +44,10 @@ function SignupPageContent() {
       } else {
         const { error } = await supabase.auth.signInWithOtp({
           email,
-          options: {
-            emailRedirectTo: redirectUrl,
-          }
         })
         if (error) throw error
-        setSuccess(`Check your email at ${email} for your magic link!`)
+        setStep('verify')
+        setSuccess(`OTP code sent to your email at ${email}`)
       }
     } catch (err: any) {
       setError(err.message)
@@ -64,16 +62,32 @@ function SignupPageContent() {
     setError('')
 
     try {
-      const formatted = phone.startsWith('+') ? phone
-        : phone.startsWith('0') ? `+254${phone.slice(1)}`
-        : `+254${phone}`
+      if (mode === 'phone') {
+        const formatted = phone.startsWith('+') ? phone
+          : phone.startsWith('0') ? `+254${phone.slice(1)}`
+          : `+254${phone}`
 
-      const { error } = await supabase.auth.verifyOtp({
-        phone: formatted,
-        token: otp,
-        type: 'sms',
-      })
-      if (error) throw error
+        const { error } = await supabase.auth.verifyOtp({
+          phone: formatted,
+          token: otp,
+          type: 'sms',
+        })
+        if (error) throw error
+      } else {
+        const { error: emailError } = await supabase.auth.verifyOtp({
+          email,
+          token: otp,
+          type: 'signup',
+        })
+        if (emailError) {
+          const { error: fallbackError } = await supabase.auth.verifyOtp({
+            email,
+            token: otp,
+            type: 'email',
+          })
+          if (fallbackError) throw emailError
+        }
+      }
 
       const plan = searchParams.get('plan')
       router.push(plan === 'plus' ? '/onboarding?plan=plus' : '/onboarding')

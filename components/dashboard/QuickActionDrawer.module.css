@@ -289,3 +289,123 @@
     width: 100vw;
   }
 }
+
+/* ---- Image Cropper ---- */
+.cropWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.cropTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+.cropContainer {
+  width: 250px;
+  height: 250px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 3px solid var(--brass);
+  background: var(--paper-light);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.cropImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cropCircleOverlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 999px rgba(32, 40, 31, 0.35); /* Dim area outside circle */
+  pointer-events: none;
+}
+
+.cropControls {
+  width: 100%;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cropSliderField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cropSliderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cropSliderLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.cropSliderVal {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-muted);
+}
+
+.cropSlider {
+  width: 100%;
+  height: 4px;
+  background: var(--line);
+  border-radius: var(--radius-full);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.cropSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--brass);
+  cursor: pointer;
+  border: 1.5px solid var(--paper);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition: background var(--duration) var(--ease);
+}
+
+.cropSlider::-webkit-slider-thumb:hover {
+  background: var(--brass-deep);
+}
+
+.changePhotoBtn {
+  margin-top: 18px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+}
+
+.changePhotoBtn:hover {
+  background: var(--line-soft);
+  color: var(--ink);
+  border-color: var(--ink-muted);
+}
