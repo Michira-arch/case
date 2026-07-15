@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
 import { generateReference, PRICING, openPaystackCheckout } from '@/lib/paystack'
+import { getVisitorCountryCode, calculatePPPPricedPlan } from '@/lib/ppp-pricing'
 import styles from './billing.module.css'
 
 interface PricingPlan {
@@ -130,6 +131,18 @@ export default function BillingPage() {
     ? new Date(subscription.current_period_end)
     : null
 
+  // Calculate PPP localized plans
+  const countryCode = getVisitorCountryCode()
+  const rawPlans = plans.length ? plans : Object.values(PRICING).map((p) => ({ ...p, description: '' }))
+  const mappedPlans = rawPlans.map((plan: any) => {
+    const ppp = calculatePPPPricedPlan(plan.id, countryCode)
+    return {
+      ...plan,
+      amount_kes: ppp.amountKes, // Pass calculated KES value to Paystack handler
+      formattedLocal: ppp.formattedLocal,
+    }
+  })
+
   const daysLeft = expiresAt
     ? Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null
@@ -191,7 +204,7 @@ export default function BillingPage() {
               <h2 className={styles.upgradeTitle}>Upgrade to Case+</h2>
 
               <div className={styles.plansGrid}>
-                {(plans.length ? plans : Object.values(PRICING).map((p) => ({ ...p, description: '' }))).map((plan: any) => (
+                {mappedPlans.map((plan: any) => (
                   <PlanCard
                     key={plan.id}
                     plan={plan}
@@ -234,7 +247,7 @@ export default function BillingPage() {
               <h2 className={styles.upgradeTitle}>Renew or extend</h2>
               <p className={styles.renewNote}>Renewing early extends from your current expiry date — you won't lose any time.</p>
               <div className={styles.plansGrid}>
-                {(plans.length ? plans : Object.values(PRICING).map((p) => ({ ...p, description: '' }))).map((plan: any) => (
+                {mappedPlans.map((plan: any) => (
                   <PlanCard
                     key={plan.id}
                     plan={plan}
@@ -270,7 +283,7 @@ function PlanCard({ plan, selected, onSelect, onCheckout }: {
       )}
       <div className={styles.planLabel}>{plan.label}</div>
       <div className={styles.planPrice}>
-        <span className={styles.planAmount}>KES {plan.amount_kes}</span>
+        <span className={styles.planAmount}>{plan.formattedLocal}</span>
         <span className={styles.planPeriod}>/ {plan.months} months</span>
       </div>
       {isYearly && (
@@ -285,7 +298,7 @@ function PlanCard({ plan, selected, onSelect, onCheckout }: {
           onClick={(e) => { e.stopPropagation(); onCheckout() }}
           style={{ marginTop: 12 }}
         >
-          Pay KES {plan.amount_kes} →
+          Pay {plan.formattedLocal} →
         </button>
       )}
     </div>

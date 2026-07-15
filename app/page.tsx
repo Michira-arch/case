@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import PricingCard from '@/components/billing/PricingCard'
 import styles from './page.module.css'
 
 export const metadata: Metadata = {
@@ -155,8 +156,7 @@ export default function LandingPage() {
           <div className={styles.pricingGrid}>
             <PricingCard
               name="Free"
-              price="0"
-              period="forever"
+              isFree={true}
               features={[
                 'Public proof-of-work profile',
                 'Up to 4 proof items per pillar',
@@ -171,8 +171,7 @@ export default function LandingPage() {
             />
             <PricingCard
               name="Case+"
-              price="70"
-              period="6 months / KES 100 per year"
+              isFree={false}
               features={[
                 'Everything in free',
                 'Unlimited proof items',
@@ -227,35 +226,7 @@ function PersonaCard({ emoji, title, desc }: { emoji: string; title: string; des
   )
 }
 
-function PricingCard({ name, price, period, features, cta, href, highlight }: {
-  name: string; price: string; period: string; features: string[];
-  cta: string; href: string; highlight: boolean;
-}) {
-  return (
-    <div className={`card ${styles.pricingCard} ${highlight ? styles.pricingCardHighlight : ''}`}>
-      <div className={styles.pricingCardHead}>
-        <h3 className={styles.pricingName}>{name}</h3>
-        <div className={styles.pricingPrice}>
-          <span className={styles.pricingAmount}>
-            {price === '0' ? 'Free' : `KES ${price}`}
-          </span>
-          {price !== '0' && <span className={styles.pricingPeriod}>/ {period}</span>}
-        </div>
-      </div>
-      <ul className={styles.pricingFeatures}>
-        {features.map((f) => (
-          <li key={f} className={styles.pricingFeature}>
-            <span className={styles.pricingCheck}>✓</span>
-            {f}
-          </li>
-        ))}
-      </ul>
-      <Link href={href} className={`btn btn--full ${highlight ? 'btn--brass' : 'btn--outline'}`}>
-        {cta}
-      </Link>
-    </div>
-  )
-}
+
 
 function ExampleCard({ handle, name, role, avatar, emoji, snippet }: {
   handle: string; name: string; role: string; avatar: string; emoji: string; snippet: string;
