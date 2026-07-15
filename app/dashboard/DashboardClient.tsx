@@ -52,7 +52,7 @@ export default function DashboardClient({
   const [items, setItems] = useState<ProofItem[]>(proofItems)
   const plan = subscription?.plan || 'free'
 
-  const [activeDrawer, setActiveDrawer] = useState<'avatar' | 'claim' | 'basics' | null>(null)
+  const [activeDrawer, setActiveDrawer] = useState<'avatar' | 'claim' | 'basics' | 'proof' | null>(null)
   const [localProfile, setLocalProfile] = useState(activeProfile)
 
   const [showGuide, setShowGuide] = useState(false)
@@ -280,10 +280,21 @@ export default function DashboardClient({
                 <span>Profile Information Form (+15%)</span>
               </button>
             )}
-            <div className={`${styles.checkItem} ${evidenceCountTotal > 0 ? styles.checkItemDone : ''}`}>
-              <span className={styles.checkIcon}>{evidenceCountTotal > 0 ? '✓' : '○'}</span>
-              <span>Evidence-Backed Proof Items (+10% each, max 40%)</span>
-            </div>
+            {evidenceCountTotal >= 4 ? (
+              <div className={`${styles.checkItem} ${styles.checkItemDone}`}>
+                <span className={styles.checkIcon}>✓</span>
+                <span>Evidence-Backed Proof Items (Maxed out +40%)</span>
+              </div>
+            ) : (
+              <button
+                className={styles.checkItem}
+                onClick={() => setActiveDrawer('proof')}
+                type="button"
+              >
+                <span className={styles.checkIcon}>{evidenceCountTotal > 0 ? '✓' : '○'}</span>
+                <span>Evidence-Backed Proof Items ({evidenceCountTotal}/4, +10% each)</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -449,12 +460,16 @@ export default function DashboardClient({
           currentTagline={localProfile.tagline || ''}
           onClose={() => setActiveDrawer(null)}
           onSaved={(newValue) => {
-            setLocalProfile((prev: any) => ({
-              ...prev,
-              ...(activeDrawer === 'avatar' ? { avatar_url: newValue }  : {}),
-              ...(activeDrawer === 'claim'  ? { claim_text: newValue }  : {}),
-              ...(activeDrawer === 'basics' ? newValue                  : {}),
-            }))
+            if (activeDrawer === 'proof') {
+              setItems((prev) => [...prev, newValue])
+            } else {
+              setLocalProfile((prev: any) => ({
+                ...prev,
+                ...(activeDrawer === 'avatar' ? { avatar_url: newValue }  : {}),
+                ...(activeDrawer === 'claim'  ? { claim_text: newValue }  : {}),
+                ...(activeDrawer === 'basics' ? newValue                  : {}),
+              }))
+            }
             setActiveDrawer(null)
           }}
         />

@@ -2,11 +2,11 @@
 
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { uploadAvatar } from '@/lib/r2'
+import { uploadAvatar, uploadEvidence } from '@/lib/r2'
 import styles from './QuickActionDrawer.module.css'
 
 export interface QuickActionDrawerProps {
-  type: 'avatar' | 'claim' | 'basics'
+  type: 'avatar' | 'claim' | 'basics' | 'proof'
   profileId: string
   currentValue?: string
   currentRoleLine?: string
@@ -30,12 +30,17 @@ const WHY_CONTENT = {
     title: 'Tell them who you are',
     text: 'Your name, role, and tagline are the first three things a visitor reads. They decide in under 3 seconds if this profile is worth their time. Make it sharp and honest.',
   },
+  proof: {
+    title: 'Prove your work',
+    text: 'An unbacked claim is just a promise. Adding a photo, invoice, or PDF of your work transforms it into certified proof that cannot be disputed by potential clients.',
+  },
 }
 
 const DRAWER_TITLES = {
   avatar: 'Profile Photo',
   claim: 'Opening Claim',
   basics: 'Profile Basics',
+  proof: 'Quick Proof & Evidence',
 }
 
 export default function QuickActionDrawer({
@@ -61,6 +66,11 @@ export default function QuickActionDrawer({
   const [roleLine, setRoleLine] = useState(currentRoleLine)
   const [tagline, setTagline] = useState(currentTagline)
 
+  // ---- proof state ----
+  const [proofTitle, setProofTitle] = useState('')
+  const [proofPillar, setProofPillar] = useState<'did' | 'trained' | 'vouched' | 'aiming'>('did')
+  const [proofFile, setProofFile] = useState<File | null>(null)
+
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -72,6 +82,13 @@ export default function QuickActionDrawer({
     setAvatarFile(file)
     const url = URL.createObjectURL(file)
     setAvatarPreviewUrl(url)
+    setError(null)
+  }
+
+  const handleProofFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setProofFile(file)
     setError(null)
   }
 
@@ -108,6 +125,68 @@ export default function QuickActionDrawer({
           .eq('id', profileId)
         if (dbError) throw dbError
         onSaved(updates)
+      } else if (type === 'proof') {
+        if (!proofTitle.trim()) {
+          setError('Please enter a title for the proof item.')
+          setSaving(false)
+          return
+        }
+        if (!proofFile) {
+          setError('Please select an evidence file.')
+          setSaving(false)
+          return
+        }
+
+        const proofItemId = typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : Math.random().toString(36).slice(2) + '-' + Date.now().toString(36)
+
+        // Upload evidence file to R2
+        const uploadResult = await uploadEvidence({
+          file: proofFile,
+          profileId,
+          proofItemId,
+        })
+
+        const supabase = createClient()
+
+        // Insert proof item
+        const { data: proofItem, error: proofError } = await supabase
+          .from('proof_items')
+          .insert({
+            id: proofItemId,
+            profile_id: profileId,
+            pillar: proofPillar,
+            title: proofTitle.trim(),
+            visible: true,
+            sort_order: 0,
+            source: 'owner',
+          })
+          .select()
+          .single()
+
+        if (proofError) throw proofError
+
+        // Insert evidence record
+        const { data: evidenceRec, error: evidenceError } = await supabase
+          .from('evidence')
+          .insert({
+            proof_item_id: proofItemId,
+            type: uploadResult.type,
+            storage_key: uploadResult.storageKey,
+            bytes_original: uploadResult.bytesOriginal,
+            bytes_compressed: uploadResult.bytesCompressed,
+          })
+          .select()
+          .single()
+
+        if (evidenceError) throw evidenceError
+
+        // Return the combined proof item with its evidence
+        onSaved({
+          ...proofItem,
+          evidence: [evidenceRec],
+        })
       }
     } catch (err: any) {
       setError(err?.message || 'Something went wrong. Please try again.')
@@ -119,6 +198,7 @@ export default function QuickActionDrawer({
   const isSaveDisabled = saving || (
     type === 'avatar' ? !avatarFile :
     type === 'claim' ? claimText.trim().length === 0 || claimText.length > CLAIM_MAX :
+    type === 'proof' ? !proofTitle.trim() || !proofFile :
     displayName.trim().length === 0
   )
 
@@ -249,6 +329,63 @@ export default function QuickActionDrawer({
                     onChange={e => setTagline(e.target.value)}
                     placeholder="One-liner bio — your story in a sentence"
                   />
+                </div>
+              </>
+            )}
+
+            {type === 'proof' && (
+              <>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="proof-title">
+                    Title / What did you do or learn?
+                  </label>
+                  <input
+                    id="proof-title"
+                    type="text"
+                    className={styles.input}
+                    value={proofTitle}
+                    onChange={e => setProofTitle(e.target.value)}
+                    placeholder="e.g., Completed haircut for client, Certified JavaScript Developer"
+                    required
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="proof-pillar">
+                    Pillar category
+                  </label>
+                  <select
+                    id="proof-pillar"
+                    className={styles.input}
+                    value={proofPillar}
+                    onChange={e => setProofPillar(e.target.value as any)}
+                  >
+                    <option value="did">Work I completed (did)</option>
+                    <option value="trained">Training or certificate (trained)</option>
+                    <option value="vouched">Vouch-based proof (vouched)</option>
+                    <option value="aiming">Future goal (aiming)</option>
+                  </select>
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label}>
+                    Attach Evidence (Photo or PDF)
+                  </label>
+                  <div className={styles.dropZone}>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={handleProofFileChange}
+                      aria-label="Upload evidence file"
+                    />
+                    <span className={styles.dropZoneText}>
+                      {proofFile ? proofFile.name : 'Click to select a photo or PDF'}
+                    </span>
+                    <span className={styles.dropZoneHint}>
+                      WebP, JPG, PNG, PDF — max 5 MB
+                    </span>
+                  </div>
                 </div>
               </>
             )}
