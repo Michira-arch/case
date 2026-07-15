@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -91,6 +91,73 @@ export default function LoginPage() {
       setLoading(false)
     }
   }
+
+  // Auto-detect OTP on window focus (e.g. returning from email client or SMS)
+  useEffect(() => {
+    if (step !== 'verify' || typeof window === 'undefined') return
+
+    const handleFocus = async () => {
+      try {
+        if (!navigator.clipboard || !navigator.clipboard.readText) return
+        
+        const text = await navigator.clipboard.readText()
+        const cleanText = text.trim().replace(/\D/g, '')
+        
+        if (cleanText.length === 6 && /^\d{6}$/.test(cleanText)) {
+          setOtp(cleanText)
+          setSuccess('Code detected from clipboard! Logging you in...')
+          setLoading(true)
+          
+          let verifyError = null
+          if (mode === 'phone') {
+            const formatted = phone.startsWith('+') ? phone
+              : phone.startsWith('0') ? `+254${phone.slice(1)}`
+              : `+254${phone}`
+
+            const { error } = await supabase.auth.verifyOtp({
+              phone: formatted,
+              token: cleanText,
+              type: 'sms',
+            })
+            verifyError = error
+          } else {
+            const { error: emailError } = await supabase.auth.verifyOtp({
+              email,
+              token: cleanText,
+              type: 'email',
+            })
+            verifyError = emailError
+            if (emailError) {
+              const { error: fallbackError } = await supabase.auth.verifyOtp({
+                email,
+                token: cleanText,
+                type: 'magiclink',
+              })
+              verifyError = fallbackError
+            }
+          }
+          
+          if (verifyError) {
+            setError(verifyError.message)
+            setLoading(false)
+          } else {
+            router.push('/dashboard')
+          }
+        }
+      } catch (err) {
+        // Fail silently if clipboard permission is denied
+        console.log('Clipboard access denied or not supported on focus')
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    // Run once on initial transition to the verify screen
+    handleFocus()
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [step, email, phone, mode, router, supabase])
 
   return (
     <div className={styles.page}>
