@@ -15,7 +15,8 @@ try {
       // Handle Base64 decoding automatically if it's encoded
       if (!credentialsStr.startsWith('{')) {
         try {
-          credentialsStr = Buffer.from(credentialsStr, 'base64').toString('utf8')
+          const cleanBase64 = credentialsStr.replace(/\s+/g, '')
+          credentialsStr = Buffer.from(cleanBase64, 'base64').toString('utf8')
         } catch (e) {
           console.error('Failed to decode Base64 Firebase credentials:', e)
         }
