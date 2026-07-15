@@ -31,4 +31,18 @@ test.describe('Case Dossier E2E Flows', () => {
     const heading = page.locator('h1, h2, .pricing-header')
     await expect(heading.first()).toBeVisible()
   })
+
+  test('Campaign messaging route returns a valid response status', async ({ request }) => {
+    const response = await request.post('/api/messaging/campaigns', {
+      headers: {
+        'Authorization': 'Bearer invalid_key'
+      },
+      data: {
+        campaign: 'daily'
+      }
+    })
+    
+    // Status can be 200, 401, or 500 (e.g. if Supabase key is missing) but should not 404 (compiled)
+    expect([200, 401, 500]).toContain(response.status())
+  })
 })
