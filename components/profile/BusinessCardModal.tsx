@@ -23,7 +23,9 @@ export default function BusinessCardModal({ profile, onClose }: BusinessCardModa
     .slice(0, 2)
     .toUpperCase() || 'C'
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://caseshow.info')
+  const appUrl = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? window.location.origin
+    : 'https://caseshow.info'
   const profileUrl = `${appUrl}/@${profile.handle}`
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(profileUrl)}`
 
