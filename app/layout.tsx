@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   keywords: ['portfolio', 'proof of work', 'Kenya', 'freelancer', 'skills', 'testimonials', 'case'],
   authors: [{ name: 'Case' }],
   creator: 'Case',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://case.app'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://caseshow.info'),
   openGraph: {
     type: 'website',
     locale: 'en_KE',

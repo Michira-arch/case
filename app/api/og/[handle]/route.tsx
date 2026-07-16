@@ -49,7 +49,7 @@ export async function GET(request: NextRequest, { params }: Props) {
       .slice(0, 2)
       .toUpperCase()
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://case.app'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://caseshow.info'
     const profileUrl = `${appUrl}/@${handle}`
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(profileUrl)}`
 
@@ -217,7 +217,7 @@ export async function GET(request: NextRequest, { params }: Props) {
                 }}
               >
                 <span style={{ color: '#FCFBF9', fontSize: '10px', fontWeight: 700, fontFamily: 'monospace', letterSpacing: '0.05em' }}>
-                  CASE.APP/@{handle.toUpperCase()}
+                  {new URL(appUrl).host.toUpperCase()}/@{handle.toUpperCase()}
                 </span>
               </div>
 

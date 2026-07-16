@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getDisplayDomain } from '@/lib/domain'
 import styles from './onboarding.module.css'
 
 type Persona = 'service' | 'professional' | 'jobseeker'
@@ -161,7 +162,7 @@ function OnboardingPageContent() {
           {
             id: `genie-handle-${Date.now()}`,
             sender: 'genie',
-            text: `Nice to meet you, ${displayName.trim()}! Let's choose your handle. This is your public link: case.app/@yourhandle.\n\nI've checked a few available usernames below. Tap one or type your own!`
+            text: `Nice to meet you, ${displayName.trim()}! Let's choose your handle. This is your public link: ${getDisplayDomain()}/@yourhandle.\n\nI've checked a few available usernames below. Tap one or type your own!`
           }
         ]
       })
@@ -628,7 +629,7 @@ function OnboardingPageContent() {
                     <span className={styles.statusChecking}>🔍 Checking availability...</span>
                   )}
                   {handleStatus === 'available' && (
-                    <span className={styles.statusAvailable}>✓ Available! Your link: case.app/@{handle}</span>
+                    <span className={styles.statusAvailable}>✓ Available! Your link: {getDisplayDomain()}/@{handle}</span>
                   )}
                   {handleStatus === 'taken' && (
                     <span className={styles.statusTaken}>✗ Already taken. Try another</span>

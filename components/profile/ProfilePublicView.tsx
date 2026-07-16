@@ -5,6 +5,7 @@ import Link from 'next/link'
 import type { PublicProfile, PublicProofItem, PublicEvidence, SocialLink } from '@/lib/types'
 import { getMediaUrl } from '@/lib/r2'
 import { logAnalyticsEvent } from '@/lib/analytics'
+import { getDisplayDomain } from '@/lib/domain'
 import styles from './profile.module.css'
 
 interface Props {
@@ -30,7 +31,7 @@ export default function ProfilePublicView({ profile, handle }: Props) {
   }, [])
   const appUrl = typeof window !== 'undefined'
     ? window.location.origin
-    : (process.env.NEXT_PUBLIC_APP_URL || 'https://case.app')
+    : (process.env.NEXT_PUBLIC_APP_URL || 'https://caseshow.info')
   const profileUrl = `${appUrl}/@${handle}`
 
   const handleShare = async () => {
@@ -69,7 +70,7 @@ export default function ProfilePublicView({ profile, handle }: Props) {
         <div className={styles.shareBar}>
           <div className={styles.handleTag}>
             <span className={styles.handleText}>
-              case.app/<b>@{handle}</b>
+              {getDisplayDomain()}/<b>@{handle}</b>
             </span>
           </div>
           <div className={styles.shareActions}>
@@ -174,7 +175,7 @@ export default function ProfilePublicView({ profile, handle }: Props) {
       <div className={styles.shareBar}>
         <div className={styles.handleTag}>
           <span className={styles.handleText}>
-            case.app/<b>@{handle}</b>
+            {getDisplayDomain()}/<b>@{handle}</b>
           </span>
         </div>
         <div className={styles.shareActions}>

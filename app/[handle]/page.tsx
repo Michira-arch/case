@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = profile.tagline ||
     `${profile.display_name}${profile.role_line ? ` — ${profile.role_line}` : ''}. View their proof-of-work profile on Case.`
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://case.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://caseshow.info'
 
   return {
     title,

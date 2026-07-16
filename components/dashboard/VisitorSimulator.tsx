@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { getMediaUrl } from '@/lib/r2'
+import { getDisplayDomain } from '@/lib/domain'
 import styles from './VisitorSimulator.module.css'
 
 export interface VisitorSimulatorProps {
@@ -67,7 +68,7 @@ export default function VisitorSimulator({ profile, proofItems, onEdit }: Visito
             <span className={styles.dot} style={{ background: '#FEBC2E' }} />
             <span className={styles.dot} style={{ background: '#28C840' }} />
             <div className={styles.urlBar}>
-              <span className={styles.urlText}>case.app/@{handle}</span>
+              <span className={styles.urlText}>{getDisplayDomain()}/@{handle}</span>
             </div>
           </div>
 

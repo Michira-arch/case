@@ -69,7 +69,7 @@ export default function BillingPage() {
     const reference = generateReference(profile.id)
 
     openPaystackCheckout({
-      email: user.email || `${profile.handle}@case.app`,
+      email: user.email || `${profile.handle}@caseshow.info`,
       amountKes: plan.amount_kes,
       reference,
       profileId: profile.id,

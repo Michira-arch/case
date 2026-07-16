@@ -5,7 +5,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-comp
 firebase.initializeApp({
   projectId: 'case-pow-99',
   messagingSenderId: '5247771290',
-  appId: '1:5247771290:web:d87b38466e33df4d1c3ea2',
+  appId: '1:5247771290:web:225ccef2dd88c42aecf523',
 })
 
 const messaging = firebase.messaging()

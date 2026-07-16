@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Profile } from '@/lib/types'
 import { getMediaUrl } from '@/lib/r2'
+import { getDisplayDomain } from '@/lib/domain'
 import styles from './BusinessCardModal.module.css'
 
 interface BusinessCardModalProps {
@@ -24,7 +25,7 @@ export default function BusinessCardModal({ profile, onClose }: BusinessCardModa
 
   const appUrl = typeof window !== 'undefined'
     ? window.location.origin
-    : (process.env.NEXT_PUBLIC_APP_URL || 'https://case.app')
+    : (process.env.NEXT_PUBLIC_APP_URL || 'https://caseshow.info')
   const profileUrl = `${appUrl}/@${profile.handle}`
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(profileUrl)}`
 
@@ -109,7 +110,7 @@ export default function BusinessCardModal({ profile, onClose }: BusinessCardModa
 
             {/* Right Column: Connection / QR */}
             <div className={styles.rightCol}>
-              <span className={styles.handleBadge}>CASE.APP/@{profile.handle.toUpperCase()}</span>
+              <span className={styles.handleBadge}>{getDisplayDomain().toUpperCase()}/@{profile.handle.toUpperCase()}</span>
               
               <div className={styles.qrBox}>
                 <img src={qrUrl} alt="QR Code" className={styles.qrCode} />

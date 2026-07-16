@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET() {
   const supabase = createClient()
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://case.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://caseshow.info'
 
   const { data: profiles } = await supabase
     .from('profiles')

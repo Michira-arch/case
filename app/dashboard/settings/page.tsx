@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { uploadAvatar, getMediaUrl } from '@/lib/r2'
 import Link from 'next/link'
 import type { ContactVisibility } from '@/lib/types'
+import { getDisplayDomain } from '@/lib/domain'
 import styles from './settings.module.css'
 
 export default function SettingsPage() {
@@ -199,7 +200,7 @@ export default function SettingsPage() {
           <div className={styles.handleInfo}>
             <span className={styles.handleLabel}>Your Case URL</span>
             <a href={`/@${profile.handle}`} target="_blank" className={styles.handleValue}>
-              case.app/@{profile.handle}
+              {getDisplayDomain()}/@{profile.handle}
             </a>
           </div>
         )}

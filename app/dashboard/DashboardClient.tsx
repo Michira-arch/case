@@ -17,6 +17,7 @@ import QuickActionDrawer from '@/components/dashboard/QuickActionDrawer'
 import TrustQuest from '@/components/dashboard/TrustQuest'
 import VisitorSimulator from '@/components/dashboard/VisitorSimulator'
 import PwaManager from '@/components/dashboard/PwaManager'
+import { getDisplayDomain } from '@/lib/domain'
 import styles from './DashboardClient.module.css'
 
 interface Props {
@@ -163,7 +164,7 @@ export default function DashboardClient({
           <div>
             <p className={styles.name}>{profile.display_name}</p>
             <p className={styles.handle}>
-              case.app/<span>@{profile.handle}</span>
+              {getDisplayDomain()}/<span>@{profile.handle}</span>
             </p>
           </div>
         </div>

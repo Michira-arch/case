@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import QRCode from 'qrcode'
 import { createClient } from '@/lib/supabase/server'
+import { getDisplayDomain } from '@/lib/domain'
 import styles from './qr.module.css'
 
 interface Props {
@@ -26,7 +27,7 @@ export default async function QrPage({ params }: Props) {
     notFound()
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://case.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://caseshow.info'
   const profileUrl = `${appUrl}/@${profile.handle}`
 
   // Generate QR code as DataURL (server-side)
@@ -74,7 +75,7 @@ export default async function QrPage({ params }: Props) {
           <div className={styles.cardFooter}>
             <h2 className={styles.name}>{profile.display_name}</h2>
             {profile.role_line && <p className={styles.role}>{profile.role_line}</p>}
-            <p className={styles.url}>case.app/@{profile.handle}</p>
+            <p className={styles.url}>{getDisplayDomain()}/@{profile.handle}</p>
           </div>
         </div>
 
