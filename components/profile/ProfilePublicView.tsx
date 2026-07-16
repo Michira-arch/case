@@ -29,9 +29,7 @@ export default function ProfilePublicView({ profile, handle }: Props) {
       clearTimeout(t3)
     }
   }, [])
-  const appUrl = typeof window !== 'undefined'
-    ? window.location.origin
-    : (process.env.NEXT_PUBLIC_APP_URL || 'https://caseshow.info')
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://caseshow.info')
   const profileUrl = `${appUrl}/@${handle}`
 
   const handleShare = async () => {

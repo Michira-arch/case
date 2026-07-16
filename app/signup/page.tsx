@@ -28,7 +28,8 @@ function SignupPageContent() {
 
     try {
       const plan = searchParams.get('plan')
-      const redirectUrl = `${window.location.origin}/onboarding${plan === 'plus' ? '?plan=plus' : ''}`
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+      const redirectUrl = `${appUrl}/onboarding${plan === 'plus' ? '?plan=plus' : ''}`
 
       if (mode === 'phone') {
         const formatted = phone.startsWith('+') ? phone
