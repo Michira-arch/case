@@ -61,7 +61,7 @@ function getTip(
   }
 
   const pillarsPresent = new Set(proofItems.filter(i => i.visible).map(i => i.pillar))
-  if (!pillarsPresent.has('vouched')) return "Ask a client for a vouch — it's the most trusted proof"
+  if (!pillarsPresent.has('vouched')) return "Ask a client for a recommendation — it's the most trusted proof"
   if (!pillarsPresent.has('aiming')) return "Add an 'aiming' item to show what you're looking for"
   if (!pillarsPresent.has('did')) return "Add a 'did' item — what work have you completed?"
 

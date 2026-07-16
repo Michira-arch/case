@@ -36,12 +36,21 @@ interface UploadState {
   storageKey?: string
   type?: 'img' | 'pdf' | 'vid'
   previewUrl?: string
+  bytesOriginal?: number
+  bytesCompressed?: number
 }
 
 function NewProofPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [itemId] = useState(() => {
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+      return window.crypto.randomUUID()
+    }
+    return 'item-' + Math.random().toString(36).substring(2, 12)
+  })
 
   const [pillar, setPillar] = useState<Pillar>(
     (searchParams.get('pillar') as Pillar) || 'did'
@@ -52,6 +61,7 @@ function NewProofPageContent() {
   const [uploads, setUploads] = useState<UploadState[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [cameraModal, setCameraModal] = useState<{ type: 'img' | 'vid'; active: boolean }>({ type: 'img', active: false })
 
   const supabase = createClient()
 
@@ -59,7 +69,25 @@ function NewProofPageContent() {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
 
-    // Add to pending uploads
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      alert('You must be signed in to upload files.')
+      return
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('owner_id', user.id)
+      .single()
+
+    if (!profile) {
+      alert('Profile not found.')
+      return
+    }
+
+    const startIndex = uploads.length
+
     const newUploads: UploadState[] = files.map(f => {
       const type = f.type.startsWith('image/') ? 'img' : f.type === 'application/pdf' ? 'pdf' : 'vid'
       const previewUrl = f.type.startsWith('image/') || f.type.startsWith('video/')
@@ -77,6 +105,49 @@ function NewProofPageContent() {
     })
 
     setUploads(prev => [...prev, ...newUploads])
+
+    newUploads.forEach((upload, idx) => {
+      const globalIndex = startIndex + idx
+      const performUpload = async () => {
+        try {
+          setUploads(prev => prev.map((u, i) =>
+            i === globalIndex ? { ...u, status: 'compressing', stage: 'Compressing…' } : u
+          ))
+
+          const result = await uploadEvidence({
+            file: upload.file,
+            profileId: profile.id,
+            proofItemId: itemId,
+            onProgress: (stage, progress) => {
+              setUploads(prev => prev.map((u, i) =>
+                i === globalIndex ? { ...u, stage, progress, status: 'uploading' } : u
+              ))
+            },
+          })
+
+          setUploads(prev => prev.map((u, i) =>
+            i === globalIndex ? {
+              ...u,
+              status: 'done',
+              stage: 'Done',
+              storageKey: result.storageKey,
+              type: result.type,
+              bytesOriginal: result.bytesOriginal,
+              bytesCompressed: result.bytesCompressed
+            } : u
+          ))
+
+          if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            navigator.vibrate(30)
+          }
+        } catch (err: any) {
+          setUploads(prev => prev.map((u, i) =>
+            i === globalIndex ? { ...u, status: 'error', stage: err.message || 'Upload failed' } : u
+          ))
+        }
+      }
+      performUpload()
+    })
   }
 
   const removeUpload = (index: number) => {
@@ -85,6 +156,13 @@ function NewProofPageContent() {
 
   const handleSave = async () => {
     if (!title.trim()) return
+
+    const hasActiveUploads = uploads.some(u => u.status === 'pending' || u.status === 'compressing' || u.status === 'uploading')
+    if (hasActiveUploads) {
+      alert('Please wait for files to finish uploading.')
+      return
+    }
+
     setSaving(true)
     setError('')
 
@@ -100,10 +178,10 @@ function NewProofPageContent() {
 
       if (!profile) throw new Error('Profile not found')
 
-      // Create the proof item
       const { data: item, error: itemErr } = await supabase
         .from('proof_items')
         .insert({
+          id: itemId,
           profile_id: profile.id,
           pillar,
           title: title.trim(),
@@ -115,50 +193,25 @@ function NewProofPageContent() {
 
       if (itemErr) throw itemErr
 
-      // Upload evidence files
-      for (let i = 0; i < uploads.length; i++) {
-        const upload = uploads[i]
-        if (upload.status === 'done') continue
+      for (const u of uploads) {
+        if (u.status !== 'done' || !u.storageKey) continue
 
-        try {
-          setUploads(prev => prev.map((u, idx) =>
-            idx === i ? { ...u, status: 'compressing' } : u
-          ))
+        await supabase.from('evidence').insert({
+          proof_item_id: item.id,
+          type: u.type,
+          storage_key: u.storageKey,
+          bytes_original: u.bytesOriginal || u.file.size,
+          bytes_compressed: u.bytesCompressed || u.file.size,
+        })
+      }
 
-          const result = await uploadEvidence({
-            file: upload.file,
-            profileId: profile.id,
-            proofItemId: item.id,
-            onProgress: (stage, progress) => {
-              setUploads(prev => prev.map((u, idx) =>
-                idx === i ? { ...u, stage, progress, status: 'uploading' } : u
-              ))
-            },
-          })
-
-          // Record in DB
-          await supabase.from('evidence').insert({
-            proof_item_id: item.id,
-            type: result.type,
-            storage_key: result.storageKey,
-            bytes_original: result.bytesOriginal,
-            bytes_compressed: result.bytesCompressed,
-          })
-
-          setUploads(prev => prev.map((u, idx) =>
-            idx === i ? { ...u, status: 'done', storageKey: result.storageKey } : u
-          ))
-        } catch (uploadErr: any) {
-          setUploads(prev => prev.map((u, idx) =>
-            idx === i ? { ...u, status: 'error', stage: uploadErr.message } : u
-          ))
-        }
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([60, 40, 60])
       }
 
       router.push('/dashboard')
     } catch (err: any) {
-      setError(err.message)
-    } finally {
+      setError(err.message || 'An error occurred while creating your profile.')
       setSaving(false)
     }
   }
@@ -274,7 +327,6 @@ function NewProofPageContent() {
             type="file"
             accept="image/*,application/pdf,video/mp4,video/webm"
             multiple
-            capture="environment"
             className={styles.fileInput}
             onChange={handleFileSelect}
           />
@@ -284,10 +336,7 @@ function NewProofPageContent() {
               type="button"
               className="btn btn--outline btn--sm"
               onClick={() => {
-                if (fileInputRef.current) {
-                  fileInputRef.current.accept = 'image/*'
-                  fileInputRef.current.click()
-                }
+                setCameraModal({ type: 'img', active: true })
               }}
             >
               📷 Photo
@@ -298,6 +347,7 @@ function NewProofPageContent() {
               onClick={() => {
                 if (fileInputRef.current) {
                   fileInputRef.current.accept = 'application/pdf'
+                  fileInputRef.current.removeAttribute('capture')
                   fileInputRef.current.click()
                 }
               }}
@@ -308,10 +358,7 @@ function NewProofPageContent() {
               type="button"
               className="btn btn--outline btn--sm"
               onClick={() => {
-                if (fileInputRef.current) {
-                  fileInputRef.current.accept = 'video/*'
-                  fileInputRef.current.click()
-                }
+                setCameraModal({ type: 'vid', active: true })
               }}
             >
               🎥 Video
@@ -381,6 +428,81 @@ function NewProofPageContent() {
           </button>
         </div>
       </div>
+      {cameraModal.active && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(32, 40, 31, 0.4)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1100,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+          }}
+          onClick={() => setCameraModal(prev => ({ ...prev, active: false }))}
+        >
+          <div
+            style={{
+              background: 'var(--card)',
+              width: '100%',
+              maxWidth: '480px',
+              borderTopLeftRadius: '16px',
+              borderTopRightRadius: '16px',
+              padding: '24px',
+              boxShadow: '0 -4px 16px rgba(0,0,0,0.1)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 600, marginBottom: '16px', color: 'var(--ink)', textAlign: 'center' }}>
+              Add {cameraModal.type === 'img' ? 'Photo' : 'Video'}
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                type="button"
+                className="btn btn--brass btn--full"
+                style={{ justifyContent: 'center' }}
+                onClick={() => {
+                  if (fileInputRef.current) {
+                    fileInputRef.current.accept = cameraModal.type === 'img' ? 'image/*' : 'video/*'
+                    fileInputRef.current.setAttribute('capture', 'environment')
+                    fileInputRef.current.click()
+                  }
+                  setCameraModal(prev => ({ ...prev, active: false }))
+                }}
+              >
+                📷 Take a Photo
+              </button>
+
+              <button
+                type="button"
+                className="btn btn--outline btn--full"
+                style={{ justifyContent: 'center' }}
+                onClick={() => {
+                  if (fileInputRef.current) {
+                    fileInputRef.current.accept = cameraModal.type === 'img' ? 'image/*' : 'video/*'
+                    fileInputRef.current.removeAttribute('capture')
+                    fileInputRef.current.click()
+                  }
+                  setCameraModal(prev => ({ ...prev, active: false }))
+                }}
+              >
+                📁 Choose from Gallery / Files
+              </button>
+
+              <button
+                type="button"
+                className="btn btn--full"
+                style={{ background: 'none', border: 'none', color: 'var(--ink-muted)', marginTop: '6px', cursor: 'pointer' }}
+                onClick={() => setCameraModal(prev => ({ ...prev, active: false }))}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

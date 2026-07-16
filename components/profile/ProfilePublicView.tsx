@@ -256,11 +256,19 @@ export default function ProfilePublicView({ profile, handle }: Props) {
           <ProofSection
             pillar="did"
             heading="What I've done"
-            subtext="Tap any evidence tag to see what's behind the claim."
           >
-            <div className={styles.cardGrid}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '14px' }}>
               {byPillar.did.map(item => (
-                <WorkCard key={item.id} item={item} profileId={profile.id} />
+                <ProofIsland
+                  key={item.id}
+                  id={item.id}
+                  pillar="did"
+                  title={item.title}
+                  detail={item.detail}
+                  whenLabel={item.when_label}
+                  evidence={item.evidence}
+                  profileId={profile.id}
+                />
               ))}
             </div>
           </ProofSection>
@@ -269,9 +277,18 @@ export default function ProfilePublicView({ profile, handle }: Props) {
         {/* TRAINED section */}
         {byPillar.trained.length > 0 && (
           <ProofSection pillar="trained" heading="How I learned it">
-            <div className={styles.trainedList}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '14px' }}>
               {byPillar.trained.map(item => (
-                <TrainedRow key={item.id} item={item} profileId={profile.id} />
+                <ProofIsland
+                  key={item.id}
+                  id={item.id}
+                  pillar="trained"
+                  title={item.title}
+                  detail={item.detail}
+                  whenLabel={item.when_label}
+                  evidence={item.evidence}
+                  profileId={profile.id}
+                />
               ))}
             </div>
           </ProofSection>
@@ -280,9 +297,18 @@ export default function ProfilePublicView({ profile, handle }: Props) {
         {/* VOUCHED section */}
         {byPillar.vouched.length > 0 && (
           <ProofSection pillar="vouched" heading="Who'll speak for me">
-            <div className={styles.quoteGrid}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '14px' }}>
               {byPillar.vouched.map(item => (
-                <QuoteCard key={item.id} item={item} profileId={profile.id} />
+                <ProofIsland
+                  key={item.id}
+                  id={item.id}
+                  pillar="vouched"
+                  title={item.title}
+                  detail={item.detail}
+                  whenLabel={item.when_label}
+                  evidence={item.evidence}
+                  profileId={profile.id}
+                />
               ))}
             </div>
           </ProofSection>
@@ -291,16 +317,18 @@ export default function ProfilePublicView({ profile, handle }: Props) {
         {/* AIMING section */}
         {byPillar.aiming.length > 0 && (
           <ProofSection pillar="aiming" heading="What I'm looking for">
-            <div className={styles.aimBody}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '14px' }}>
               {byPillar.aiming.map(item => (
-                <div key={item.id}>
-                  <p className={styles.aimText}>{item.detail || item.title}</p>
-                  {item.title !== item.detail && (
-                    <div className={styles.chipRow}>
-                      <span className={styles.chip}>{item.title}</span>
-                    </div>
-                  )}
-                </div>
+                <ProofIsland
+                  key={item.id}
+                  id={item.id}
+                  pillar="aiming"
+                  title={item.title}
+                  detail={item.detail}
+                  whenLabel={item.when_label}
+                  evidence={item.evidence}
+                  profileId={profile.id}
+                />
               ))}
             </div>
           </ProofSection>
@@ -381,13 +409,21 @@ function ClaimSection({ text }: { text: string }) {
 }
 
 /* ---- Section wrapper ---- */
+const PILLAR_LABELS: Record<string, string> = {
+  did: 'did',
+  trained: 'trained',
+  vouched: 'recommended',
+  aiming: 'aiming',
+}
+
+/* ---- Section wrapper ---- */
 function ProofSection({ pillar, heading, subtext, children }: {
   pillar: string; heading: string; subtext?: string; children: React.ReactNode
 }) {
   return (
     <section className={styles.proofSection}>
       <div className={styles.sectionHead}>
-        <span className={`stamp stamp--${pillar}`}>{pillar}</span>
+        <span className={`stamp stamp--${pillar}`}>{PILLAR_LABELS[pillar] || pillar}</span>
         <h2 className={styles.sectionHeading}>{heading}</h2>
       </div>
       {subtext && <p className={styles.sectionSub}>{subtext}</p>}
@@ -396,209 +432,99 @@ function ProofSection({ pillar, heading, subtext, children }: {
   )
 }
 
-/* ---- Work card (did pillar) ---- */
-function WorkCard({ item, profileId }: { item: PublicProofItem; profileId: string }) {
-  const hasEvidence = (item.evidence?.length ?? 0) > 0
-
-  return (
-    <div className={styles.workCard}>
-      {/* Thumb — shows first image or gradient placeholder */}
-      <div className={styles.workThumb}>
-        {item.evidence?.[0]?.type === 'img' ? (
-          <img
-            src={getMediaUrl(item.evidence[0].storage_key)}
-            alt={item.evidence[0].caption || item.title}
-            className={styles.workThumbImg}
-          />
-        ) : null}
-      </div>
-      <div className={styles.workBody}>
-        <h3 className={styles.workTitle}>{item.title}</h3>
-        {item.detail && <p className={styles.workDetail}>{item.detail}</p>}
-        {hasEvidence && (
-          <EvidencePanel evidence={item.evidence!} proofItemId={item.id} profileId={profileId} />
-        )}
-      </div>
-    </div>
-  )
+interface ProofIslandProps {
+  id: string
+  pillar: string
+  title: string
+  detail?: string | null
+  whenLabel?: string | null
+  evidence?: PublicEvidence[] | null
+  profileId: string
 }
 
-/* ---- Trained row ---- */
-function TrainedRow({ item, profileId }: { item: PublicProofItem; profileId: string }) {
-  const hasEvidence = (item.evidence?.length ?? 0) > 0
+function ProofIsland({ id, pillar, title, detail, whenLabel, evidence, profileId }: ProofIslandProps) {
+  const hasEvidence = (evidence?.length ?? 0) > 0
+
+  const borderStyles: Record<string, React.CSSProperties> = {
+    did: { borderLeft: '4px solid var(--ink)' },
+    trained: { borderLeft: '4px solid var(--brass)' },
+    vouched: { borderLeft: '4px solid var(--verified)' },
+    aiming: { borderLeft: '4px solid var(--aim)' },
+  }
 
   return (
-    <div className={styles.trainedRow}>
-      <div className={styles.trainedTop}>
-        <div>
-          <h3 className={styles.trainedTitle}>{item.title}</h3>
-          {item.detail && <p className={styles.trainedDetail}>{item.detail}</p>}
+    <div className={styles.proofIsland} style={borderStyles[pillar]}>
+      <div className={styles.islandHeader}>
+        <div className={styles.islandTitleRow}>
+          <h3 className={styles.islandTitle}>
+            {pillar === 'vouched' ? <span className={styles.quoteMark}>“</span> : null}
+            {title}
+            {pillar === 'vouched' ? <span className={styles.quoteMark}>”</span> : null}
+          </h3>
+          {whenLabel && <span className={styles.islandWhen}>{whenLabel}</span>}
         </div>
-        {item.when_label && (
-          <span className={styles.whenLabel}>{item.when_label}</span>
+        {detail && (
+          <p className={pillar === 'vouched' ? styles.islandQuoteWho : styles.islandDetail}>
+            {pillar === 'vouched' ? `— ${detail}` : detail}
+          </p>
         )}
       </div>
-      {hasEvidence && <EvidencePanel evidence={item.evidence!} proofItemId={item.id} profileId={profileId} />}
-    </div>
-  )
-}
 
-/* ---- Quote card (vouched) ---- */
-function QuoteCard({ item, profileId }: { item: PublicProofItem; profileId: string }) {
-  const hasEvidence = (item.evidence?.length ?? 0) > 0
-
-  return (
-    <div className={styles.quoteCard}>
-      <p className={styles.quoteText}>{item.title}</p>
-      <p className={styles.quoteWho}>{item.detail}</p>
-      {hasEvidence && <EvidencePanel evidence={item.evidence!} proofItemId={item.id} profileId={profileId} />}
-    </div>
-  )
-}
-
-/* ---- Evidence panel ---- */
-function EvidencePanel({ evidence, proofItemId, profileId }: { evidence: PublicEvidence[]; proofItemId: string; profileId: string }) {
-  const [previewingEv, setPreviewingEv] = useState<PublicEvidence | null>(null)
-
-  return (
-    <>
-      <div className={styles.evidencePanelInline}>
-        {evidence.map(e => {
-          const isMedia = e.type === 'img' || e.type === 'vid'
-          const mediaUrl = getMediaUrl(e.storage_key)
-
-          if (isMedia) {
-            return (
-              <div
-                key={e.id}
-                className={styles.evMediaCard}
-                onClick={() => {
-                  setPreviewingEv(e)
-                  logAnalyticsEvent(profileId, 'evidence_tap', { proofItemId })
-                }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') { setPreviewingEv(e); logAnalyticsEvent(profileId, 'evidence_tap', { proofItemId }) } }}
-              >
-                {e.type === 'img' ? (
-                  <img src={mediaUrl} alt={e.caption || 'Evidence'} className={styles.evInlineImg} />
-                ) : (
-                  <div className={styles.evVideoContainer}>
-                    <video src={mediaUrl} className={styles.evInlineVideo} muted playsInline />
-                    <div className={styles.playOverlay}>▶</div>
-                  </div>
-                )}
-                {e.caption && <div className={styles.evInlineCaption}>{e.caption}</div>}
-              </div>
-            )
-          } else {
-            // PDF Document
-            return (
-              <div
-                key={e.id}
-                className={styles.evDocCard}
-                onClick={() => {
-                  setPreviewingEv(e)
-                  logAnalyticsEvent(profileId, 'evidence_tap', { proofItemId })
-                }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') { setPreviewingEv(e); logAnalyticsEvent(profileId, 'evidence_tap', { proofItemId }) } }}
-              >
-                <div className={styles.docIconWrap}>📄</div>
-                <div className={styles.docInfo}>
-                  <span className={styles.docLabel}>Document Proof (PDF)</span>
-                  <span className={styles.docName}>{e.caption || 'View Certificate / Document'}</span>
+      {hasEvidence && (
+        <div className={styles.islandEvidenceStack}>
+          {evidence!.map((e) => {
+            const mediaUrl = getMediaUrl(e.storage_key)
+            if (e.type === 'img') {
+              return (
+                <div key={e.id} className={styles.islandMediaWrap}>
+                  <img
+                    src={mediaUrl}
+                    alt={e.caption || 'Evidence Image'}
+                    className={styles.islandFullImg}
+                    loading="lazy"
+                  />
+                  {e.caption && <p className={styles.islandCaption}>{e.caption}</p>}
                 </div>
-                <span className={styles.docActionBadge}>View →</span>
-              </div>
-            )
-          }
-        })}
-      </div>
-
-      {previewingEv && (
-        <EvidencePreviewModal
-          evidence={previewingEv}
-          onClose={() => setPreviewingEv(null)}
-        />
-      )}
-    </>
-  )
-}
-
-function EvidencePreviewModal({ evidence, onClose }: { evidence: PublicEvidence; onClose: () => void }) {
-  const mediaUrl = getMediaUrl(evidence.storage_key)
-
-  return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-        <button className={styles.modalClose} onClick={onClose} aria-label="Close preview">
-          ✕
-        </button>
-        
-        <div className={styles.modalBody}>
-          {evidence.type === 'img' && (
-            <img src={mediaUrl} alt={evidence.caption || 'Evidence'} className={styles.modalImg} />
-          )}
-          {evidence.type === 'vid' && (
-            <video src={mediaUrl} controls autoPlay className={styles.modalVideo} />
-          )}
-          {evidence.type === 'pdf' && (
-            <div className={styles.pdfViewer}>
-              <iframe src={mediaUrl} className={styles.pdfIframe} title="PDF Preview" />
-              <div className={styles.pdfFallback}>
-                <p style={{ marginBottom: 12 }}>Previewing Document</p>
+              )
+            } else if (e.type === 'vid') {
+              return (
+                <div key={e.id} className={styles.islandMediaWrap}>
+                  <video
+                    src={mediaUrl}
+                    className={styles.islandFullVideo}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    controls
+                  />
+                  {e.caption && <p className={styles.islandCaption}>{e.caption}</p>}
+                </div>
+              )
+            } else {
+              // PDF/Doc
+              return (
                 <a
+                  key={e.id}
                   href={mediaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn btn--brass"
-                  style={{ display: 'inline-flex', padding: '8px 16px', fontSize: 13 }}
+                  className={styles.islandDocLink}
+                  onClick={() => logAnalyticsEvent(profileId, 'evidence_tap', { proofItemId: id })}
                 >
-                  Open PDF in new tab
+                  <span className={styles.islandDocIcon}>📄</span>
+                  <div className={styles.islandDocInfo}>
+                    <span className={styles.islandDocLabel}>Document Proof (PDF)</span>
+                    <span className={styles.islandDocName}>{e.caption || 'View Certificate / Document'}</span>
+                  </div>
+                  <span className={styles.islandDocAction}>Open Document →</span>
                 </a>
-              </div>
-            </div>
-          )}
+              )
+            }
+          })}
         </div>
-        
-        {evidence.caption && (
-          <div className={styles.modalCaption}>{evidence.caption}</div>
-        )}
-      </div>
+      )}
     </div>
-  )
-}
-
-function EvidenceIcon({ type, storageKey }: { type: string; storageKey: string }) {
-  if (type === 'img') {
-    return (
-      <img
-        src={getMediaUrl(storageKey)}
-        alt=""
-        className={styles.evThumb}
-      />
-    )
-  }
-  return (
-    <div className={`${styles.evIcon} ${styles[`evIcon--${type}`]}`}>
-      {type.toUpperCase()}
-    </div>
-  )
-}
-
-function PaperclipIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path
-        d="M13.5 6.5l-6 6a2.5 2.5 0 003.5 3.5l6-6a4.5 4.5 0 00-6.5-6.5l-6 6a6.5 6.5 0 009 9.5"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   )
 }
 

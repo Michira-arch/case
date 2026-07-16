@@ -144,7 +144,7 @@ export default function PwaManager({ profileId }: PwaManagerProps) {
             <div className={styles.iconCircle}>🔔</div>
             <h3 className={styles.promptTitle}>Enable Real-time Updates</h3>
             <p className={styles.promptText}>
-              Get instant push notifications when clients view your proof items, complete recommendation vouches, or look at your dossier.
+              Get instant push notifications when clients view your proof items, submit recommendations, or look at your dossier.
             </p>
             <div className={styles.actions}>
               <button

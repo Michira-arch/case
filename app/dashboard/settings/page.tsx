@@ -80,30 +80,40 @@ export default function SettingsPage() {
     load()
   }, [])
 
+  const triggerAutosave = async (updatedFields: any) => {
+    if (!profile) return
+
+    await supabase.from('profiles').update({
+      display_name:  updatedFields.display_name !== undefined ? updatedFields.display_name : displayName,
+      role_line:     updatedFields.role_line !== undefined ? updatedFields.role_line : roleLine,
+      tagline:       updatedFields.tagline !== undefined ? updatedFields.tagline : tagline,
+      category:      updatedFields.category !== undefined ? updatedFields.category : category,
+      location_area: updatedFields.location_area !== undefined ? updatedFields.location_area : locationArea,
+      avatar_url:    updatedFields.avatar_url !== undefined ? updatedFields.avatar_url : avatarUrl,
+      showcase_images: updatedFields.showcase_images !== undefined ? updatedFields.showcase_images : showcaseImages,
+      physical_attributes: {
+        height:      updatedFields.physical_attributes?.height !== undefined ? updatedFields.physical_attributes.height : height,
+        build:       updatedFields.physical_attributes?.build !== undefined ? updatedFields.physical_attributes.build : build,
+        bio:         updatedFields.physical_attributes?.bio !== undefined ? updatedFields.physical_attributes.bio : physicalBio,
+        photo_url:   updatedFields.physical_attributes?.photo_url !== undefined ? updatedFields.physical_attributes.photo_url : physicalPhotoUrl,
+      },
+      is_public:     updatedFields.is_public !== undefined ? updatedFields.is_public : isPublic,
+      discoverable:  updatedFields.discoverable !== undefined ? updatedFields.discoverable : discoverable,
+      contact_visibility: updatedFields.contact_visibility !== undefined ? updatedFields.contact_visibility : contactVisibility,
+      claim_text:    updatedFields.claim_text !== undefined ? updatedFields.claim_text : claimText,
+    }).eq('id', profile.id)
+
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(30)
+    }
+  }
+
   const handleSave = async () => {
     if (!profile) return
     setSaving(true)
     setSaved(false)
 
-    await supabase.from('profiles').update({
-      display_name:  displayName,
-      role_line:     roleLine,
-      tagline,
-      category,
-      location_area: locationArea,
-      avatar_url:    avatarUrl,
-      showcase_images: showcaseImages,
-      physical_attributes: {
-        height,
-        build,
-        bio: physicalBio,
-        photo_url: physicalPhotoUrl,
-      },
-      is_public:     isPublic,
-      discoverable,
-      contact_visibility: contactVisibility,
-      claim_text:    claimText,
-    }).eq('id', profile.id)
+    await triggerAutosave({})
 
     setSaving(false)
     setSaved(true)
@@ -118,6 +128,7 @@ export default function SettingsPage() {
     try {
       const storageKey = await uploadAvatar(file, profile.id)
       setAvatarUrl(storageKey)
+      await triggerAutosave({ avatar_url: storageKey })
     } catch (err: any) {
       alert(`Upload failed: ${err.message}`)
     } finally {
@@ -125,8 +136,9 @@ export default function SettingsPage() {
     }
   }
 
-  const handleRemoveAvatar = () => {
+  const handleRemoveAvatar = async () => {
     setAvatarUrl('')
+    await triggerAutosave({ avatar_url: '' })
   }
 
   const handlePhysicalPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,6 +149,14 @@ export default function SettingsPage() {
     try {
       const storageKey = await uploadAvatar(file, profile.id)
       setPhysicalPhotoUrl(storageKey)
+      await triggerAutosave({
+        physical_attributes: {
+          height,
+          build,
+          bio: physicalBio,
+          photo_url: storageKey
+        }
+      })
     } catch (err: any) {
       alert(`Upload failed: ${err.message}`)
     } finally {
@@ -144,8 +164,16 @@ export default function SettingsPage() {
     }
   }
 
-  const handleRemovePhysicalPhoto = () => {
+  const handleRemovePhysicalPhoto = async () => {
     setPhysicalPhotoUrl('')
+    await triggerAutosave({
+      physical_attributes: {
+        height,
+        build,
+        bio: physicalBio,
+        photo_url: ''
+      }
+    })
   }
 
   const isPlus = subscription?.plan === 'plus'
@@ -170,7 +198,9 @@ export default function SettingsPage() {
         const storageKey = await uploadAvatar(file, profile.id)
         uploadedKeys.push(storageKey)
       }
-      setShowcaseImages(prev => [...prev, ...uploadedKeys])
+      const newShowcase = [...showcaseImages, ...uploadedKeys]
+      setShowcaseImages(newShowcase)
+      await triggerAutosave({ showcase_images: newShowcase })
     } catch (err: any) {
       alert(`Upload failed: ${err.message}`)
     } finally {
@@ -178,8 +208,10 @@ export default function SettingsPage() {
     }
   }
 
-  const handleRemoveShowcase = (index: number) => {
-    setShowcaseImages(prev => prev.filter((_, i) => i !== index))
+  const handleRemoveShowcase = async (index: number) => {
+    const newShowcase = showcaseImages.filter((_, i) => i !== index)
+    setShowcaseImages(newShowcase)
+    await triggerAutosave({ showcase_images: newShowcase })
   }
 
   const handleSignOut = async () => {
@@ -281,15 +313,15 @@ export default function SettingsPage() {
 
           <div className="field">
             <label className="label">Display name</label>
-            <input type="text" className="input" value={displayName} onChange={e => setDisplayName(e.target.value)} />
+            <input type="text" className="input" value={displayName} onChange={e => setDisplayName(e.target.value)} onBlur={() => triggerAutosave({ display_name: displayName })} />
           </div>
           <div className="field">
             <label className="label">Role / tagline line <span className={styles.optional}>(optional)</span></label>
-            <input type="text" className="input" placeholder="Freelance hairstylist & braider · Nairobi" value={roleLine} onChange={e => setRoleLine(e.target.value)} />
+            <input type="text" className="input" placeholder="Chef & Event Caterer · Nairobi" value={roleLine} onChange={e => setRoleLine(e.target.value)} onBlur={() => triggerAutosave({ role_line: roleLine })} />
           </div>
           <div className="field">
             <label className="label">Bio <span className={styles.optional}>(optional)</span></label>
-            <textarea className="input textarea" placeholder="A short intro paragraph…" value={tagline} onChange={e => setTagline(e.target.value)} rows={3} />
+            <textarea className="input textarea" placeholder="A short intro paragraph…" value={tagline} onChange={e => setTagline(e.target.value)} onBlur={() => triggerAutosave({ tagline })} rows={3} />
           </div>
           <div className="field">
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
@@ -300,9 +332,10 @@ export default function SettingsPage() {
             </div>
             <textarea
               className="input textarea"
-              placeholder="I've been doing natural hair care in Nairobi for 5 years. I specialise in protective styles that actually protect. Everything below proves it."
+              placeholder="I've been catering events and weddings in Nairobi for 5 years. I specialize in custom menus and premium food presentation. Everything below proves it."
               value={claimText}
               onChange={e => setClaimText(e.target.value.slice(0, 500))}
+              onBlur={() => triggerAutosave({ claim_text: claimText })}
               rows={4}
             />
             <p className={styles.hint} style={{ marginTop: 4, fontSize: 12.5, color: 'var(--ink-soft)' }}>
@@ -311,11 +344,11 @@ export default function SettingsPage() {
           </div>
           <div className="field">
             <label className="label">Category <span className={styles.optional}>(for Case Search)</span></label>
-            <input type="text" className="input" placeholder="hairstylist · electrician · nurse" value={category} onChange={e => setCategory(e.target.value)} />
+            <input type="text" className="input" placeholder="caterer · electrician · nurse" value={category} onChange={e => setCategory(e.target.value)} onBlur={() => triggerAutosave({ category })} />
           </div>
           <div className="field">
             <label className="label">Location area</label>
-            <input type="text" className="input" placeholder="Westlands, Nairobi" value={locationArea} onChange={e => setLocationArea(e.target.value)} />
+            <input type="text" className="input" placeholder="Westlands, Nairobi" value={locationArea} onChange={e => setLocationArea(e.target.value)} onBlur={() => triggerAutosave({ location_area: locationArea })} />
             <p style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 4 }}>
               💡 Use your neighbourhood or area — not your home address. This is publicly visible.
             </p>
@@ -330,17 +363,17 @@ export default function SettingsPage() {
 
           <div className="field">
             <label className="label">Height</label>
-            <input type="text" className="input" placeholder="e.g. 5'11 / 180cm" value={height} onChange={e => setHeight(e.target.value)} />
+            <input type="text" className="input" placeholder="e.g. 5'11 / 180cm" value={height} onChange={e => setHeight(e.target.value)} onBlur={() => triggerAutosave({ physical_attributes: { height, build, bio: physicalBio, photo_url: physicalPhotoUrl } })} />
           </div>
 
           <div className="field">
             <label className="label">Build</label>
-            <input type="text" className="input" placeholder="e.g. Athletic / Medium" value={build} onChange={e => setBuild(e.target.value)} />
+            <input type="text" className="input" placeholder="e.g. Athletic / Medium" value={build} onChange={e => setBuild(e.target.value)} onBlur={() => triggerAutosave({ physical_attributes: { height, build, bio: physicalBio, photo_url: physicalPhotoUrl } })} />
           </div>
 
           <div className="field">
             <label className="label">Physical Bio / Appearance details</label>
-            <textarea className="input textarea" placeholder="Add any details about hair, scars, tattoos, or other features of your choice…" value={physicalBio} onChange={e => setPhysicalBio(e.target.value)} rows={3} />
+            <textarea className="input textarea" placeholder="Add any details about hair, scars, tattoos, or other features of your choice…" value={physicalBio} onChange={e => setPhysicalBio(e.target.value)} onBlur={() => triggerAutosave({ physical_attributes: { height, build, bio: physicalBio, photo_url: physicalPhotoUrl } })} rows={3} />
           </div>
 
           <div className={styles.avatarUploadField} style={{ marginTop: 16 }}>
@@ -419,28 +452,44 @@ export default function SettingsPage() {
             label="Show location area"
             desc="Shows your neighbourhood (e.g. Westlands, Nairobi). Never add a home address to the location field."
             checked={contactVisibility.location ?? true}
-            onChange={v => setContactVisibility(prev => ({ ...prev, location: v }))}
+            onChange={v => {
+              const next = { ...contactVisibility, location: v }
+              setContactVisibility(next)
+              triggerAutosave({ contact_visibility: next })
+            }}
           />
           <Toggle
             id="cv_whatsapp"
             label="Show WhatsApp link"
             desc="Lets visitors message you directly on WhatsApp."
             checked={contactVisibility.whatsapp ?? true}
-            onChange={v => setContactVisibility(prev => ({ ...prev, whatsapp: v }))}
+            onChange={v => {
+              const next = { ...contactVisibility, whatsapp: v }
+              setContactVisibility(next)
+              triggerAutosave({ contact_visibility: next })
+            }}
           />
           <Toggle
             id="cv_email"
             label="Show email address"
             desc="Your email address will be visible to anyone who visits your profile."
             checked={contactVisibility.email ?? true}
-            onChange={v => setContactVisibility(prev => ({ ...prev, email: v }))}
+            onChange={v => {
+              const next = { ...contactVisibility, email: v }
+              setContactVisibility(next)
+              triggerAutosave({ contact_visibility: next })
+            }}
           />
           <Toggle
             id="cv_phone"
             label="Show phone number"
             desc="Your phone number will be visible to anyone who visits your profile."
             checked={contactVisibility.phone ?? true}
-            onChange={v => setContactVisibility(prev => ({ ...prev, phone: v }))}
+            onChange={v => {
+              const next = { ...contactVisibility, phone: v }
+              setContactVisibility(next)
+              triggerAutosave({ contact_visibility: next })
+            }}
           />
         </section>
 
@@ -452,7 +501,10 @@ export default function SettingsPage() {
             label="Public profile"
             desc="When off, your Case URL shows a 'not found' page to visitors. Your data isn't deleted."
             checked={isPublic}
-            onChange={setIsPublic}
+            onChange={v => {
+              setIsPublic(v)
+              triggerAutosave({ is_public: v })
+            }}
           />
 
           <Toggle
@@ -460,7 +512,10 @@ export default function SettingsPage() {
             label="Appear in Case Search"
             desc="When off, you won't appear in the Case Search directory. You can still share your link."
             checked={discoverable}
-            onChange={setDiscoverable}
+            onChange={v => {
+              setDiscoverable(v)
+              triggerAutosave({ discoverable: v })
+            }}
           />
         </section>
 

@@ -61,6 +61,16 @@ export default function DashboardClient({
 
   const [showGuide, setShowGuide] = useState(false)
   const [showCardModal, setShowCardModal] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('welcome') === 'true') {
+      setShowWelcome(true)
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+  }, [])
+
   const isGuideMode = showGuide && items.length === 0
   const displayItems = isGuideMode 
     ? applyFreeTierDisplay(GUIDE_PROOF_ITEMS, plan)
@@ -193,39 +203,45 @@ export default function DashboardClient({
         </div>
       </div>
 
-      {/* Case File Integrity / Verification Status Dossier Panel */}
-      <div className={styles.dossierBadge}>
-        <div className={styles.dossierRow}>
-          <div>
-            <span className={styles.dossierLabel}>CASE FILE STATUS</span>
-            <span className={`${styles.dossierValue} ${score === 100 ? styles.dossierValueVerified : ''}`}>
-              {score === 100 ? '✓ FULLY AUTHENTICATED' : '⚙ INTEGRITY BUILD PENDING'}
-            </span>
-          </div>
-          <div>
-            <span className={styles.dossierLabel}>DOSSIER FILE NUMBER</span>
-            <span className={styles.dossierValue}>CASE-2026-NBO-{profile.handle.toUpperCase()}</span>
-          </div>
-          <div>
-            <span className={styles.dossierLabel}>AUTHENTICITY METHOD</span>
-            <span className={styles.dossierValue}>SECURE OTP-VERIFIED</span>
-          </div>
-        </div>
-        <div className={styles.dossierSecurityLine}>
-          <span>RLS Protection: ACTIVE</span>
-          <span>·</span>
-          <span>Database Integrity: ENFORCED</span>
-          <span>·</span>
-          <span>Identity Binding: SECURE</span>
-        </div>
-      </div>
+
 
       {/* Completeness bar */}
       <div className={styles.completeness}>
         <TrustQuest score={score} plan={plan as 'free' | 'plus'} />
         <div className={styles.completenessTop}>
           <span>Dossier Completion Index: <b>{score}%</b></span>
-          <span className={styles.tip}>{tip}</span>
+          {(() => {
+            const getTipDrawer = (txt: string): 'avatar' | 'claim' | 'basics' | null => {
+              if (txt.includes('photo') || txt.includes('avatar')) return 'avatar'
+              if (txt.includes('claim')) return 'claim'
+              if (txt.includes('tagline') || txt.includes('basics')) return 'basics'
+              return null
+            }
+            const drawer = getTipDrawer(tip)
+            if (drawer) {
+              return (
+                <button
+                  onClick={() => setActiveDrawer(drawer)}
+                  className={styles.tipBtn}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    color: 'var(--brass)',
+                    cursor: 'pointer',
+                    fontSize: '12.5px',
+                    fontWeight: 500,
+                    textDecoration: 'underline',
+                    textAlign: 'right',
+                  }}
+                  title="Click to edit"
+                >
+                  💡 {tip}
+                </button>
+              )
+            }
+            return <span className={styles.tip}>{tip}</span>
+          })()}
         </div>
         <div className="progress-track">
           <div className="progress-fill" style={{ width: `${score}%` }} />
@@ -453,6 +469,133 @@ export default function DashboardClient({
       </div>
       {showCardModal && (
         <BusinessCardModal profile={profile} onClose={() => setShowCardModal(false)} />
+      )}
+      {showWelcome && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(32, 40, 31, 0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+          }}
+          onClick={() => setShowWelcome(false)}
+        >
+          <div
+            style={{
+              background: 'var(--card)',
+              border: '1px solid var(--line)',
+              borderRadius: 'var(--radius-xl)',
+              maxWidth: '520px',
+              width: '100%',
+              boxShadow: 'var(--shadow-xl)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '24px',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <span style={{ fontSize: '32px' }}>🎉</span>
+              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '22px', fontWeight: 600, color: 'var(--ink)', marginTop: '8px' }}>
+                Welcome to Case!
+              </h3>
+              <p style={{ fontSize: '14px', color: 'var(--ink-soft)', marginTop: '6px', lineHeight: 1.4 }}>
+                Look! We made you a business card. Just your profile picture missing in it.
+              </p>
+            </div>
+
+            {/* Simple Business Card Preview */}
+            <div
+              style={{
+                background: '#FCFBF9',
+                border: '1.5px solid #DCD5C2',
+                borderRadius: '8px',
+                padding: '20px',
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '24px',
+                textAlign: 'left',
+              }}
+            >
+              <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '4px', backgroundColor: 'var(--brass)' }} />
+              
+              <div style={{ width: '60%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      background: 'var(--brass-bg)',
+                      color: 'var(--brass-deep)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      fontFamily: 'var(--font-serif)',
+                      border: '1px solid #DCD5C2',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {initials}
+                  </div>
+                  <div>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: '12px', color: 'var(--brass)' }}>CASE</span>
+                    <span style={{ display: 'block', fontSize: '7px', color: 'var(--ink-muted)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Verified Dossier</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 700, color: 'var(--ink)', margin: 0 }}>
+                    {profile.display_name}
+                  </h4>
+                  <p style={{ fontSize: '10px', fontWeight: 500, color: 'var(--ink-soft)', margin: '2px 0 0' }}>
+                    {profile.role_line || 'Professional'}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ width: '35%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', borderLeft: '1px dashed #DCD5C2', paddingLeft: '12px' }}>
+                <span style={{ background: 'var(--ink)', color: 'var(--paper-light)', fontSize: '7px', fontWeight: 700, padding: '2px 5px', borderRadius: '3px', fontFamily: 'var(--font-mono)' }}>
+                  @{profile.handle}
+                </span>
+                
+                <div style={{ background: '#fff', padding: '3px', borderRadius: '4px', border: '1px solid #DCD5C2' }}>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(profileUrl)}`}
+                    alt="QR Code"
+                    style={{ width: '48px', height: '48px', display: 'block' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'stretch' }}>
+              <button
+                className="btn btn--brass btn--full"
+                onClick={() => {
+                  setShowWelcome(false)
+                  setActiveDrawer('avatar')
+                }}
+              >
+                + Add photo
+              </button>
+              <button
+                className="btn btn--outline btn--full"
+                onClick={() => setShowWelcome(false)}
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {activeDrawer && localProfile && (
         <QuickActionDrawer

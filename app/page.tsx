@@ -57,7 +57,7 @@ export default function LandingPage() {
 
       {/* Social proof bar */}
       <div className={styles.proofBar}>
-        <p className={styles.proofBarText}>Used by hairstylists, nurses, electricians, tailors, and job seekers across Nairobi</p>
+        <p className={styles.proofBarText}>Used by caterers, nurses, electricians, tailors, and job seekers across Nairobi</p>
       </div>
 
       {/* Features */}
@@ -94,9 +94,9 @@ export default function LandingPage() {
           <h2 className={styles.sectionTitle}>Built for real work</h2>
           <div className={styles.personasGrid}>
             <PersonaCard
-              emoji="✂️"
+              emoji="🛠️"
               title="Service providers"
-              desc="Hairstylists, electricians, mechanics, tailors — prove your bookings, show your work, get repeat clients."
+              desc="Caterers, electricians, plumbers, tailors — prove your bookings, show your work, get repeat clients."
             />
             <PersonaCard
               emoji="🏥"
@@ -123,10 +123,10 @@ export default function LandingPage() {
             <ExampleCard
               handle="a.njoroge"
               name="Aisha Njoroge"
-              role="Freelance Braider & Stylist"
+              role="Chef & Event Caterer"
               avatar="AN"
-              emoji="✂️"
-              snippet="Has 4 vouches and 5 pieces of photo evidence showing client braids."
+              emoji="🍳"
+              snippet="Has 4 recommendations and 5 pieces of photo evidence showing client dishes."
             />
             <ExampleCard
               handle="m.obwaka"
@@ -139,10 +139,10 @@ export default function LandingPage() {
             <ExampleCard
               handle="j.kimani"
               name="Joy Kimani"
-              role="Junior Web Developer"
+              role="Digital Marketing Specialist"
               avatar="JK"
-              emoji="💻"
-              snippet="Features GitHub screenshots, portfolio links, and supervisor references."
+              emoji="📈"
+              snippet="Features campaign screenshots, analytics links, and supervisor recommendations."
             />
           </div>
         </div>

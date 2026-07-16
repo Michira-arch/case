@@ -19,30 +19,30 @@ interface ChatMessage {
 const PERSONA_DATA = {
   service: {
     label: 'Service provider',
-    emoji: '✂️',
-    desc: 'Hairstylist, electrician, mechanic, tailor, cook — you book clients and do the work.',
-    didPrompt: "What is one thing you are most proud of that you did recently? e.g. a recent job or project you completed.",
-    trainedPrompt: 'Where or how did you learn your trade or gain your qualifications?',
+    emoji: '🔌',
+    desc: 'Electrician, mechanic, tailor, cook, plumber — you book clients and do the work.',
+    didPrompt: "Give us a glimpse of what you can do: What is a moment at work that made you feel proud? How did your work help a client, customer, or team?",
+    trainedPrompt: "Excellent. Tell us the story behind your skills. Are you self-taught, formally educated, or did you learn by working with others?",
     placeholderDid: "e.g. Rewired a 3-bedroom home's electrical",
     placeholderTrained: "e.g. 2-year apprenticeship under James Mwenda",
   },
   professional: {
     label: 'Credentialed professional',
     emoji: '🏥',
-    desc: 'Nurse, accountant, engineer, lawyer — your credentials matter and need to be visible.',
-    didPrompt: "What is one thing you are most proud of that you did recently? e.g. your most important recent role or responsibility.",
-    trainedPrompt: "What is your most important credential, degree, or qualification?",
-    placeholderDid: "e.g. Led implementation of nursing care plans in ICU",
+    desc: 'Nurse, accountant, administrator, project manager — your credentials matter and need to be visible.',
+    didPrompt: "Give us a glimpse of what you can do: What is a moment at work that made you feel proud? How did your work help a client, customer, or team?",
+    trainedPrompt: "Excellent. Tell us the story behind your skills. Are you self-taught, formally educated, or did you learn by working with others?",
+    placeholderDid: "e.g. Directed launch of a new regional retail store branch layout",
     placeholderTrained: "e.g. B.Sc. in Nursing, University of Nairobi",
   },
   jobseeker: {
     label: 'Job seeker',
     emoji: '📋',
     desc: "Looking for employment — you want a recruiter or employer to see exactly what you've done.",
-    didPrompt: "What is one thing you are most proud of that you did recently? e.g. the most impressive thing you did at work.",
-    trainedPrompt: "What is your highest qualification or most relevant training?",
-    placeholderDid: "e.g. Optimized database queries reducing load times by 40%",
-    placeholderTrained: "e.g. Certified Scrum Master & AWS Practitioner",
+    didPrompt: "Give us a glimpse of what you can do: What is a moment at work that made you feel proud? How did your work help a client, customer, or team?",
+    trainedPrompt: "Excellent. Tell us the story behind your skills. Are you self-taught, formally educated, or did you learn by working with others?",
+    placeholderDid: "e.g. Managed team of 4 customer support agents to hit 98% satisfaction",
+    placeholderTrained: "e.g. Google Digital Marketing Certification",
   },
 }
 
@@ -281,10 +281,10 @@ function OnboardingPageContent() {
             sender: 'genie',
             text: `Perfect! Next up, let's write a quick headline or tagline. What is your current role or what do you offer? (e.g. "${
               persona === 'service'
-                ? 'Freelance hairstylist & braider · Nairobi'
+                ? 'Chef & Event Caterer · Nairobi'
                 : persona === 'professional'
                 ? 'ICU Nurse Practitioner · Aga Khan'
-                : 'Software engineer seeking frontend roles'
+                : 'Digital Marketer seeking project manager roles'
             }")`
           }
         ]
@@ -659,10 +659,10 @@ function OnboardingPageContent() {
                   className={styles.textInput}
                   placeholder={
                     persona === 'service'
-                      ? 'e.g. Freelance hairstylist & braider · Nairobi'
+                      ? 'e.g. Chef & Event Caterer · Nairobi'
                       : persona === 'professional'
                       ? 'e.g. Accountant & Auditor'
-                      : 'e.g. Web Developer searching for full-time work'
+                      : 'e.g. Digital Marketer searching for full-time work'
                   }
                   value={roleLine}
                   onChange={(e) => setRoleLine(e.target.value)}

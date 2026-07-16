@@ -476,7 +476,7 @@ export default function QuickActionDrawer({
                     className={styles.input}
                     value={proofTitle}
                     onChange={e => setProofTitle(e.target.value)}
-                    placeholder="e.g., Completed haircut for client, Certified JavaScript Developer"
+                    placeholder="e.g., Catered corporate event, Certified First Aid Provider"
                     required
                   />
                 </div>
@@ -493,7 +493,7 @@ export default function QuickActionDrawer({
                   >
                     <option value="did">Work I completed (did)</option>
                     <option value="trained">Training or certificate (trained)</option>
-                    <option value="vouched">Vouch-based proof (vouched)</option>
+                    <option value="vouched">Recommendation (recommended)</option>
                     <option value="aiming">Future goal (aiming)</option>
                   </select>
                 </div>
