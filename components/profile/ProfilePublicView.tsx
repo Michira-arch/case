@@ -58,7 +58,7 @@ export default function ProfilePublicView({ profile, handle }: Props) {
     const socials = profile.socials || []
     const phone = socials.find(s => s.platform.toLowerCase() === 'phone')?.url.replace('tel:', '') || ''
     const whatsapp = socials.find(s => s.platform.toLowerCase() === 'whatsapp')?.url.replace('https://wa.me/', '') || ''
-    const email = socials.find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') || ''
+    const email = socials.find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') || profile.email || ''
 
     const list = []
     if (phone) {
@@ -73,8 +73,8 @@ export default function ProfilePublicView({ profile, handle }: Props) {
       list.push({ label: '✉️', val: email })
     }
 
-    if (list.length === 0) {
-      list.push({ label: '✉️', val: email || `${handle}@caseshow.info` })
+    if (list.length === 0 && email) {
+      list.push({ label: '✉️', val: email })
     }
 
     return list

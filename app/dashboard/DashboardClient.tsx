@@ -94,7 +94,7 @@ export default function DashboardClient({
     const socials = localProfile?.socials || []
     const phone = socials.find(s => s.platform.toLowerCase() === 'phone')?.url.replace('tel:', '') || ''
     const whatsapp = socials.find(s => s.platform.toLowerCase() === 'whatsapp')?.url.replace('https://wa.me/', '') || ''
-    const email = socials.find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') || ''
+    const email = socials.find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') || user?.email || ''
 
     const list = []
     if (phone) {
@@ -109,8 +109,8 @@ export default function DashboardClient({
       list.push({ label: '✉️', val: email })
     }
 
-    if (list.length === 0) {
-      list.push({ label: '✉️', val: email || `${localProfile?.handle}@caseshow.info` })
+    if (list.length === 0 && email) {
+      list.push({ label: '✉️', val: email })
     }
 
     return list
@@ -494,7 +494,7 @@ export default function DashboardClient({
         </div>
       </div>
       {showCardModal && (
-        <BusinessCardModal profile={profile} onClose={() => setShowCardModal(false)} />
+        <BusinessCardModal profile={profile} userEmail={user?.email} onClose={() => setShowCardModal(false)} />
       )}
       {showWelcome && (
         <div

@@ -130,6 +130,7 @@ export interface PublicProfile {
   tagline: string | null
   claim_text: string | null
   avatar_url: string | null
+  email?: string | null
   socials: SocialLink[]
   category: string | null
   tags: string[]

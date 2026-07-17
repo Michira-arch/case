@@ -297,6 +297,7 @@ as $$
 declare
   v_profile  public.profiles%rowtype;
   v_sub      public.subscriptions%rowtype;
+  v_email    text;
   result     jsonb;
 begin
   select * into v_profile
@@ -312,6 +313,10 @@ begin
   from public.subscriptions
   where profile_id = v_profile.id;
 
+  select email into v_email
+  from auth.users
+  where id = v_profile.owner_id;
+
   select jsonb_build_object(
     'id',           v_profile.id,
     'handle',       v_profile.handle,
@@ -320,6 +325,7 @@ begin
     'role_line',    v_profile.role_line,
     'tagline',      v_profile.tagline,
     'avatar_url',   v_profile.avatar_url,
+    'email',        v_email,
     'showcase_images', v_profile.showcase_images,
     'physical_attributes', v_profile.physical_attributes,
     'socials',      v_profile.socials,

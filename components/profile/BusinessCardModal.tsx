@@ -9,10 +9,11 @@ import styles from './BusinessCardModal.module.css'
 
 interface BusinessCardModalProps {
   profile: Profile
+  userEmail?: string
   onClose: () => void
 }
 
-export default function BusinessCardModal({ profile, onClose }: BusinessCardModalProps) {
+export default function BusinessCardModal({ profile, userEmail, onClose }: BusinessCardModalProps) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [downloading, setDownloading] = useState(false)
 
@@ -27,7 +28,7 @@ export default function BusinessCardModal({ profile, onClose }: BusinessCardModa
     const socials = profile.socials || []
     const phone = socials.find(s => s.platform.toLowerCase() === 'phone')?.url.replace('tel:', '') || ''
     const whatsapp = socials.find(s => s.platform.toLowerCase() === 'whatsapp')?.url.replace('https://wa.me/', '') || ''
-    const email = socials.find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') || ''
+    const email = socials.find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') || userEmail || ''
 
     const list = []
     if (phone) {
@@ -42,8 +43,8 @@ export default function BusinessCardModal({ profile, onClose }: BusinessCardModa
       list.push({ label: '✉️', val: email })
     }
 
-    if (list.length === 0) {
-      list.push({ label: '✉️', val: email || `${profile.handle}@caseshow.info` })
+    if (list.length === 0 && email) {
+      list.push({ label: '✉️', val: email })
     }
 
     return list
