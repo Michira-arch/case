@@ -1,8 +1,7 @@
 /**
  * Purchasing Power Parity (PPP) Pricing module
  * Kenyan Shilling (KES) is the baseline currency.
- * Max price in high economic zones is 20 USD.
- * Minimum price is local equivalent of 100 KES.
+ * Minimum price is local equivalent of 100 KES (except for manually annealed KE pricing).
  */
 
 export interface PricingConfig {
@@ -10,11 +9,8 @@ export interface PricingConfig {
   currency: string
   symbol: string
   exchangeRateToKes: number // Multiply local currency by this to get KES
-  // Base prices in local currency before rounding and discount
   base12mLocal: number
   base6mLocal: number
-  discountUnit: number      // E.g., 1 unit of local currency
-  roundTo: number           // Round to nearest X units (e.g. 10, 100, 1000)
 }
 
 export const PPP_CONFIGS: Record<string, PricingConfig> = {
@@ -23,100 +19,80 @@ export const PPP_CONFIGS: Record<string, PricingConfig> = {
     currency: 'KES',
     symbol: 'KES',
     exchangeRateToKes: 1.0,
-    base12mLocal: 100,
-    base6mLocal: 70,
-    discountUnit: 1,
-    roundTo: 10,
+    base12mLocal: 100, // Manually annealed sweet spot
+    base6mLocal: 70,   // Manually annealed sweet spot
   },
   US: {
     countryCode: 'US',
     currency: 'USD',
     symbol: '$',
     exchangeRateToKes: 130.0,
-    base12mLocal: 20.0,
-    base6mLocal: 10.0,
-    discountUnit: 1,
-    roundTo: 1,
+    base12mLocal: 19.99,
+    base6mLocal: 10.99,
   },
   GB: {
     countryCode: 'GB',
     currency: 'GBP',
     symbol: '£',
     exchangeRateToKes: 165.0,
-    base12mLocal: 16.0,
-    base6mLocal: 8.0,
-    discountUnit: 1,
-    roundTo: 1,
+    base12mLocal: 15.99,
+    base6mLocal: 8.99,
   },
   EU: {
     countryCode: 'EU',
     currency: 'EUR',
     symbol: '€',
     exchangeRateToKes: 140.0,
-    base12mLocal: 18.0,
-    base6mLocal: 9.0,
-    discountUnit: 1,
-    roundTo: 1,
+    base12mLocal: 17.99,
+    base6mLocal: 9.99,
   },
   IN: {
     countryCode: 'IN',
     currency: 'INR',
     symbol: '₹',
     exchangeRateToKes: 1.55,
-    base12mLocal: 500,
-    base6mLocal: 250,
-    discountUnit: 1,
-    roundTo: 10,
+    base12mLocal: 499,
+    base6mLocal: 299,
   },
   NG: {
     countryCode: 'NG',
     currency: 'NGN',
     symbol: '₦',
     exchangeRateToKes: 0.09,
-    base12mLocal: 8000,
-    base6mLocal: 4000,
-    discountUnit: 1,
-    roundTo: 100,
+    base12mLocal: 7999,
+    base6mLocal: 4499,
   },
   ZA: {
     countryCode: 'ZA',
     currency: 'ZAR',
     symbol: 'R',
     exchangeRateToKes: 7.0,
-    base12mLocal: 150,
-    base6mLocal: 80,
-    discountUnit: 1,
-    roundTo: 5,
+    base12mLocal: 149,
+    base6mLocal: 89,
   },
   UG: {
     countryCode: 'UG',
     currency: 'UGX',
     symbol: 'USh',
     exchangeRateToKes: 0.035,
-    base12mLocal: 3000,
-    base6mLocal: 2000,
-    discountUnit: 1,
-    roundTo: 100,
+    base12mLocal: 3999,  // above 100 KES baseline floor
+    base6mLocal: 2999,   // above 100 KES baseline floor
   },
   TZ: {
     countryCode: 'TZ',
     currency: 'TZS',
     symbol: 'TSh',
     exchangeRateToKes: 0.05,
-    base12mLocal: 2000,
-    base6mLocal: 1400,
-    discountUnit: 1,
-    roundTo: 100,
+    base12mLocal: 2999,  // above 100 KES baseline floor
+    base6mLocal: 1999,   // above 100 KES baseline floor
   },
   GH: {
     countryCode: 'GH',
     currency: 'GHS',
     symbol: 'GH₵',
     exchangeRateToKes: 10.0,
-    base12mLocal: 80,
-    base6mLocal: 40,
-    discountUnit: 1,
-    roundTo: 5,
+    base12mLocal: 79,
+    base6mLocal: 49,
   },
 }
 
@@ -162,31 +138,16 @@ export function calculatePPPPricedPlan(
   countryCode: string
 ): CalculatedPrice {
   const config = PPP_CONFIGS[countryCode] || PPP_CONFIGS.US // Fallback to US/Global
-  const rawLocal = planPeriod === '12m' ? config.base12mLocal : config.base6mLocal
+  const amountLocal = planPeriod === '12m' ? config.base12mLocal : config.base6mLocal
 
-  // Floor requirement: Lowest price is local equivalent of 100 shillings
-  const floorLocalRaw = 100.0 / config.exchangeRateToKes
-  // Round the floor value up based on country roundTo configuration
-  const floorLocal = Math.ceil(floorLocalRaw / config.roundTo) * config.roundTo
-
-  let localPrice = rawLocal
-  if (localPrice < floorLocal) {
-    localPrice = floorLocal
-  }
-
-  // Round off to look nice
-  const roundedLocal = Math.round(localPrice / config.roundTo) * config.roundTo
-  // Discount to end in ..9 something
-  const discountedLocal = roundedLocal - config.discountUnit
-
-  // Compute final KES value to be passed to payment gateway (since it accepts KES)
-  const finalKes = discountedLocal * config.exchangeRateToKes
+  // Final KES value to be passed to payment gateway (since it accepts KES)
+  const finalKes = amountLocal * config.exchangeRateToKes
 
   return {
-    amountLocal: discountedLocal,
+    amountLocal,
     amountKes: Math.round(finalKes),
     currency: config.currency,
     symbol: config.symbol,
-    formattedLocal: `${config.symbol} ${discountedLocal.toLocaleString()}`,
+    formattedLocal: `${config.symbol} ${amountLocal.toLocaleString()}`,
   }
 }
