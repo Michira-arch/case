@@ -59,3 +59,35 @@ export async function logAnalyticsEvent(
     console.warn('Firebase logEvent failed:', err)
   }
 }
+
+/**
+ * Log standard GA4 purchase event to Firebase Analytics for monetization tracking
+ */
+export async function logPurchaseEvent(opts: {
+  transactionId: string
+  value: number
+  currency: string
+  planId: string
+  planName: string
+}) {
+  try {
+    const analytics = await getFirebaseAnalytics()
+    if (analytics) {
+      logEvent(analytics, 'purchase', {
+        transaction_id: opts.transactionId,
+        value: opts.value,
+        currency: opts.currency,
+        items: [
+          {
+            item_id: opts.planId,
+            item_name: opts.planName,
+            price: opts.value,
+            quantity: 1
+          }
+        ]
+      })
+    }
+  } catch (err) {
+    console.warn('Firebase logPurchaseEvent failed:', err)
+  }
+}

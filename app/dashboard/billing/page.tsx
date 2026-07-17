@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { generateReference, PRICING, openPaystackCheckout } from '@/lib/paystack'
 import { getVisitorCountryCode, calculatePPPPricedPlan } from '@/lib/ppp-pricing'
+import { logPurchaseEvent } from '@/lib/analytics'
 import styles from './billing.module.css'
 
 interface PricingPlan {
@@ -77,6 +78,19 @@ export default function BillingPage() {
       onSuccess: async (ref) => {
         setPaymentStatus('confirming')
 
+        let purchaseLogged = false
+        const triggerPurchaseLog = () => {
+          if (purchaseLogged) return
+          purchaseLogged = true
+          logPurchaseEvent({
+            transactionId: ref,
+            value: plan.amount_kes,
+            currency: 'KES',
+            planId: planId,
+            planName: `Case+ ${planId === '6m' ? '6-Month' : '12-Month'} Subscription`
+          })
+        }
+
         // 1. Immediately request manual verification (server-to-server with Paystack API)
         try {
           const verifyRes = await fetch('/api/billing/verify', {
@@ -93,6 +107,7 @@ export default function BillingPage() {
               .eq('profile_id', profile.id)
               .single()
 
+            triggerPurchaseLog()
             setSubscription(sub)
             setPaymentStatus('success')
             return
@@ -113,6 +128,9 @@ export default function BillingPage() {
 
           if (sub?.plan === 'plus' || attempts > 10) {
             clearInterval(poll)
+            if (sub?.plan === 'plus') {
+              triggerPurchaseLog()
+            }
             setSubscription(sub)
             setPaymentStatus('success')
           }
