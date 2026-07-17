@@ -23,6 +23,32 @@ export default function BusinessCardModal({ profile, onClose }: BusinessCardModa
     .slice(0, 2)
     .toUpperCase() || 'C'
 
+  const getCardContacts = () => {
+    const socials = profile.socials || []
+    const phone = socials.find(s => s.platform.toLowerCase() === 'phone')?.url.replace('tel:', '') || ''
+    const whatsapp = socials.find(s => s.platform.toLowerCase() === 'whatsapp')?.url.replace('https://wa.me/', '') || ''
+    const email = socials.find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') || ''
+
+    const list = []
+    if (phone) {
+      list.push({ label: '📞', val: phone })
+    }
+    
+    if (whatsapp && whatsapp !== phone) {
+      list.push({ label: '💬', val: whatsapp })
+    }
+
+    if (list.length < 2 && email) {
+      list.push({ label: '✉️', val: email })
+    }
+
+    if (list.length === 0) {
+      list.push({ label: '✉️', val: email || `${profile.handle}@caseshow.info` })
+    }
+
+    return list
+  }
+
   const appUrl = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? window.location.origin
     : 'https://caseshow.info'
@@ -101,6 +127,14 @@ export default function BusinessCardModal({ profile, onClose }: BusinessCardModa
               <div className={styles.personalInfo}>
                 <h4 className={styles.name}>{profile.display_name}</h4>
                 <p className={styles.role}>{profile.role_line || 'Case Member'}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '6px' }}>
+                  {getCardContacts().map((c, idx) => (
+                    <span key={idx} style={{ fontSize: '10.5px', color: 'var(--ink-soft)', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span style={{ opacity: 0.85 }}>{c.label}</span>
+                      <span style={{ fontWeight: 500 }}>{c.val}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
 
               <p className={styles.tagline}>

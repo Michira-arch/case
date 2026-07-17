@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { uploadAvatar, uploadEvidence } from '@/lib/r2'
+import type { ContactVisibility, SocialLink } from '@/lib/types'
 import styles from './QuickActionDrawer.module.css'
 
 export interface QuickActionDrawerProps {
@@ -11,6 +12,8 @@ export interface QuickActionDrawerProps {
   currentValue?: string
   currentRoleLine?: string
   currentTagline?: string
+  currentSocials?: SocialLink[]
+  currentContactVisibility?: ContactVisibility | null
   onClose: () => void
   onSaved: (newValue: any) => void
 }
@@ -49,6 +52,8 @@ export default function QuickActionDrawer({
   currentValue = '',
   currentRoleLine = '',
   currentTagline = '',
+  currentSocials = [],
+  currentContactVisibility = null,
   onClose,
   onSaved,
 }: QuickActionDrawerProps) {
@@ -69,6 +74,20 @@ export default function QuickActionDrawer({
   const [displayName, setDisplayName] = useState(currentValue)
   const [roleLine, setRoleLine] = useState(currentRoleLine)
   const [tagline, setTagline] = useState(currentTagline)
+
+  const [email, setEmail] = useState(() => {
+    return (currentSocials || []).find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') || ''
+  })
+  const [phone, setPhone] = useState(() => {
+    return (currentSocials || []).find(s => s.platform.toLowerCase() === 'phone')?.url.replace('tel:', '') || ''
+  })
+  const [whatsapp, setWhatsapp] = useState(() => {
+    return (currentSocials || []).find(s => s.platform.toLowerCase() === 'whatsapp')?.url.replace('https://wa.me/', '') || ''
+  })
+
+  const [emailVisible, setEmailVisible] = useState(currentContactVisibility?.email !== false)
+  const [phoneVisible, setPhoneVisible] = useState(currentContactVisibility?.phone !== false)
+  const [whatsappVisible, setWhatsappVisible] = useState(currentContactVisibility?.whatsapp !== false)
 
   // ---- proof state ----
   const [proofTitle, setProofTitle] = useState('')
@@ -168,15 +187,47 @@ export default function QuickActionDrawer({
         onSaved(claimText.trim())
       } else if (type === 'basics') {
         const supabase = createClient()
+        
+        // Filter out existing Email, Phone, WhatsApp entries from currentSocials
+        const otherSocials = (currentSocials || []).filter(
+          s => !['email', 'phone', 'whatsapp'].includes(s.platform.toLowerCase())
+        )
+
+        // Build new contact entries
+        const newContacts = []
+        if (email.trim()) {
+          newContacts.push({ platform: 'Email', url: `mailto:${email.trim()}` })
+        }
+        if (phone.trim()) {
+          newContacts.push({ platform: 'Phone', url: `tel:${phone.trim()}` })
+        }
+        if (whatsapp.trim()) {
+          const cleanWa = whatsapp.trim().replace('+', '').replace('https://wa.me/', '')
+          newContacts.push({ platform: 'WhatsApp', url: `https://wa.me/${cleanWa}` })
+        }
+
+        const updatedSocials = [...otherSocials, ...newContacts]
+
+        const nextCv = {
+          ...currentContactVisibility,
+          phone: phoneVisible,
+          email: emailVisible,
+          whatsapp: whatsappVisible,
+        }
+
         const updates = {
           display_name: displayName.trim(),
           role_line: roleLine.trim() || null,
           tagline: tagline.trim() || null,
+          socials: updatedSocials,
+          contact_visibility: nextCv,
         }
+
         const { error: dbError } = await supabase
           .from('profiles')
           .update(updates)
           .eq('id', profileId)
+
         if (dbError) throw dbError
         onSaved(updates)
       } else if (type === 'proof') {
@@ -460,6 +511,72 @@ export default function QuickActionDrawer({
                     onChange={e => setTagline(e.target.value)}
                     placeholder="One-liner bio — your story in a sentence"
                   />
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="basics-email">
+                    Preferred Email Address
+                  </label>
+                  <input
+                    id="basics-email"
+                    type="email"
+                    className={styles.input}
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="e.g. name@domain.com"
+                  />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-soft)', marginTop: 6, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={emailVisible}
+                      onChange={e => setEmailVisible(e.target.checked)}
+                    />
+                    Show email publicly on profile
+                  </label>
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="basics-phone">
+                    Primary Phone Number
+                  </label>
+                  <input
+                    id="basics-phone"
+                    type="tel"
+                    className={styles.input}
+                    value={phone}
+                    onChange={e => setPhone(e.target.value)}
+                    placeholder="e.g. +254 700 000000"
+                  />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-soft)', marginTop: 6, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={phoneVisible}
+                      onChange={e => setPhoneVisible(e.target.checked)}
+                    />
+                    Show phone number publicly on profile
+                  </label>
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="basics-whatsapp">
+                    WhatsApp Number
+                  </label>
+                  <input
+                    id="basics-whatsapp"
+                    type="tel"
+                    className={styles.input}
+                    value={whatsapp}
+                    onChange={e => setWhatsapp(e.target.value)}
+                    placeholder="e.g. +254 700 000000"
+                  />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-soft)', marginTop: 6, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={whatsappVisible}
+                      onChange={e => setWhatsappVisible(e.target.checked)}
+                    />
+                    Show WhatsApp link publicly on profile
+                  </label>
                 </div>
               </>
             )}

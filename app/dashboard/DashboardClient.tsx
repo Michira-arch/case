@@ -90,6 +90,32 @@ export default function DashboardClient({
     .slice(0, 2)
     .toUpperCase() || '?'
 
+  const getCardContacts = () => {
+    const socials = localProfile?.socials || []
+    const phone = socials.find(s => s.platform.toLowerCase() === 'phone')?.url.replace('tel:', '') || ''
+    const whatsapp = socials.find(s => s.platform.toLowerCase() === 'whatsapp')?.url.replace('https://wa.me/', '') || ''
+    const email = socials.find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') || ''
+
+    const list = []
+    if (phone) {
+      list.push({ label: '📞', val: phone })
+    }
+    
+    if (whatsapp && whatsapp !== phone) {
+      list.push({ label: '💬', val: whatsapp })
+    }
+
+    if (list.length < 2 && email) {
+      list.push({ label: '✉️', val: email })
+    }
+
+    if (list.length === 0) {
+      list.push({ label: '✉️', val: email || `${localProfile?.handle}@caseshow.info` })
+    }
+
+    return list
+  }
+
   const appUrl = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? window.location.origin
     : 'https://caseshow.info'
@@ -559,6 +585,14 @@ export default function DashboardClient({
                   <p style={{ fontSize: '10px', fontWeight: 500, color: 'var(--ink-soft)', margin: '2px 0 0' }}>
                     {profile.role_line || 'Professional'}
                   </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
+                    {getCardContacts().map((c, idx) => (
+                      <span key={idx} style={{ fontSize: '9px', color: 'var(--ink-soft)', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <span style={{ opacity: 0.85 }}>{c.label}</span>
+                        <span style={{ fontWeight: 500 }}>{c.val}</span>
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -608,6 +642,8 @@ export default function DashboardClient({
           }
           currentRoleLine={localProfile.role_line || ''}
           currentTagline={localProfile.tagline || ''}
+          currentSocials={localProfile.socials || []}
+          currentContactVisibility={localProfile.contact_visibility}
           onClose={() => setActiveDrawer(null)}
           onSaved={(newValue) => {
             if (activeDrawer === 'proof') {

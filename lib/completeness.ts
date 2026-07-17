@@ -50,8 +50,12 @@ function getTip(
 ): string {
   if (score >= 90) return "Your Case is looking great — share it!"
   if (!profile.avatar_url) return "Add a photo to your profile"
-  if (!profile.claim_text) return "Add your claim — state what you can do or the skill/knowledge you posit you possess"
   if (!profile.tagline) return "Add a tagline to tell your story"
+
+  const hasContact = profile.socials?.some(s => ['email', 'phone', 'whatsapp'].includes(s.platform.toLowerCase()))
+  if (!hasContact) return "Add your preferred contact methods (basics)"
+
+  if (!profile.claim_text) return "Add your claim — state what you can do or the skill/knowledge you posit you possess"
 
   const withoutEvidence = proofItems.filter(
     (item) => item.visible && (item.evidence?.length ?? 0) === 0
