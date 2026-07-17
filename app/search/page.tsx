@@ -21,9 +21,8 @@ export default async function SearchPage({ searchParams }: Props) {
   const supabase = createClient()
 
   // 1. Fetch public stats
-  const [profilesRes, viewsRes, evidenceRes] = await Promise.all([
+  const [profilesRes, evidenceRes] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_public', true).eq('discoverable', true),
-    supabase.from('analytics_events').select('*', { count: 'exact', head: true }).eq('event_type', 'profile_view'),
     supabase.from('evidence').select('*', { count: 'exact', head: true })
   ])
 
@@ -38,7 +37,6 @@ export default async function SearchPage({ searchParams }: Props) {
 
   const stats = {
     totalProfiles: profilesRes.count || 0,
-    totalViews: viewsRes.count || 0,
     totalEvidence: evidenceRes.count || 0,
   }
 
@@ -66,10 +64,6 @@ export default async function SearchPage({ searchParams }: Props) {
           <div className={styles.statCard}>
             <span className={styles.statNum}>{stats.totalEvidence.toLocaleString()}</span>
             <span className={styles.statLabel}>Proof Documents Verified</span>
-          </div>
-          <div className={styles.statCard}>
-            <span className={styles.statNum}>{stats.totalViews.toLocaleString()}</span>
-            <span className={styles.statLabel}>Total Engagement / Views</span>
           </div>
         </section>
 
