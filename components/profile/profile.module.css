@@ -1166,3 +1166,62 @@
   font-weight: 600;
   color: var(--brass-deep);
 }
+
+/* ---- Floating Download Business Card Button ---- */
+.downloadFloatingBtn, .downloadFloatingBtnCollapsed {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brass);
+  color: var(--paper);
+  border: 1px solid var(--brass-deep);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(168, 120, 58, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.downloadFloatingBtn {
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  max-width: 250px;
+  height: 40px;
+}
+
+.downloadFloatingBtnCollapsed {
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  box-shadow: 0 6px 20px rgba(168, 120, 58, 0.35);
+}
+
+.downloadFloatingBtn:hover, .downloadFloatingBtnCollapsed:hover {
+  background: var(--brass-deep);
+  transform: translateY(-2px);
+}
+
+.downloadFloatingBtn:active, .downloadFloatingBtnCollapsed:active {
+  transform: translateY(0);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import type { PublicProfile, PublicProofItem, PublicEvidence, SocialLink } from '@/lib/types'
 import { getMediaUrl } from '@/lib/r2'
@@ -15,8 +15,20 @@ interface Props {
 
 export default function ProfilePublicView({ profile, handle }: Props) {
   const [loadingState, setLoadingState] = useState<'rough' | 'refined' | 'detailed' | 'done'>('rough')
+  const [scrolled, setScrolled] = useState(false)
+  const [downloading, setDownloading] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 80) {
+        setScrolled(true)
+      } else {
+        setScrolled(false)
+      }
+    }
+    window.addEventListener('scroll', handleScroll)
+
     // Log profile view to Firebase Analytics and Supabase
     logAnalyticsEvent(profile.id, 'profile_view', { referrerHost: document.referrer ? new URL(document.referrer).hostname : '' })
 
@@ -24,6 +36,7 @@ export default function ProfilePublicView({ profile, handle }: Props) {
     const t2 = setTimeout(() => setLoadingState('detailed'), 2000)
     const t3 = setTimeout(() => setLoadingState('done'), 3000)
     return () => {
+      window.removeEventListener('scroll', handleScroll)
       clearTimeout(t1)
       clearTimeout(t2)
       clearTimeout(t3)
@@ -33,6 +46,66 @@ export default function ProfilePublicView({ profile, handle }: Props) {
     ? window.location.origin
     : 'https://caseshow.info'
   const profileUrl = `${appUrl}/@${handle}`
+
+  const initials = profile.display_name
+    ?.split(' ')
+    .map(w => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'C'
+
+  const getCardContacts = () => {
+    const socials = profile.socials || []
+    const phone = socials.find(s => s.platform.toLowerCase() === 'phone')?.url.replace('tel:', '') || ''
+    const whatsapp = socials.find(s => s.platform.toLowerCase() === 'whatsapp')?.url.replace('https://wa.me/', '') || ''
+    const email = socials.find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') || ''
+
+    const list = []
+    if (phone) {
+      list.push({ label: '📞', val: phone })
+    }
+    
+    if (whatsapp && whatsapp !== phone) {
+      list.push({ label: '💬', val: whatsapp })
+    }
+
+    if (list.length < 2 && email) {
+      list.push({ label: '✉️', val: email })
+    }
+
+    if (list.length === 0) {
+      list.push({ label: '✉️', val: email || `${handle}@caseshow.info` })
+    }
+
+    return list
+  }
+  const cardContacts = getCardContacts()
+
+  const handleDownload = async () => {
+    setDownloading(true)
+    try {
+      const html2canvas = (await import('html2canvas')).default
+      if (cardRef.current) {
+        const canvas = await html2canvas(cardRef.current, {
+          scale: 3,
+          useCORS: true,
+          backgroundColor: '#FCFBF9',
+          logging: false,
+        })
+        
+        const dataUrl = canvas.toDataURL('image/png')
+        const link = document.createElement('a')
+        link.download = `case-card-${handle}.png`
+        link.href = dataUrl
+        link.click()
+      }
+    } catch (err) {
+      console.error('Failed to export business card image:', err)
+      alert('Could not download business card. Please try again.')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -55,13 +128,6 @@ export default function ProfilePublicView({ profile, handle }: Props) {
     vouched:  profile.proof_items?.filter(i => i.pillar === 'vouched')  ?? [],
     aiming:   profile.proof_items?.filter(i => i.pillar === 'aiming')   ?? [],
   }
-
-  const initials = profile.display_name
-    .split(' ')
-    .map(w => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
 
   if (loadingState !== 'done') {
     return (
@@ -171,6 +237,109 @@ export default function ProfilePublicView({ profile, handle }: Props) {
 
   return (
     <div className={styles.page}>
+      {/* Floating Download Business Card Button */}
+      <button
+        onClick={handleDownload}
+        disabled={downloading}
+        className={scrolled ? styles.downloadFloatingBtnCollapsed : styles.downloadFloatingBtn}
+        title="Download Business Card"
+      >
+        {downloading ? (
+          <span className={styles.spinner} />
+        ) : scrolled ? (
+          <span style={{ fontSize: '18px' }}>📥</span>
+        ) : (
+          <>
+            <span style={{ marginRight: '6px' }}>💳</span>
+            <span>Download Business Card</span>
+          </>
+        )}
+      </button>
+
+      {/* Hidden card for PDF/Image capture */}
+      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
+        <div
+          ref={cardRef}
+          style={{
+            width: '480px',
+            height: '274px',
+            background: '#FCFBF9',
+            border: '1.5px solid #DCD5C2',
+            borderRadius: '8px',
+            position: 'relative',
+            overflow: 'hidden',
+            display: 'flex',
+            padding: '24px',
+            fontFamily: 'var(--font-sans)',
+            boxSizing: 'border-box',
+          }}
+        >
+          {/* Accent Stripe */}
+          <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '4px', backgroundColor: 'var(--brass)' }} />
+
+          {/* Left Column */}
+          <div style={{ width: '62%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingRight: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {profile.avatar_url ? (
+                <img
+                  src={`/api/proxy-avatar?key=${encodeURIComponent(profile.avatar_url)}`}
+                  alt=""
+                  style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #DCD5C2' }}
+                />
+              ) : (
+                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--brass-bg)', color: 'var(--brass)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: '15px', border: '1px solid #DCD5C2' }}>
+                  {initials}
+                </div>
+              )}
+              <div>
+                <span style={{ display: 'block', fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: '14px', color: 'var(--brass)', letterSpacing: '-0.01em' }}>CASE</span>
+                <span style={{ display: 'block', fontSize: '8px', color: 'var(--ink-muted)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>Verified Dossier</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '21px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em', margin: 0 }}>
+                {profile.display_name}
+              </h4>
+              <p style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink-soft)', margin: 0 }}>
+                {profile.role_line || 'Case Member'}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '6px' }}>
+                {cardContacts.map((c, idx) => (
+                  <span key={idx} style={{ fontSize: '10.5px', color: 'var(--ink-soft)', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{ opacity: 0.85 }}>{c.label}</span>
+                    <span style={{ fontWeight: 500 }}>{c.val}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <p style={{ fontSize: '11px', lineHeight: 1.4, color: 'var(--ink-muted)', fontStyle: 'italic', margin: 0 }}>
+              {profile.tagline ? `"${profile.tagline.slice(0, 85)}${profile.tagline.length > 85 ? '...' : ''}"` : 'State your claim. Present your evidence.'}
+            </p>
+          </div>
+
+          {/* Right Column */}
+          <div style={{ width: '38%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', borderLeft: '1px dashed #DCD5C2', paddingLeft: '16px' }}>
+            <span style={{ background: 'var(--ink)', color: 'var(--paper-light)', fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '4px', fontFamily: 'var(--font-mono)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+              {getDisplayDomain().toUpperCase()}/@{profile.handle.toUpperCase()}
+            </span>
+
+            <div style={{ background: '#fff', padding: '5px', borderRadius: '6px', border: '1px solid #DCD5C2', boxShadow: '0 2px 8px rgba(32,40,31,0.04)' }}>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(profileUrl)}`}
+                alt="QR Code"
+                style={{ width: '64px', height: '64px', display: 'block' }}
+              />
+            </div>
+
+            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <span style={{ display: 'block', fontSize: '8px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--ink)' }}>SCAN FOR EVIDENCE</span>
+              <span style={{ display: 'block', fontSize: '7px', color: 'var(--ink-muted)' }}>Authentic proof-of-work</span>
+            </div>
+          </div>
+        </div>
+      </div>
       {/* Top bar */}
       <div className={styles.shareBar}>
         <div className={styles.handleTag}>
