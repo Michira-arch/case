@@ -82,21 +82,32 @@ export default function ProfilePublicView({ profile, handle }: Props) {
     return methods
   }
 
-  // For business card generation
+  // For business card generation — public page only uses explicitly public contacts.
+  // No fallback to sign-up email: if the user hasn't made any contact public, the card shows none.
   const getCardContacts = () => {
     const socials = profile.socials || []
-    const phone = socials.find(s => s.platform.toLowerCase() === 'phone')?.url.replace('tel:', '') || ''
-    const whatsapp = socials.find(s => s.platform.toLowerCase() === 'whatsapp')?.url.replace('https://wa.me/', '') || ''
-    const email =
-      socials.find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') ||
-      profile.email ||
-      ''
-    const list = []
-    if (phone) list.push({ label: '📞', val: phone })
-    if (whatsapp && whatsapp !== phone) list.push({ label: '💬', val: whatsapp })
-    if (list.length < 2 && email) list.push({ label: '✉️', val: email })
-    if (list.length === 0 && email) list.push({ label: '✉️', val: email })
-    return list
+    const cv = profile.contact_visibility
+    const list: { label: string; val: string }[] = []
+
+    const phoneSocial   = socials.find(s => s.platform.toLowerCase() === 'phone')
+    const whatsappSocial = socials.find(s => s.platform.toLowerCase() === 'whatsapp')
+    const emailSocial   = socials.find(s => s.platform.toLowerCase() === 'email')
+
+    const phone   = phoneSocial?.url.replace('tel:', '') || ''
+    const wa      = whatsappSocial?.url.replace('https://wa.me/', '') || ''
+    const email   = emailSocial?.url.replace('mailto:', '') || ''
+
+    if (phoneSocial && cv?.phone !== false && phone)
+      list.push({ label: '📞', val: phone })
+
+    if (whatsappSocial && cv?.whatsapp !== false && wa && wa !== phone)
+      list.push({ label: '💬', val: wa })
+
+    // Email from socials only — never fall back to profile.email on the public card
+    if (emailSocial && cv?.email !== false && email)
+      list.push({ label: '✉️', val: email })
+
+    return list // May be empty — card renders without contact section if so
   }
 
   const cardContacts = getCardContacts()
@@ -415,6 +426,27 @@ export default function ProfilePublicView({ profile, handle }: Props) {
               </div>
             )
           })()}
+
+          {/* Download business card — in hero, always visible */}
+          <div className={styles.pHeroCardBtn}>
+            <button
+              onClick={handleDownload}
+              disabled={downloading}
+              className={styles.pDownloadCardBtn}
+            >
+              {downloading ? (
+                <span className={styles.spinnerSm} />
+              ) : (
+                <CardIcon />
+              )}
+              <span>{downloading ? 'Exporting...' : 'Download Business Card'}</span>
+            </button>
+            {cardContacts.length === 0 && (
+              <p className={styles.pCardBtnNote}>
+                No public contacts — card will show profile info only
+              </p>
+            )}
+          </div>
         </header>
 
         {/* ── CLAIM ─────────────────────────────────────────── */}

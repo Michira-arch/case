@@ -286,6 +286,56 @@
   color: var(--ink);
 }
 
+/* Download card button — hero placement */
+.pHeroCardBtn {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (min-width: 640px) {
+  .pHeroCardBtn {
+    align-items: flex-start;
+  }
+}
+
+.pDownloadCardBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-full);
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: background var(--duration) var(--ease), border-color var(--duration) var(--ease);
+}
+.pDownloadCardBtn:hover {
+  background: var(--brass-bg);
+  border-color: var(--brass);
+  color: var(--brass-deep);
+}
+.pDownloadCardBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pCardBtnNote {
+  font-size: 11px;
+  color: var(--ink-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+
 /* ─── Sticky contact bar ─────────────────────────────────────── */
 .stickyBar {
   position: fixed;
