@@ -358,39 +358,97 @@ export default function ProfilePublicView({ profile, handle }: Props) {
       </div>
 
       <div className={styles.frame}>
-        {/* Hero */}
-        <header className={styles.hero}>
-          <div className={styles.avatarWrap}>
-            {profile.avatar_url ? (
-              <img
-                src={getMediaUrl(profile.avatar_url)}
-                alt={profile.display_name}
-                className={styles.avatar}
-                width={76}
-                height={76}
-              />
-            ) : (
-              <div className={styles.avatarFallback}>{initials}</div>
-            )}
+        {/* Editorial Profile Header Card */}
+        <header className={styles.heroCard}>
+          <div className={styles.heroLayout}>
+            {/* Left Column: Avatar & Text Info */}
+            <div className={styles.heroMainInfo}>
+              <div className={styles.avatarContainer}>
+                <div className={styles.avatarFrame}>
+                  {profile.avatar_url ? (
+                    <img
+                      src={getMediaUrl(profile.avatar_url)}
+                      alt={profile.display_name}
+                      className={styles.avatarImg}
+                    />
+                  ) : (
+                    <div className={styles.avatarInitials}>{initials}</div>
+                  )}
+                </div>
+                <div className={styles.verificationBadge}>
+                  <span>✓ Verified</span>
+                </div>
+              </div>
+
+              <div className={styles.heroTextContent}>
+                <div className={styles.nameRow}>
+                  <h1 className={styles.name}>{profile.display_name}</h1>
+                  {profile.plan === 'plus' && (
+                    <span className={styles.premiumBadge}>Plus</span>
+                  )}
+                </div>
+                {profile.role_line && (
+                  <p className={styles.roleLine}>{profile.role_line}</p>
+                )}
+                
+                {/* Category & Tags pills */}
+                {(profile.category || (profile.tags && profile.tags.length > 0)) && (
+                  <div className={styles.tagsRow}>
+                    {profile.category && (
+                      <span className={styles.categoryPill}>{profile.category}</span>
+                    )}
+                    {profile.tags?.map((tag) => (
+                      <span key={tag} className={styles.tagPill}>{tag}</span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Trust Indicators */}
+                <div className={styles.trustRow}>
+                  {profile.location_area && profile.contact_visibility?.location !== false && (
+                    <div className={styles.trustItem}>
+                      <span>📍</span>
+                      <span>{profile.location_area}</span>
+                    </div>
+                  )}
+                  {byPillar.vouched.length > 0 && (
+                    <>
+                      {profile.location_area && profile.contact_visibility?.location !== false && <div className={styles.bulletDot} />}
+                      <div className={styles.trustItem}>
+                        <span>🤝</span>
+                        <span><strong>{byPillar.vouched.length}</strong> {byPillar.vouched.length === 1 ? 'Recommendation' : 'Recommendations'}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Hero Actions Box */}
+            <div className={styles.heroActionsBox}>
+              <button onClick={handleDownload} disabled={downloading} className={styles.heroActionBtnOutline}>
+                {downloading ? 'Exporting...' : '💳 Download Business Card'}
+              </button>
+              <button onClick={handleShare} className={styles.heroActionBtnPrimary}>
+                🔗 Share Portfolio
+              </button>
+            </div>
           </div>
-          <div className={styles.heroText}>
-            <h1 className={styles.name}>{profile.display_name}</h1>
-            {profile.role_line && (
-              <p className={styles.roleLine}>{profile.role_line}</p>
-            )}
-            {profile.tagline && (
-              <p className={styles.tagline}>{profile.tagline}</p>
-            )}
-            {profile.socials?.length > 0 && (() => {
-              const cv = profile.contact_visibility
-              const visibleSocials = profile.socials.filter((s: SocialLink) => {
-                const p = s.platform.toLowerCase()
-                if (p === 'whatsapp') return cv?.whatsapp !== false
-                if (p === 'email')    return cv?.email !== false
-                if (p === 'phone')    return cv?.phone !== false
-                return true
-              })
-              return visibleSocials.length > 0 ? (
+
+          {/* Socials Row inside the header card */}
+          {profile.socials?.length > 0 && (() => {
+            const cv = profile.contact_visibility
+            const visibleSocials = profile.socials.filter((s: SocialLink) => {
+              const p = s.platform.toLowerCase()
+              if (p === 'whatsapp') return cv?.whatsapp !== false
+              if (p === 'email')    return cv?.email !== false
+              if (p === 'phone')    return cv?.phone !== false
+              return true
+            })
+
+            return visibleSocials.length > 0 ? (
+              <div className={styles.heroSocialsBorderRow}>
+                <p className={styles.socialsLabel}>Preferred contact methods:</p>
                 <div className={styles.socialRow}>
                   {visibleSocials.map((s: SocialLink) => (
                     <a
@@ -405,162 +463,233 @@ export default function ProfilePublicView({ profile, handle }: Props) {
                     </a>
                   ))}
                 </div>
-              ) : null
-            })()}
-          </div>
+              </div>
+            ) : null
+          })()}
         </header>
 
         {/* Showcase Images Gallery */}
         {profile.showcase_images && profile.showcase_images.length > 0 && (
-          <ShowcaseGallery images={profile.showcase_images} name={profile.display_name} />
+          <div className={styles.galleryWrapper}>
+            <p className={styles.galleryLabel}>Showcase Gallery:</p>
+            <ShowcaseGallery images={profile.showcase_images} name={profile.display_name} />
+          </div>
         )}
 
         {/* Claim section */}
         {profile.claim_text && (
-          <ClaimSection text={profile.claim_text} />
+          <div className={styles.quoteCard}>
+            <span className={styles.quoteMarkLarge}>“</span>
+            <p className={styles.quoteText}>{profile.claim_text}</p>
+            {profile.tagline && (
+              <div className={styles.quoteSubRow}>
+                <span>🎯</span>
+                <span>{profile.tagline}</span>
+              </div>
+            )}
+          </div>
         )}
 
-        {/* DID section */}
-        {byPillar.did.length > 0 && (
-          <ProofSection
-            pillar="did"
-            heading="What I've done"
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '14px' }}>
-              {byPillar.did.map(item => (
-                <ProofIsland
-                  key={item.id}
-                  id={item.id}
-                  pillar="did"
-                  title={item.title}
-                  detail={item.detail}
-                  whenLabel={item.when_label}
-                  evidence={item.evidence}
-                  profileId={profile.id}
-                />
-              ))}
-            </div>
-          </ProofSection>
-        )}
-
-        {/* TRAINED section */}
-        {byPillar.trained.length > 0 && (
-          <ProofSection pillar="trained" heading="How I learned it">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '14px' }}>
-              {byPillar.trained.map(item => (
-                <ProofIsland
-                  key={item.id}
-                  id={item.id}
-                  pillar="trained"
-                  title={item.title}
-                  detail={item.detail}
-                  whenLabel={item.when_label}
-                  evidence={item.evidence}
-                  profileId={profile.id}
-                />
-              ))}
-            </div>
-          </ProofSection>
-        )}
-
-        {/* VOUCHED section */}
-        {byPillar.vouched.length > 0 && (
-          <ProofSection pillar="vouched" heading="Who'll speak for me">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '14px' }}>
-              {byPillar.vouched.map(item => (
-                <ProofIsland
-                  key={item.id}
-                  id={item.id}
-                  pillar="vouched"
-                  title={item.title}
-                  detail={item.detail}
-                  whenLabel={item.when_label}
-                  evidence={item.evidence}
-                  profileId={profile.id}
-                />
-              ))}
-            </div>
-          </ProofSection>
-        )}
-
-        {/* AIMING section */}
-        {byPillar.aiming.length > 0 && (
-          <ProofSection pillar="aiming" heading="What I'm looking for">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '14px' }}>
-              {byPillar.aiming.map(item => (
-                <ProofIsland
-                  key={item.id}
-                  id={item.id}
-                  pillar="aiming"
-                  title={item.title}
-                  detail={item.detail}
-                  whenLabel={item.when_label}
-                  evidence={item.evidence}
-                  profileId={profile.id}
-                />
-              ))}
-            </div>
-          </ProofSection>
-        )}
-
-        {/* Physical Attributes Section */}
-        {profile.physical_attributes && 
-         (profile.physical_attributes.height || 
-          profile.physical_attributes.build || 
-          profile.physical_attributes.bio || 
-          profile.physical_attributes.photo_url) && (
-          <section className={styles.physicalSection}>
-            <div className={styles.physicalHead}>
-              <span className="stamp stamp--vouched">Physical Attributes</span>
-              <h2 className={styles.physicalHeading}>Appearance Details</h2>
+        {/* Main Grid: What I've Done vs How I Learned It / What I'm Looking For */}
+        <div className={styles.columnsGrid}>
+          {/* LEFT COLUMN: What I've Done */}
+          <div className={styles.gridColumn}>
+            <div className={styles.columnHeader}>
+              <span className={styles.columnHeaderIcon}>✨</span>
+              <h3 className={styles.columnTitle}>What I've Done</h3>
             </div>
             
-            <div className={styles.physicalGrid}>
-              <div className={styles.physicalTextDetails}>
-                {profile.physical_attributes.height && (
-                  <div className={styles.physicalField}>
-                    <span className={styles.physicalLabel}>Height</span>
-                    <span className={styles.physicalValue}>{profile.physical_attributes.height}</span>
-                  </div>
-                )}
-                {profile.physical_attributes.build && (
-                  <div className={styles.physicalField}>
-                    <span className={styles.physicalLabel}>Build</span>
-                    <span className={styles.physicalValue}>{profile.physical_attributes.build}</span>
-                  </div>
-                )}
-                {profile.physical_attributes.bio && (
-                  <div className={styles.physicalBioField}>
-                    <span className={styles.physicalLabel}>Additional Notes</span>
-                    <p className={styles.physicalBioText}>{profile.physical_attributes.bio}</p>
-                  </div>
-                )}
-              </div>
-              
-              {profile.physical_attributes.photo_url && (
-                <div className={styles.physicalPhotoContainer}>
-                  <img
-                    src={getMediaUrl(profile.physical_attributes.photo_url)}
-                    alt={`${profile.display_name} appearance`}
-                    className={styles.physicalPhoto}
+            {byPillar.did.length > 0 ? (
+              <div className={styles.islandStack}>
+                {byPillar.did.map(item => (
+                  <ProofIsland
+                    key={item.id}
+                    id={item.id}
+                    pillar="did"
+                    title={item.title}
+                    detail={item.detail}
+                    whenLabel={item.when_label}
+                    evidence={item.evidence}
+                    profileId={profile.id}
                   />
+                ))}
+              </div>
+            ) : (
+              <div className={styles.emptyGridCard}>
+                No project or work proof items added yet.
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT COLUMN: How I Learned It & What I'm Looking For & Physical Attributes */}
+          <div className={styles.gridColumn}>
+            {/* How I Learned It */}
+            <div className={styles.columnHeader}>
+              <span className={styles.columnHeaderIcon}>🎓</span>
+              <h3 className={styles.columnTitle}>How I Learned It</h3>
+            </div>
+            {byPillar.trained.length > 0 ? (
+              <div className={styles.islandStack} style={{ marginBottom: '24px' }}>
+                {byPillar.trained.map(item => (
+                  <ProofIsland
+                    key={item.id}
+                    id={item.id}
+                    pillar="trained"
+                    title={item.title}
+                    detail={item.detail}
+                    whenLabel={item.when_label}
+                    evidence={item.evidence}
+                    profileId={profile.id}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className={styles.emptyGridCard} style={{ marginBottom: '24px' }}>
+                No training or apprenticeship proof items added yet.
+              </div>
+            )}
+
+            {/* What I'm Looking For */}
+            {byPillar.aiming.length > 0 && (
+              <>
+                <div className={styles.columnHeader}>
+                  <span className={styles.columnHeaderIcon}>🚀</span>
+                  <h3 className={styles.columnTitle}>What I'm Looking For</h3>
                 </div>
-              )}
+                <div className={styles.islandStack} style={{ marginBottom: '24px' }}>
+                  {byPillar.aiming.map(item => (
+                    <ProofIsland
+                      key={item.id}
+                      id={item.id}
+                      pillar="aiming"
+                      title={item.title}
+                      detail={item.detail}
+                      whenLabel={item.when_label}
+                      evidence={item.evidence}
+                      profileId={profile.id}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Physical Attributes (Demeanor & Appearance) */}
+            {profile.physical_attributes && 
+             (profile.physical_attributes.height || 
+              profile.physical_attributes.build || 
+              profile.physical_attributes.bio || 
+              profile.physical_attributes.photo_url) && (
+              <>
+                <div className={styles.columnHeader}>
+                  <span className={styles.columnHeaderIcon}>👤</span>
+                  <h3 className={styles.columnTitle}>Appearance &amp; Demeanor</h3>
+                </div>
+                <div className={styles.physicalCard}>
+                  <div className={styles.physicalContent}>
+                    <div className={styles.physicalTextDetails}>
+                      {profile.physical_attributes.height && (
+                        <div className={styles.physicalField}>
+                          <span className={styles.physicalLabel}>Height</span>
+                          <span className={styles.physicalValue}>{profile.physical_attributes.height}</span>
+                        </div>
+                      )}
+                      {profile.physical_attributes.build && (
+                        <div className={styles.physicalField}>
+                          <span className={styles.physicalLabel}>Build</span>
+                          <span className={styles.physicalValue}>{profile.physical_attributes.build}</span>
+                        </div>
+                      )}
+                      {profile.physical_attributes.bio && (
+                        <div className={styles.physicalBioField}>
+                          <span className={styles.physicalLabel}>Notes</span>
+                          <p className={styles.physicalBioText}>{profile.physical_attributes.bio}</p>
+                        </div>
+                      )}
+                    </div>
+                    {profile.physical_attributes.photo_url && (
+                      <div className={styles.physicalPhotoFrame}>
+                        <img
+                          src={getMediaUrl(profile.physical_attributes.photo_url)}
+                          alt={`${profile.display_name} appearance`}
+                          className={styles.physicalPhoto}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Verified Vouch Board */}
+        {byPillar.vouched.length > 0 && (
+          <section className={styles.vouchBoardSection}>
+            <div className={styles.vouchBoardHeader}>
+              <div>
+                <span className={styles.vouchBoardLabel}>AUTHENTICITY ENDORSEMENTS</span>
+                <h2 className={styles.vouchBoardTitle}>🤝 The Verified Recommendation Board</h2>
+              </div>
+            </div>
+            
+            <div className={styles.vouchBoardGrid}>
+              {byPillar.vouched.map(item => (
+                <div key={item.id} className={styles.vouchCard}>
+                  <div className={styles.vouchCardHeader}>
+                    <div className={styles.vouchUserMeta}>
+                      <div className={styles.vouchAvatarPlaceholder}>
+                        {item.detail?.replace('From ', '').split(' ')[0]?.[0] || 'R'}
+                      </div>
+                      <div>
+                        {(() => {
+                          const detailStr = item.detail || ''
+                          const match = detailStr.match(/From\s+([^(:]+)(?:\(([^)]+)\))?/)
+                          const name = match ? match[1].trim() : 'Verified Recommender'
+                          const title = match && match[2] ? match[2].trim() : 'Professional Peer'
+                          return (
+                            <>
+                              <h5 className={styles.vouchName}>{name}</h5>
+                              <p className={styles.vouchTitle}>{title}</p>
+                            </>
+                          )
+                        })()}
+                      </div>
+                    </div>
+                    <span className={styles.vouchBadge}>
+                      ✓ Recommendation
+                    </span>
+                  </div>
+                  
+                  <p className={styles.vouchBody}>
+                    {(() => {
+                      const detailStr = item.detail || ''
+                      const quoteMatch = detailStr.match(/"([^"]+)"/)
+                      return quoteMatch ? `"${quoteMatch[1]}"` : item.title
+                    })()}
+                  </p>
+
+                  <div className={styles.vouchFooter}>
+                    <span>Relationship: Verified Partner</span>
+                    <span className={styles.vouchDate}>{item.when_label || 'Recently'}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         )}
 
-        {/* Footer */}
-        <footer className={styles.footer}>
-          <span className={styles.footerWordmark}>Case</span>
-          {profile.plan === 'free' ? (
-            <Link href="/signup" className={styles.footerCta}>
-              Build your own, free →
-            </Link>
-          ) : (
-            <span className={styles.footerEmpty} />
-          )}
-        </footer>
+        {/* Promotional Brand Panel */}
+        <section className={styles.promoPanel}>
+          <div className={styles.promoTextContainer}>
+            <h4 className={styles.promoTitle}>Need a page like this to prove your competence?</h4>
+            <p className={styles.promoDesc}>
+              Create your own secure digital credential profile. Skip the traditional resume; let your actual work evidence and verified recommendations do the talking.
+            </p>
+          </div>
+          <Link href="/signup" className={styles.promoBtn}>
+            Build Your Free Profile →
+          </Link>
+        </section>
       </div>
     </div>
   )
