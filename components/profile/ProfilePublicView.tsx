@@ -15,71 +15,92 @@ interface Props {
 
 export default function ProfilePublicView({ profile, handle }: Props) {
   const [loadingState, setLoadingState] = useState<'rough' | 'refined' | 'detailed' | 'done'>('rough')
-  const [scrolled, setScrolled] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [stickyVisible, setStickyVisible] = useState(false)
+  const heroRef = useRef<HTMLElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 80) {
-        setScrolled(true)
-      } else {
-        setScrolled(false)
-      }
-    }
-    window.addEventListener('scroll', handleScroll)
-
-    // Log profile view to Firebase Analytics and Supabase
-    logAnalyticsEvent(profile.id, 'profile_view', { referrerHost: document.referrer ? new URL(document.referrer).hostname : '' })
+    logAnalyticsEvent(profile.id, 'profile_view', {
+      referrerHost: document.referrer ? new URL(document.referrer).hostname : '',
+    })
 
     const t1 = setTimeout(() => setLoadingState('refined'), 1000)
     const t2 = setTimeout(() => setLoadingState('detailed'), 2000)
     const t3 = setTimeout(() => setLoadingState('done'), 3000)
+
+    // Sticky contact bar — appears when hero scrolls out of view
+    const observer = new IntersectionObserver(
+      ([entry]) => setStickyVisible(!entry.isIntersecting),
+      { threshold: 0.1 }
+    )
+    if (heroRef.current) observer.observe(heroRef.current)
+
     return () => {
-      window.removeEventListener('scroll', handleScroll)
       clearTimeout(t1)
       clearTimeout(t2)
       clearTimeout(t3)
+      observer.disconnect()
     }
-  }, [])
-  const appUrl = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? window.location.origin
-    : 'https://caseshow.info'
+  }, [profile.id])
+
+  const appUrl =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? window.location.origin
+      : 'https://caseshow.info'
   const profileUrl = `${appUrl}/@${handle}`
 
-  const initials = profile.display_name
-    ?.split(' ')
-    .map(w => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'C'
+  const initials =
+    profile.display_name
+      ?.split(' ')
+      .map(w => w[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'C'
 
+  // Resolve contact methods respecting visibility settings
+  const getContactMethods = () => {
+    const socials = profile.socials || []
+    const cv = profile.contact_visibility
+    const methods: { icon: string; label: string; href: string }[] = []
+
+    const phone = socials.find(s => s.platform.toLowerCase() === 'phone')
+    const whatsapp = socials.find(s => s.platform.toLowerCase() === 'whatsapp')
+    const emailSocial = socials.find(s => s.platform.toLowerCase() === 'email')
+    const email = emailSocial?.url.replace('mailto:', '') || profile.email || ''
+
+    if (phone && cv?.phone !== false) {
+      methods.push({ icon: 'Phone', label: phone.url.replace('tel:', ''), href: phone.url })
+    }
+    if (whatsapp && cv?.whatsapp !== false) {
+      methods.push({ icon: 'WhatsApp', label: 'WhatsApp', href: whatsapp.url })
+    }
+    if (methods.length < 2 && email && cv?.email !== false) {
+      methods.push({ icon: 'Email', label: email, href: `mailto:${email}` })
+    }
+    return methods
+  }
+
+  // For business card generation
   const getCardContacts = () => {
     const socials = profile.socials || []
     const phone = socials.find(s => s.platform.toLowerCase() === 'phone')?.url.replace('tel:', '') || ''
     const whatsapp = socials.find(s => s.platform.toLowerCase() === 'whatsapp')?.url.replace('https://wa.me/', '') || ''
-    const email = socials.find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') || profile.email || ''
-
+    const email =
+      socials.find(s => s.platform.toLowerCase() === 'email')?.url.replace('mailto:', '') ||
+      profile.email ||
+      ''
     const list = []
-    if (phone) {
-      list.push({ label: '📞', val: phone })
-    }
-    
-    if (whatsapp && whatsapp !== phone) {
-      list.push({ label: '💬', val: whatsapp })
-    }
-
-    if (list.length < 2 && email) {
-      list.push({ label: '✉️', val: email })
-    }
-
-    if (list.length === 0 && email) {
-      list.push({ label: '✉️', val: email })
-    }
-
+    if (phone) list.push({ label: '📞', val: phone })
+    if (whatsapp && whatsapp !== phone) list.push({ label: '💬', val: whatsapp })
+    if (list.length < 2 && email) list.push({ label: '✉️', val: email })
+    if (list.length === 0 && email) list.push({ label: '✉️', val: email })
     return list
   }
+
   const cardContacts = getCardContacts()
+  const contactMethods = getContactMethods()
 
   const handleDownload = async () => {
     setDownloading(true)
@@ -92,7 +113,6 @@ export default function ProfilePublicView({ profile, handle }: Props) {
           backgroundColor: '#FCFBF9',
           logging: false,
         })
-        
         const dataUrl = canvas.toDataURL('image/png')
         const link = document.createElement('a')
         link.download = `case-card-${handle}.png`
@@ -115,7 +135,9 @@ export default function ProfilePublicView({ profile, handle }: Props) {
           text: profile.tagline || `Check out ${profile.display_name}'s proof-of-work profile`,
           url: profileUrl,
         })
-      } catch { /* user cancelled */ }
+      } catch {
+        /* user cancelled */
+      }
     } else {
       await navigator.clipboard.writeText(profileUrl)
       alert('Link copied!')
@@ -123,16 +145,16 @@ export default function ProfilePublicView({ profile, handle }: Props) {
   }
 
   const byPillar = {
-    did:      profile.proof_items?.filter(i => i.pillar === 'did')      ?? [],
-    trained:  profile.proof_items?.filter(i => i.pillar === 'trained')  ?? [],
-    vouched:  profile.proof_items?.filter(i => i.pillar === 'vouched')  ?? [],
-    aiming:   profile.proof_items?.filter(i => i.pillar === 'aiming')   ?? [],
+    did:     profile.proof_items?.filter(i => i.pillar === 'did')     ?? [],
+    trained: profile.proof_items?.filter(i => i.pillar === 'trained') ?? [],
+    vouched: profile.proof_items?.filter(i => i.pillar === 'vouched') ?? [],
+    aiming:  profile.proof_items?.filter(i => i.pillar === 'aiming')  ?? [],
   }
 
+  // ─── Skeleton loading screen ────────────────────────────────
   if (loadingState !== 'done') {
     return (
       <div className={styles.page}>
-        {/* Top bar */}
         <div className={styles.shareBar}>
           <div className={styles.handleTag}>
             <span className={styles.handleText}>
@@ -140,17 +162,12 @@ export default function ProfilePublicView({ profile, handle }: Props) {
             </span>
           </div>
           <div className={styles.shareActions}>
-            <button className={styles.btnGhost} disabled>
-              Share
-            </button>
-            <button className={styles.btnInstall} disabled>
-              Build yours free →
-            </button>
+            <button className={styles.btnGhost} disabled>Share</button>
+            <button className={styles.btnInstall} disabled>Build yours free →</button>
           </div>
         </div>
 
         <div className={`${styles.frame} ${styles.skeletonFrame}`}>
-          {/* Hero Skeleton */}
           <header className={styles.heroSkeleton}>
             <div className={`${styles.avatarSkeleton} ${styles.pulse}`} />
             <div className={styles.heroTextSkeleton}>
@@ -168,35 +185,25 @@ export default function ProfilePublicView({ profile, handle }: Props) {
             </div>
           </header>
 
-          {/* Claim Section Skeleton (only in refined & detailed) */}
           {(loadingState === 'refined' || loadingState === 'detailed') && (
             <div className={`${styles.claimSkeleton} ${styles.pulse}`}>
               <div className={styles.claimLineSkeleton} />
               <div className={styles.claimLineSkeleton} style={{ width: '80%' }} />
-              {loadingState === 'detailed' && (
-                <div className={styles.claimMetaSkeleton} />
-              )}
+              {loadingState === 'detailed' && <div className={styles.claimMetaSkeleton} />}
             </div>
           )}
 
-          {/* Main Sections Skeletons */}
           <div className={styles.proofSectionSkeleton}>
-            {/* Stamp / Section Title */}
             <div className={`${styles.sectionHeaderSkeleton} ${styles.pulse}`} />
-            
-            {/* Rough: just blocks. Refined: layout lines. Detailed: full cards with evidence capsules */}
             <div className={styles.cardGridSkeleton}>
               <div className={`${styles.workCardSkeleton} ${styles.pulse}`}>
                 <div className={styles.workThumbSkeleton} />
                 <div className={styles.workBodySkeleton}>
                   <div className={styles.cardTitleSkeleton} />
                   <div className={styles.cardDetailSkeleton} />
-                  {loadingState === 'detailed' && (
-                    <div className={styles.evidencePillSkeleton} />
-                  )}
+                  {loadingState === 'detailed' && <div className={styles.evidencePillSkeleton} />}
                 </div>
               </div>
-
               {(loadingState === 'refined' || loadingState === 'detailed') && (
                 <div className={`${styles.workCardSkeleton} ${styles.pulse}`}>
                   <div className={styles.workThumbSkeleton} />
@@ -224,86 +231,47 @@ export default function ProfilePublicView({ profile, handle }: Props) {
             </div>
           )}
         </div>
-        
-        {/* Psychological Status Tip during progressive load */}
+
         <div className={styles.loadingTip}>
-          {loadingState === 'rough' && <span>⚡ Connecting to Case registry...</span>}
-          {loadingState === 'refined' && <span>🔒 Verifying cryptographic signatures...</span>}
+          {loadingState === 'rough'    && <span>⚡ Connecting to Case registry...</span>}
+          {loadingState === 'refined'  && <span>🔒 Verifying cryptographic signatures...</span>}
           {loadingState === 'detailed' && <span>📄 Retrieving certified evidence...</span>}
         </div>
       </div>
     )
   }
 
+  // ─── Main render ────────────────────────────────────────────
   return (
     <div className={styles.page}>
-      {/* Floating Download Business Card Button */}
-      <button
-        onClick={handleDownload}
-        disabled={downloading}
-        className={scrolled ? styles.downloadFloatingBtnCollapsed : styles.downloadFloatingBtn}
-        title="Download Business Card"
-      >
-        {downloading ? (
-          <span className={styles.spinner} />
-        ) : scrolled ? (
-          <span style={{ fontSize: '18px' }}>📥</span>
-        ) : (
-          <>
-            <span style={{ marginRight: '6px' }}>💳</span>
-            <span>Download Business Card</span>
-          </>
-        )}
-      </button>
-
-      {/* Hidden card for PDF/Image capture */}
+      {/* Hidden business card for image capture */}
       <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
         <div
           ref={cardRef}
           style={{
-            width: '480px',
-            height: '274px',
-            background: '#FCFBF9',
-            border: '1.5px solid #DCD5C2',
-            borderRadius: '8px',
-            position: 'relative',
-            overflow: 'hidden',
-            display: 'flex',
-            padding: '24px',
-            fontFamily: 'var(--font-sans)',
-            boxSizing: 'border-box',
+            width: '480px', height: '274px', background: '#FCFBF9',
+            border: '1.5px solid #DCD5C2', borderRadius: '8px',
+            position: 'relative', overflow: 'hidden',
+            display: 'flex', padding: '24px',
+            fontFamily: 'var(--font-sans)', boxSizing: 'border-box',
           }}
         >
-          {/* Accent Stripe */}
           <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '4px', backgroundColor: 'var(--brass)' }} />
-
-          {/* Left Column */}
           <div style={{ width: '62%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingRight: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               {profile.avatar_url ? (
-                <img
-                  src={`/api/proxy-avatar?key=${encodeURIComponent(profile.avatar_url)}`}
-                  alt=""
-                  style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #DCD5C2' }}
-                />
+                <img src={`/api/proxy-avatar?key=${encodeURIComponent(profile.avatar_url)}`} alt="" style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #DCD5C2' }} />
               ) : (
-                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--brass-bg)', color: 'var(--brass)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: '15px', border: '1px solid #DCD5C2' }}>
-                  {initials}
-                </div>
+                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--brass-bg)', color: 'var(--brass)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: '15px', border: '1px solid #DCD5C2' }}>{initials}</div>
               )}
               <div>
                 <span style={{ display: 'block', fontFamily: 'var(--font-serif)', fontWeight: 800, fontSize: '14px', color: 'var(--brass)', letterSpacing: '-0.01em' }}>CASE</span>
                 <span style={{ display: 'block', fontSize: '8px', color: 'var(--ink-muted)', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>Verified Dossier</span>
               </div>
             </div>
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '21px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em', margin: 0 }}>
-                {profile.display_name}
-              </h4>
-              <p style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink-soft)', margin: 0 }}>
-                {profile.role_line || 'Case Member'}
-              </p>
+              <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '21px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em', margin: 0 }}>{profile.display_name}</h4>
+              <p style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink-soft)', margin: 0 }}>{profile.role_line || 'Case Member'}</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '6px' }}>
                 {cardContacts.map((c, idx) => (
                   <span key={idx} style={{ fontSize: '10.5px', color: 'var(--ink-soft)', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -313,26 +281,17 @@ export default function ProfilePublicView({ profile, handle }: Props) {
                 ))}
               </div>
             </div>
-
             <p style={{ fontSize: '11px', lineHeight: 1.4, color: 'var(--ink-muted)', fontStyle: 'italic', margin: 0 }}>
               {profile.tagline ? `"${profile.tagline.slice(0, 85)}${profile.tagline.length > 85 ? '...' : ''}"` : 'State your claim. Present your evidence.'}
             </p>
           </div>
-
-          {/* Right Column */}
           <div style={{ width: '38%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', borderLeft: '1px dashed #DCD5C2', paddingLeft: '16px' }}>
             <span style={{ background: 'var(--ink)', color: 'var(--paper-light)', fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '4px', fontFamily: 'var(--font-mono)', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
               {getDisplayDomain().toUpperCase()}/@{profile.handle.toUpperCase()}
             </span>
-
             <div style={{ background: '#fff', padding: '5px', borderRadius: '6px', border: '1px solid #DCD5C2', boxShadow: '0 2px 8px rgba(32,40,31,0.04)' }}>
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(profileUrl)}`}
-                alt="QR Code"
-                style={{ width: '64px', height: '64px', display: 'block' }}
-              />
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(profileUrl)}`} alt="QR Code" style={{ width: '64px', height: '64px', display: 'block' }} />
             </div>
-
             <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <span style={{ display: 'block', fontSize: '8px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--ink)' }}>SCAN FOR EVIDENCE</span>
               <span style={{ display: 'block', fontSize: '7px', color: 'var(--ink-muted)' }}>Authentic proof-of-work</span>
@@ -340,7 +299,8 @@ export default function ProfilePublicView({ profile, handle }: Props) {
           </div>
         </div>
       </div>
-      {/* Top bar */}
+
+      {/* ── Top identity bar ─────────────────────────────────── */}
       <div className={styles.shareBar}>
         <div className={styles.handleTag}>
           <span className={styles.handleText}>
@@ -348,520 +308,479 @@ export default function ProfilePublicView({ profile, handle }: Props) {
           </span>
         </div>
         <div className={styles.shareActions}>
-          <button className={styles.btnGhost} onClick={handleShare}>
-            Share
-          </button>
-          <Link href="/signup" className={styles.btnInstall}>
-            Build yours free →
-          </Link>
+          <button className={styles.btnGhost} onClick={handleShare}>Share</button>
+          <Link href="/signup" className={styles.btnInstall}>Build yours free →</Link>
         </div>
       </div>
 
+      {/* ── Sticky contact bar ───────────────────────────────── */}
+      <div className={`${styles.stickyBar} ${stickyVisible ? styles.stickyBarVisible : ''}`}>
+        <span className={styles.stickyName}>{profile.display_name}</span>
+        <div className={styles.stickyActions}>
+          {contactMethods.map((m, idx) => (
+            <a key={idx} href={m.href} className={styles.stickyContactBtn} target={m.icon === 'Email' ? '_self' : '_blank'} rel="noopener noreferrer">
+              {m.icon === 'Phone'    && <PhoneIcon />}
+              {m.icon === 'WhatsApp' && <WhatsAppIcon />}
+              {m.icon === 'Email'    && <EmailIcon />}
+              <span>{m.label}</span>
+            </a>
+          ))}
+          <button onClick={handleDownload} disabled={downloading} className={styles.stickyCardBtn} title="Download Business Card">
+            {downloading ? <span className={styles.spinnerSm} /> : <CardIcon />}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Main content frame ───────────────────────────────── */}
       <div className={styles.frame}>
-        {/* Editorial Profile Header Card */}
-        <header className={styles.heroCard}>
-          <div className={styles.heroLayout}>
-            {/* Left Column: Avatar & Text Info */}
-            <div className={styles.heroMainInfo}>
-              <div className={styles.avatarContainer}>
-                <div className={styles.avatarFrame}>
-                  {profile.avatar_url ? (
-                    <img
-                      src={getMediaUrl(profile.avatar_url)}
-                      alt={profile.display_name}
-                      className={styles.avatarImg}
-                    />
-                  ) : (
-                    <div className={styles.avatarInitials}>{initials}</div>
-                  )}
-                </div>
-                <div className={styles.verificationBadge}>
-                  <span>✓ Verified</span>
-                </div>
-              </div>
 
-              <div className={styles.heroTextContent}>
-                <div className={styles.nameRow}>
-                  <h1 className={styles.name}>{profile.display_name}</h1>
-                  {profile.plan === 'plus' && (
-                    <span className={styles.premiumBadge}>Plus</span>
-                  )}
-                </div>
-                {profile.role_line && (
-                  <p className={styles.roleLine}>{profile.role_line}</p>
-                )}
-                
-                {/* Category & Tags pills */}
-                {(profile.category || (profile.tags && profile.tags.length > 0)) && (
-                  <div className={styles.tagsRow}>
-                    {profile.category && (
-                      <span className={styles.categoryPill}>{profile.category}</span>
-                    )}
-                    {profile.tags?.map((tag) => (
-                      <span key={tag} className={styles.tagPill}>{tag}</span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Trust Indicators */}
-                <div className={styles.trustRow}>
-                  {profile.location_area && profile.contact_visibility?.location !== false && (
-                    <div className={styles.trustItem}>
-                      <span>📍</span>
-                      <span>{profile.location_area}</span>
-                    </div>
-                  )}
-                  {byPillar.vouched.length > 0 && (
-                    <>
-                      {profile.location_area && profile.contact_visibility?.location !== false && <div className={styles.bulletDot} />}
-                      <div className={styles.trustItem}>
-                        <span>🤝</span>
-                        <span><strong>{byPillar.vouched.length}</strong> {byPillar.vouched.length === 1 ? 'Recommendation' : 'Recommendations'}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
+        {/* ── HERO ──────────────────────────────────────────── */}
+        <header ref={heroRef} className={styles.pHero}>
+          {/* Mobile: magazine / Desktop: side-by-side */}
+          <div className={styles.pHeroInner}>
+            <div className={styles.pAvatarWrap}>
+              {profile.avatar_url ? (
+                <img
+                  src={getMediaUrl(profile.avatar_url)}
+                  alt={profile.display_name}
+                  className={styles.pAvatar}
+                />
+              ) : (
+                <div className={styles.pAvatarFallback}>{initials}</div>
+              )}
+              {/* Verified badge on avatar */}
+              <div className={styles.pVerifiedBadge}>✓</div>
             </div>
 
-            {/* Right Column: Hero Actions Box */}
-            <div className={styles.heroActionsBox}>
-              <button onClick={handleDownload} disabled={downloading} className={styles.heroActionBtnOutline}>
-                {downloading ? 'Exporting...' : '💳 Download Business Card'}
-              </button>
-              <button onClick={handleShare} className={styles.heroActionBtnPrimary}>
-                🔗 Share Portfolio
-              </button>
+            <div className={styles.pHeroText}>
+              <h1 className={styles.pName}>{profile.display_name}</h1>
+              {profile.role_line && (
+                <p className={styles.pRole}>{profile.role_line}</p>
+              )}
+              {(profile.category || (profile.tags && profile.tags.length > 0)) && (
+                <div className={styles.pTagsRow}>
+                  {profile.category && (
+                    <span className={styles.pCategoryPill}>{profile.category}</span>
+                  )}
+                  {profile.tags?.map(tag => (
+                    <span key={tag} className={styles.pTagPill}>{tag}</span>
+                  ))}
+                </div>
+              )}
+              <div className={styles.pTrustRow}>
+                {profile.location_area && profile.contact_visibility?.location !== false && (
+                  <span className={styles.pTrustItem}>
+                    <LocIcon />
+                    {profile.location_area}
+                  </span>
+                )}
+                {byPillar.vouched.length > 0 && (
+                  <span className={styles.pTrustItem}>
+                    <span className={styles.pTrustDot} />
+                    <strong>{byPillar.vouched.length}</strong>&nbsp;{byPillar.vouched.length === 1 ? 'Recommendation' : 'Recommendations'}
+                  </span>
+                )}
+                {profile.plan === 'plus' && (
+                  <span className={styles.pPlusBadge}>Plus</span>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Socials Row inside the header card */}
-          {profile.socials?.length > 0 && (() => {
+          {/* Socials inside hero, below the grid */}
+          {(() => {
             const cv = profile.contact_visibility
-            const visibleSocials = profile.socials.filter((s: SocialLink) => {
+            const visible = (profile.socials || []).filter((s: SocialLink) => {
               const p = s.platform.toLowerCase()
               if (p === 'whatsapp') return cv?.whatsapp !== false
               if (p === 'email')    return cv?.email !== false
               if (p === 'phone')    return cv?.phone !== false
               return true
             })
-
-            return visibleSocials.length > 0 ? (
-              <div className={styles.heroSocialsBorderRow}>
-                <p className={styles.socialsLabel}>Preferred contact methods:</p>
-                <div className={styles.socialRow}>
-                  {visibleSocials.map((s: SocialLink) => (
-                    <a
-                      key={s.platform}
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.socialPill}
-                      onClick={() => logAnalyticsEvent(profile.id, 'social_click', { referrerHost: s.platform })}
-                    >
-                      {s.platform}
-                    </a>
-                  ))}
-                </div>
+            if (!visible.length) return null
+            return (
+              <div className={styles.pSocialsRow}>
+                {visible.map((s: SocialLink) => (
+                  <a
+                    key={s.platform}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.pSocialPill}
+                    onClick={() => logAnalyticsEvent(profile.id, 'social_click', { referrerHost: s.platform })}
+                  >
+                    {s.platform}
+                  </a>
+                ))}
               </div>
-            ) : null
+            )
           })()}
         </header>
 
-        {/* Showcase Images Gallery */}
-        {profile.showcase_images && profile.showcase_images.length > 0 && (
-          <div className={styles.galleryWrapper}>
-            <p className={styles.galleryLabel}>Showcase Gallery:</p>
-            <ShowcaseGallery images={profile.showcase_images} name={profile.display_name} />
-          </div>
-        )}
-
-        {/* Claim section */}
+        {/* ── CLAIM ─────────────────────────────────────────── */}
         {profile.claim_text && (
-          <div className={styles.quoteCard}>
-            <span className={styles.quoteMarkLarge}>“</span>
-            <p className={styles.quoteText}>{profile.claim_text}</p>
+          <section className={styles.pClaimSection}>
+            <span className={styles.pClaimMark}>&ldquo;</span>
+            <blockquote className={styles.pClaimText}>{profile.claim_text}</blockquote>
             {profile.tagline && (
-              <div className={styles.quoteSubRow}>
-                <span>🎯</span>
-                <span>{profile.tagline}</span>
-              </div>
+              <p className={styles.pTagline}>{profile.tagline}</p>
             )}
-          </div>
+            <p className={styles.pClaimCaption}>Their claim — the proof is below.</p>
+          </section>
         )}
 
-        {/* Main Grid: What I've Done vs How I Learned It / What I'm Looking For */}
-        <div className={styles.columnsGrid}>
-          {/* LEFT COLUMN: What I've Done */}
-          <div className={styles.gridColumn}>
-            <div className={styles.columnHeader}>
-              <span className={styles.columnHeaderIcon}>✨</span>
-              <h3 className={styles.columnTitle}>What I've Done</h3>
-            </div>
-            
-            {byPillar.did.length > 0 ? (
-              <div className={styles.islandStack}>
-                {byPillar.did.map(item => (
-                  <ProofIsland
-                    key={item.id}
-                    id={item.id}
-                    pillar="did"
-                    title={item.title}
-                    detail={item.detail}
-                    whenLabel={item.when_label}
-                    evidence={item.evidence}
-                    profileId={profile.id}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className={styles.emptyGridCard}>
-                No project or work proof items added yet.
-              </div>
-            )}
-          </div>
+        {/* ── SHOWCASE GALLERY ──────────────────────────────── */}
+        {profile.showcase_images && profile.showcase_images.length > 0 && (
+          <ShowcaseGallery images={profile.showcase_images} name={profile.display_name} />
+        )}
 
-          {/* RIGHT COLUMN: How I Learned It & What I'm Looking For & Physical Attributes */}
-          <div className={styles.gridColumn}>
-            {/* How I Learned It */}
-            <div className={styles.columnHeader}>
-              <span className={styles.columnHeaderIcon}>🎓</span>
-              <h3 className={styles.columnTitle}>How I Learned It</h3>
-            </div>
-            {byPillar.trained.length > 0 ? (
-              <div className={styles.islandStack} style={{ marginBottom: '24px' }}>
-                {byPillar.trained.map(item => (
-                  <ProofIsland
-                    key={item.id}
-                    id={item.id}
-                    pillar="trained"
-                    title={item.title}
-                    detail={item.detail}
-                    whenLabel={item.when_label}
-                    evidence={item.evidence}
-                    profileId={profile.id}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className={styles.emptyGridCard} style={{ marginBottom: '24px' }}>
-                No training or apprenticeship proof items added yet.
-              </div>
-            )}
-
-            {/* What I'm Looking For */}
-            {byPillar.aiming.length > 0 && (
-              <>
-                <div className={styles.columnHeader}>
-                  <span className={styles.columnHeaderIcon}>🚀</span>
-                  <h3 className={styles.columnTitle}>What I'm Looking For</h3>
-                </div>
-                <div className={styles.islandStack} style={{ marginBottom: '24px' }}>
-                  {byPillar.aiming.map(item => (
-                    <ProofIsland
-                      key={item.id}
-                      id={item.id}
-                      pillar="aiming"
-                      title={item.title}
-                      detail={item.detail}
-                      whenLabel={item.when_label}
-                      evidence={item.evidence}
-                      profileId={profile.id}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Physical Attributes (Demeanor & Appearance) */}
-            {profile.physical_attributes && 
-             (profile.physical_attributes.height || 
-              profile.physical_attributes.build || 
-              profile.physical_attributes.bio || 
-              profile.physical_attributes.photo_url) && (
-              <>
-                <div className={styles.columnHeader}>
-                  <span className={styles.columnHeaderIcon}>👤</span>
-                  <h3 className={styles.columnTitle}>Appearance &amp; Demeanor</h3>
-                </div>
-                <div className={styles.physicalCard}>
-                  <div className={styles.physicalContent}>
-                    <div className={styles.physicalTextDetails}>
-                      {profile.physical_attributes.height && (
-                        <div className={styles.physicalField}>
-                          <span className={styles.physicalLabel}>Height</span>
-                          <span className={styles.physicalValue}>{profile.physical_attributes.height}</span>
-                        </div>
-                      )}
-                      {profile.physical_attributes.build && (
-                        <div className={styles.physicalField}>
-                          <span className={styles.physicalLabel}>Build</span>
-                          <span className={styles.physicalValue}>{profile.physical_attributes.build}</span>
-                        </div>
-                      )}
-                      {profile.physical_attributes.bio && (
-                        <div className={styles.physicalBioField}>
-                          <span className={styles.physicalLabel}>Notes</span>
-                          <p className={styles.physicalBioText}>{profile.physical_attributes.bio}</p>
-                        </div>
-                      )}
-                    </div>
-                    {profile.physical_attributes.photo_url && (
-                      <div className={styles.physicalPhotoFrame}>
-                        <img
-                          src={getMediaUrl(profile.physical_attributes.photo_url)}
-                          alt={`${profile.display_name} appearance`}
-                          className={styles.physicalPhoto}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Verified Vouch Board */}
-        {byPillar.vouched.length > 0 && (
-          <section className={styles.vouchBoardSection}>
-            <div className={styles.vouchBoardHeader}>
-              <div>
-                <span className={styles.vouchBoardLabel}>AUTHENTICITY ENDORSEMENTS</span>
-                <h2 className={styles.vouchBoardTitle}>🤝 The Verified Recommendation Board</h2>
-              </div>
-            </div>
-            
-            <div className={styles.vouchBoardGrid}>
-              {byPillar.vouched.map(item => (
-                <div key={item.id} className={styles.vouchCard}>
-                  <div className={styles.vouchCardHeader}>
-                    <div className={styles.vouchUserMeta}>
-                      <div className={styles.vouchAvatarPlaceholder}>
-                        {item.detail?.replace('From ', '').split(' ')[0]?.[0] || 'R'}
-                      </div>
-                      <div>
-                        {(() => {
-                          const detailStr = item.detail || ''
-                          const match = detailStr.match(/From\s+([^(:]+)(?:\(([^)]+)\))?/)
-                          const name = match ? match[1].trim() : 'Verified Recommender'
-                          const title = match && match[2] ? match[2].trim() : 'Professional Peer'
-                          return (
-                            <>
-                              <h5 className={styles.vouchName}>{name}</h5>
-                              <p className={styles.vouchTitle}>{title}</p>
-                            </>
-                          )
-                        })()}
-                      </div>
-                    </div>
-                    <span className={styles.vouchBadge}>
-                      ✓ Recommendation
-                    </span>
-                  </div>
-                  
-                  <p className={styles.vouchBody}>
-                    {(() => {
-                      const detailStr = item.detail || ''
-                      const quoteMatch = detailStr.match(/"([^"]+)"/)
-                      return quoteMatch ? `"${quoteMatch[1]}"` : item.title
-                    })()}
-                  </p>
-
-                  <div className={styles.vouchFooter}>
-                    <span>Relationship: Verified Partner</span>
-                    <span className={styles.vouchDate}>{item.when_label || 'Recently'}</span>
-                  </div>
-                </div>
+        {/* ── WHAT I'VE DONE ────────────────────────────────── */}
+        {byPillar.did.length > 0 && (
+          <section className={styles.pSection}>
+            <SectionLabel pillar="did" text="What I've done" />
+            <div className={styles.pIslandList}>
+              {byPillar.did.map(item => (
+                <ProofIsland key={item.id} item={item} profileId={profile.id} />
               ))}
             </div>
           </section>
         )}
 
-        {/* Promotional Brand Panel */}
-        <section className={styles.promoPanel}>
-          <div className={styles.promoTextContainer}>
-            <h4 className={styles.promoTitle}>Need a page like this to prove your competence?</h4>
-            <p className={styles.promoDesc}>
-              Create your own secure digital credential profile. Skip the traditional resume; let your actual work evidence and verified recommendations do the talking.
+        {/* ── HOW I LEARNED IT ──────────────────────────────── */}
+        {byPillar.trained.length > 0 && (
+          <section className={styles.pSection}>
+            <SectionLabel pillar="trained" text="How I learned it" />
+            <div className={styles.pIslandList}>
+              {byPillar.trained.map(item => (
+                <ProofIsland key={item.id} item={item} profileId={profile.id} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── WHAT I'M LOOKING FOR ──────────────────────────── */}
+        {byPillar.aiming.length > 0 && (
+          <section className={styles.pSection}>
+            <SectionLabel pillar="aiming" text="What I'm looking for" />
+            <div className={styles.pIslandList}>
+              {byPillar.aiming.map(item => (
+                <ProofIsland key={item.id} item={item} profileId={profile.id} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── APPEARANCE & DEMEANOR ─────────────────────────── */}
+        {profile.physical_attributes &&
+          (profile.physical_attributes.height ||
+           profile.physical_attributes.build  ||
+           profile.physical_attributes.bio    ||
+           profile.physical_attributes.photo_url) && (
+          <section className={styles.pSection}>
+            <SectionLabel pillar="physical" text="Appearance & on-site demeanor" />
+            <div className={styles.pPhysicalCard}>
+              <div className={styles.pPhysicalBody}>
+                {profile.physical_attributes.height && (
+                  <div className={styles.pPhysicalField}>
+                    <span className={styles.pPhysicalLabel}>Height</span>
+                    <span className={styles.pPhysicalValue}>{profile.physical_attributes.height}</span>
+                  </div>
+                )}
+                {profile.physical_attributes.build && (
+                  <div className={styles.pPhysicalField}>
+                    <span className={styles.pPhysicalLabel}>Build</span>
+                    <span className={styles.pPhysicalValue}>{profile.physical_attributes.build}</span>
+                  </div>
+                )}
+                {profile.physical_attributes.bio && (
+                  <p className={styles.pPhysicalBio}>{profile.physical_attributes.bio}</p>
+                )}
+              </div>
+              {profile.physical_attributes.photo_url && (
+                <div className={styles.pPhysicalPhotoWrap}>
+                  <img
+                    src={getMediaUrl(profile.physical_attributes.photo_url)}
+                    alt={`${profile.display_name} appearance`}
+                    className={styles.pPhysicalPhoto}
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ── RECOMMENDATIONS ───────────────────────────────── */}
+        {byPillar.vouched.length > 0 && (
+          <section className={styles.pSection}>
+            <SectionLabel pillar="vouched" text="What people say" />
+            <div className={styles.pVouchGrid}>
+              {byPillar.vouched.map(item => (
+                <VouchCard key={item.id} item={item} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── PROMO FOOTER ──────────────────────────────────── */}
+        <section className={styles.pPromo}>
+          <div className={styles.pPromoText}>
+            <p className={styles.pPromoHeadline}>
+              Need a page like this?
+            </p>
+            <p className={styles.pPromoSub}>
+              Build your own proof-of-work profile — free. No resume needed.
             </p>
           </div>
-          <Link href="/signup" className={styles.promoBtn}>
-            Build Your Free Profile →
+          <Link href="/signup" className={styles.pPromoBtn}>
+            Get started free →
           </Link>
         </section>
+
       </div>
     </div>
   )
 }
 
-/* ---- Claim section ---- */
-function ClaimSection({ text }: { text: string }) {
+/* ─── Section label ─────────────────────────────────────────── */
+function SectionLabel({ pillar, text }: { pillar: string; text: string }) {
   return (
-    <section className={styles.claimSection}>
-      <span className={styles.claimQuote}>&ldquo;</span>
-      <p className={styles.claimText}>{text}</p>
-      <p className={styles.claimMeta}>This is what they say they can do. Everything below is the proof.</p>
-    </section>
+    <div className={styles.pSectionLabel}>
+      <span className={`${styles.pSectionStamp} ${styles[`pStamp_${pillar}`]}`}>
+        {pillar}
+      </span>
+      <h2 className={styles.pSectionHeading}>{text}</h2>
+    </div>
   )
 }
 
-/* ---- Section wrapper ---- */
-const PILLAR_LABELS: Record<string, string> = {
-  did: 'did',
-  trained: 'trained',
-  vouched: 'recommended',
-  aiming: 'aiming',
-}
+/* ─── Proof island (inline evidence) ───────────────────────── */
+function ProofIsland({ item, profileId }: { item: PublicProofItem; profileId: string }) {
+  const [lightbox, setLightbox] = useState<string | null>(null)
+  const evidence = item.evidence ?? []
+  const images = evidence.filter(e => e.type === 'img')
+  const videos = evidence.filter(e => e.type === 'vid')
+  const docs   = evidence.filter(e => e.type !== 'img' && e.type !== 'vid')
 
-/* ---- Section wrapper ---- */
-function ProofSection({ pillar, heading, subtext, children }: {
-  pillar: string; heading: string; subtext?: string; children: React.ReactNode
-}) {
-  return (
-    <section className={styles.proofSection}>
-      <div className={styles.sectionHead}>
-        <span className={`stamp stamp--${pillar}`}>{PILLAR_LABELS[pillar] || pillar}</span>
-        <h2 className={styles.sectionHeading}>{heading}</h2>
-      </div>
-      {subtext && <p className={styles.sectionSub}>{subtext}</p>}
-      {children}
-    </section>
-  )
-}
-
-interface ProofIslandProps {
-  id: string
-  pillar: string
-  title: string
-  detail?: string | null
-  whenLabel?: string | null
-  evidence?: PublicEvidence[] | null
-  profileId: string
-}
-
-function ProofIsland({ id, pillar, title, detail, whenLabel, evidence, profileId }: ProofIslandProps) {
-  const hasEvidence = (evidence?.length ?? 0) > 0
-
-  const borderStyles: Record<string, React.CSSProperties> = {
-    did: { borderLeft: '4px solid var(--ink)' },
-    trained: { borderLeft: '4px solid var(--brass)' },
-    vouched: { borderLeft: '4px solid var(--verified)' },
-    aiming: { borderLeft: '4px solid var(--aim)' },
+  const pillarAccent: Record<string, string> = {
+    did:     'var(--ink)',
+    trained: 'var(--brass)',
+    vouched: 'var(--verified)',
+    aiming:  'var(--aim)',
   }
 
   return (
-    <div className={styles.proofIsland} style={borderStyles[pillar]}>
-      <div className={styles.islandHeader}>
-        <div className={styles.islandTitleRow}>
-          <h3 className={styles.islandTitle}>
-            {pillar === 'vouched' ? <span className={styles.quoteMark}>“</span> : null}
-            {title}
-            {pillar === 'vouched' ? <span className={styles.quoteMark}>”</span> : null}
-          </h3>
-          {whenLabel && <span className={styles.islandWhen}>{whenLabel}</span>}
+    <>
+      <article
+        className={styles.pIsland}
+        style={{ borderLeftColor: pillarAccent[item.pillar] || 'var(--line)' }}
+      >
+        <div className={styles.pIslandHead}>
+          <h3 className={styles.pIslandTitle}>{item.title}</h3>
+          {item.when_label && <span className={styles.pIslandWhen}>{item.when_label}</span>}
         </div>
-        {detail && (
-          <p className={pillar === 'vouched' ? styles.islandQuoteWho : styles.islandDetail}>
-            {pillar === 'vouched' ? `— ${detail}` : detail}
-          </p>
+        {item.detail && (
+          <p className={styles.pIslandDetail}>{item.detail}</p>
         )}
-      </div>
 
-      {hasEvidence && (
-        <div className={styles.islandEvidenceStack}>
-          {evidence!.map((e) => {
-            const mediaUrl = getMediaUrl(e.storage_key)
-            if (e.type === 'img') {
-              return (
-                <div key={e.id} className={styles.islandMediaWrap}>
-                  <img
-                    src={mediaUrl}
-                    alt={e.caption || 'Evidence Image'}
-                    className={styles.islandFullImg}
-                    loading="lazy"
-                  />
-                  {e.caption && <p className={styles.islandCaption}>{e.caption}</p>}
-                </div>
-              )
-            } else if (e.type === 'vid') {
-              return (
-                <div key={e.id} className={styles.islandMediaWrap}>
-                  <video
-                    src={mediaUrl}
-                    className={styles.islandFullVideo}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    controls
-                  />
-                  {e.caption && <p className={styles.islandCaption}>{e.caption}</p>}
-                </div>
-              )
-            } else {
-              // PDF/Doc
-              return (
-                <a
-                  key={e.id}
-                  href={mediaUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.islandDocLink}
-                  onClick={() => logAnalyticsEvent(profileId, 'evidence_tap', { proofItemId: id })}
-                >
-                  <span className={styles.islandDocIcon}>📄</span>
-                  <div className={styles.islandDocInfo}>
-                    <span className={styles.islandDocLabel}>Document Proof (PDF)</span>
-                    <span className={styles.islandDocName}>{e.caption || 'View Certificate / Document'}</span>
-                  </div>
-                  <span className={styles.islandDocAction}>Open Document →</span>
-                </a>
-              )
-            }
-          })}
+        {/* Inline image grid — social media style */}
+        {images.length > 0 && (
+          <div className={`${styles.pEvidenceImgGrid} ${images.length === 1 ? styles.pEvidenceImgSingle : ''}`}>
+            {images.map(e => (
+              <button
+                key={e.id}
+                className={styles.pEvidenceImgBtn}
+                onClick={() => {
+                  setLightbox(getMediaUrl(e.storage_key))
+                  logAnalyticsEvent(profileId, 'evidence_tap', { proofItemId: item.id })
+                }}
+                aria-label={e.caption || 'View evidence image'}
+              >
+                <img
+                  src={getMediaUrl(e.storage_key)}
+                  alt={e.caption || 'Evidence'}
+                  className={styles.pEvidenceImg}
+                  loading="lazy"
+                />
+                {e.caption && <span className={styles.pEvidenceCaption}>{e.caption}</span>}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Inline video */}
+        {videos.map(e => (
+          <div key={e.id} className={styles.pEvidenceVideoWrap}>
+            <video
+              src={getMediaUrl(e.storage_key)}
+              className={styles.pEvidenceVideo}
+              controls
+              muted
+              loop
+              playsInline
+            />
+            {e.caption && <p className={styles.pEvidenceCaption}>{e.caption}</p>}
+          </div>
+        ))}
+
+        {/* Document cards */}
+        {docs.length > 0 && (
+          <div className={styles.pEvidenceDocList}>
+            {docs.map(e => (
+              <a
+                key={e.id}
+                href={getMediaUrl(e.storage_key)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.pEvidenceDoc}
+                onClick={() => logAnalyticsEvent(profileId, 'evidence_tap', { proofItemId: item.id })}
+              >
+                <span className={styles.pEvidenceDocIcon}>
+                  <DocIcon />
+                </span>
+                <span className={styles.pEvidenceDocInfo}>
+                  <span className={styles.pEvidenceDocLabel}>Document</span>
+                  <span className={styles.pEvidenceDocName}>{e.caption || 'View Certificate / Document'}</span>
+                </span>
+                <span className={styles.pEvidenceDocArrow}>→</span>
+              </a>
+            ))}
+          </div>
+        )}
+      </article>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div className={styles.pLightbox} onClick={() => setLightbox(null)}>
+          <button className={styles.pLightboxClose} onClick={() => setLightbox(null)} aria-label="Close">✕</button>
+          <div className={styles.pLightboxContent} onClick={e => e.stopPropagation()}>
+            <img src={lightbox} alt="Evidence full size" className={styles.pLightboxImg} />
+          </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
 
+/* ─── Vouch card ────────────────────────────────────────────── */
+function VouchCard({ item }: { item: PublicProofItem }) {
+  // Parse "From Name (Title): "Quote text""
+  const detailStr = item.detail || ''
+  const nameMatch  = detailStr.match(/From\s+([^(:]+)/)
+  const titleMatch = detailStr.match(/\(([^)]+)\)/)
+  const quoteMatch = detailStr.match(/"([^"]+)"/)
+
+  const name  = nameMatch  ? nameMatch[1].trim()  : 'Verified Recommender'
+  const title = titleMatch ? titleMatch[1].trim()  : 'Professional Contact'
+  const quote = quoteMatch ? quoteMatch[1]         : item.title
+  const initLetter = name[0]?.toUpperCase() || 'R'
+
+  return (
+    <article className={styles.pVouchCard}>
+      {/* Large watermark quote mark */}
+      <span className={styles.pVouchWatermark}>&ldquo;</span>
+      <p className={styles.pVouchQuote}>&ldquo;{quote}&rdquo;</p>
+      <footer className={styles.pVouchFooter}>
+        <div className={styles.pVouchAvatar}>{initLetter}</div>
+        <div className={styles.pVouchMeta}>
+          <span className={styles.pVouchName}>{name}</span>
+          <span className={styles.pVouchTitle}>{title}</span>
+        </div>
+        <span className={styles.pVouchVerifiedBadge}>✓ Verified</span>
+      </footer>
+      {item.when_label && (
+        <p className={styles.pVouchDate}>{item.when_label}</p>
+      )}
+    </article>
+  )
+}
+
+/* ─── Showcase gallery ──────────────────────────────────────── */
 function ShowcaseGallery({ images, name }: { images: string[]; name: string }) {
   const [activeImg, setActiveImg] = useState<string | null>(null)
 
   return (
     <>
-      <div className={styles.showcaseGallery}>
+      <div className={styles.pShowcaseStrip}>
         {images.map((imgUrl, idx) => (
-          <div
+          <button
             key={idx}
-            className={styles.showcaseItem}
+            className={styles.pShowcaseItem}
             onClick={() => setActiveImg(imgUrl)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setActiveImg(imgUrl) }}
+            aria-label={`${name} showcase image ${idx + 1}`}
           >
             <img
               src={getMediaUrl(imgUrl)}
               alt={`${name} Showcase ${idx + 1}`}
-              className={styles.showcaseImg}
+              className={styles.pShowcaseImg}
             />
-          </div>
+          </button>
         ))}
       </div>
 
       {activeImg && (
-        <div className={styles.modalOverlay} onClick={() => setActiveImg(null)}>
-          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-            <button className={styles.modalClose} onClick={() => setActiveImg(null)} aria-label="Close preview">
-              ✕
-            </button>
-            <div className={styles.modalBody}>
-              <img src={getMediaUrl(activeImg)} alt="Showcase full size" className={styles.modalImg} />
-            </div>
+        <div className={styles.pLightbox} onClick={() => setActiveImg(null)}>
+          <button className={styles.pLightboxClose} onClick={() => setActiveImg(null)} aria-label="Close">✕</button>
+          <div className={styles.pLightboxContent} onClick={e => e.stopPropagation()}>
+            <img src={getMediaUrl(activeImg)} alt="Showcase full size" className={styles.pLightboxImg} />
           </div>
         </div>
       )}
     </>
+  )
+}
+
+/* ─── Inline SVG icons ──────────────────────────────────────── */
+function PhoneIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.02 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z" />
+    </svg>
+  )
+}
+
+function WhatsAppIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+    </svg>
+  )
+}
+
+function EmailIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+      <polyline points="22,6 12,13 2,6" />
+    </svg>
+  )
+}
+
+function CardIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+      <line x1="1" y1="10" x2="23" y2="10" />
+    </svg>
+  )
+}
+
+function LocIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  )
+}
+
+function DocIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
+    </svg>
   )
 }
