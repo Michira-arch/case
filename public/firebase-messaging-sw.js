@@ -24,3 +24,28 @@ messaging.onBackgroundMessage((payload) => {
 
   self.registration.showNotification(notificationTitle, notificationOptions)
 })
+
+// Handle notification click to open/focus the dashboard URL
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+
+  // Retrieve the url from payload data (configured in our campaigns API as /dashboard)
+  const urlToOpen = event.notification.data?.url || '/dashboard'
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // If the dashboard is already open, focus it
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i]
+        if (client.url.includes('/dashboard') && 'focus' in client) {
+          return client.focus()
+        }
+      }
+      // Otherwise, open a new window/tab to the dashboard
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen)
+      }
+    })
+  )
+})
+
