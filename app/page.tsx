@@ -38,25 +38,6 @@ export default function LandingPage() {
             who'll vouch for you, and what you're aiming for next. Every claim backed by
             real evidence: photos, certificates, videos.
           </p>
-
-          <form action="/search" method="GET" className={styles.heroSearchForm}>
-            <div className={styles.heroSearchPill}>
-              <svg className={styles.heroSearchIcon} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input 
-                type="text" 
-                name="q" 
-                placeholder="Search professionals, skills, or roles..." 
-                className={styles.heroSearchInput}
-              />
-              <button type="submit" className={`btn btn--brass ${styles.heroSearchBtn}`}>
-                Search
-              </button>
-            </div>
-          </form>
-
           <div className={styles.heroCtas}>
             <Link href="/signup" className="btn btn--brass btn--lg">
               Build your Case — free
