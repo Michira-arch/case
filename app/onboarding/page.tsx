@@ -446,6 +446,39 @@ function OnboardingPageContent() {
 
       if (profileErr) throw profileErr
 
+      // Try to track affiliate referral
+      try {
+        let refCode = ''
+        if (typeof document !== 'undefined') {
+          const match = document.cookie.match(/ref_code=([^;]+)/)
+          if (match) {
+            refCode = match[1]
+          }
+        }
+
+        if (refCode) {
+          const { data: affiliate } = await supabase
+            .from('affiliates')
+            .select('profile_id')
+            .eq('code', refCode)
+            .maybeSingle()
+
+          if (affiliate) {
+            await supabase
+              .from('referrals')
+              .insert({
+                referrer_profile_id: affiliate.profile_id,
+                referred_profile_id: profile.id,
+              })
+
+            // Clear the cookie
+            document.cookie = 'ref_code=; Max-Age=0; path=/;'
+          }
+        }
+      } catch (refErr) {
+        console.error('Failed to register affiliate referral:', refErr)
+      }
+
       // Seed proof items
       const seeds = []
       if (didItem.trim()) {

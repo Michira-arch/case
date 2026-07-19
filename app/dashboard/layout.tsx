@@ -8,6 +8,7 @@ const navItems = [
   { href: '/dashboard',            label: 'Case',      icon: '◆' },
   { href: '/dashboard/analytics',  label: 'Analytics', icon: '↗' },
   { href: '/dashboard/billing',    label: 'Billing',   icon: '★' },
+  { href: '/dashboard/affiliate',  label: 'Affiliate', icon: '🤝' },
   { href: '/dashboard/settings',   label: 'Settings',  icon: '⚙' },
 ]
 

@@ -287,6 +287,78 @@ export type Database = {
           description?: string | null
         }
       }
+      affiliates: {
+        Row: {
+          profile_id: string
+          code: string
+          created_at: string
+        }
+        Insert: {
+          profile_id: string
+          code: string
+          created_at?: string
+        }
+        Update: {
+          profile_id?: string
+          code?: string
+          created_at?: string
+        }
+      }
+      affiliate_payouts: {
+        Row: {
+          id: string
+          profile_id: string
+          amount_kes: number
+          payment_details: string
+          status: 'pending' | 'completed' | 'failed'
+          created_at: string
+          processed_at: string | null
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          amount_kes: number
+          payment_details: string
+          status?: 'pending' | 'completed' | 'failed'
+          created_at?: string
+          processed_at?: string | null
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          amount_kes?: number
+          payment_details?: string
+          status?: 'pending' | 'completed' | 'failed'
+          created_at?: string
+          processed_at?: string | null
+        }
+      }
+      referrals: {
+        Row: {
+          id: string
+          referrer_profile_id: string
+          referred_profile_id: string
+          created_at: string
+          payout_status: 'unpaid' | 'paid'
+          payout_id: string | null
+        }
+        Insert: {
+          id?: string
+          referrer_profile_id: string
+          referred_profile_id: string
+          created_at?: string
+          payout_status?: 'unpaid' | 'paid'
+          payout_id?: string | null
+        }
+        Update: {
+          id?: string
+          referrer_profile_id?: string
+          referred_profile_id?: string
+          created_at?: string
+          payout_status?: 'unpaid' | 'paid'
+          payout_id?: string | null
+        }
+      }
     }
     Functions: {
       get_public_profile: {
@@ -348,6 +420,22 @@ export type Database = {
           profile_id: string
           handle: string
           completeness_score: number
+        }
+      }
+      affiliate_referrals_summary: {
+        Row: {
+          id: string
+          referrer_profile_id: string
+          referred_profile_id: string
+          created_at: string
+          referred_name: string
+          referred_handle: string
+          payout_status: 'unpaid' | 'paid'
+          payout_id: string | null
+          upgraded_within_30_days: boolean
+          payment_date: string | null
+          commission_kes: number
+          status: 'earned' | 'pending'
         }
       }
     }
