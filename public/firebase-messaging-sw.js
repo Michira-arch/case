@@ -3,6 +3,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js')
 
 firebase.initializeApp({
+  apiKey: 'AIzaSyC1oh4-GS3-x6NUSqGJQA4lxQnY4R1H194',
   projectId: 'case-pow-99',
   messagingSenderId: '5247771290',
   appId: '1:5247771290:web:225ccef2dd88c42aecf523',
