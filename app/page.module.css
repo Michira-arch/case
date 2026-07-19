@@ -73,6 +73,52 @@
   margin: 0 auto 32px;
 }
 
+.heroSearchForm {
+  margin: 0 auto 32px;
+  max-width: 540px;
+}
+
+.heroSearchPill {
+  display: flex;
+  align-items: center;
+  background: var(--card, #ffffff);
+  border: 1px solid var(--line);
+  border-radius: 9999px;
+  padding: 6px 6px 6px 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.heroSearchPill:focus-within {
+  border-color: var(--brass);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 0 0 4px var(--brass-bg);
+}
+
+.heroSearchIcon {
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+
+.heroSearchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  font-size: 16px;
+  color: var(--ink);
+  outline: none;
+  font-family: inherit;
+}
+
+.heroSearchInput::placeholder {
+  color: var(--ink-muted);
+}
+
+.heroSearchBtn {
+  border-radius: 9999px;
+  padding: 10px 24px;
+}
+
 .heroCtas {
   display: flex;
   gap: 12px;

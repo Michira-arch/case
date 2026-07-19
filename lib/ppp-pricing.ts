@@ -10,7 +10,6 @@ export interface PricingConfig {
   symbol: string
   exchangeRateToKes: number // Multiply local currency by this to get KES
   base12mLocal: number
-  base6mLocal: number
 }
 
 export const PPP_CONFIGS: Record<string, PricingConfig> = {
@@ -19,32 +18,28 @@ export const PPP_CONFIGS: Record<string, PricingConfig> = {
     currency: 'KES',
     symbol: 'KES',
     exchangeRateToKes: 1.0,
-    base12mLocal: 100, // Manually annealed sweet spot
-    base6mLocal: 70,   // Manually annealed sweet spot
+    base12mLocal: 99,
   },
   US: {
     countryCode: 'US',
     currency: 'USD',
     symbol: '$',
     exchangeRateToKes: 130.0,
-    base12mLocal: 19.99,
-    base6mLocal: 10.99,
+    base12mLocal: 19,
   },
   GB: {
     countryCode: 'GB',
     currency: 'GBP',
     symbol: '£',
     exchangeRateToKes: 165.0,
-    base12mLocal: 15.99,
-    base6mLocal: 8.99,
+    base12mLocal: 15,
   },
   EU: {
     countryCode: 'EU',
     currency: 'EUR',
     symbol: '€',
     exchangeRateToKes: 140.0,
-    base12mLocal: 17.99,
-    base6mLocal: 9.99,
+    base12mLocal: 17,
   },
   IN: {
     countryCode: 'IN',
@@ -52,7 +47,6 @@ export const PPP_CONFIGS: Record<string, PricingConfig> = {
     symbol: '₹',
     exchangeRateToKes: 1.55,
     base12mLocal: 499,
-    base6mLocal: 299,
   },
   NG: {
     countryCode: 'NG',
@@ -60,7 +54,6 @@ export const PPP_CONFIGS: Record<string, PricingConfig> = {
     symbol: '₦',
     exchangeRateToKes: 0.09,
     base12mLocal: 7999,
-    base6mLocal: 4499,
   },
   ZA: {
     countryCode: 'ZA',
@@ -68,23 +61,20 @@ export const PPP_CONFIGS: Record<string, PricingConfig> = {
     symbol: 'R',
     exchangeRateToKes: 7.0,
     base12mLocal: 149,
-    base6mLocal: 89,
   },
   UG: {
     countryCode: 'UG',
     currency: 'UGX',
     symbol: 'USh',
     exchangeRateToKes: 0.035,
-    base12mLocal: 3999,  // above 100 KES baseline floor
-    base6mLocal: 2999,   // above 100 KES baseline floor
+    base12mLocal: 3999,
   },
   TZ: {
     countryCode: 'TZ',
     currency: 'TZS',
     symbol: 'TSh',
     exchangeRateToKes: 0.05,
-    base12mLocal: 2999,  // above 100 KES baseline floor
-    base6mLocal: 1999,   // above 100 KES baseline floor
+    base12mLocal: 2999,
   },
   GH: {
     countryCode: 'GH',
@@ -92,7 +82,6 @@ export const PPP_CONFIGS: Record<string, PricingConfig> = {
     symbol: 'GH₵',
     exchangeRateToKes: 10.0,
     base12mLocal: 79,
-    base6mLocal: 49,
   },
 }
 
@@ -131,6 +120,36 @@ export interface CalculatedPrice {
 }
 
 /**
+ * Calculate the 6-month price algorithmically with charm pricing applied.
+ * Ensures the 6-month price is proportionally higher than the 12-month.
+ */
+export function calculate6MonthPrice(base12m: number): number {
+  const half = base12m / 2
+
+  // For major currencies (USD, GBP, EUR)
+  if (base12m <= 30) {
+    return Math.floor(half) + 1.99
+  }
+
+  // Mid-tier currencies
+  if (base12m <= 150) {
+    if (base12m === 99) return 70 // Special case requested by user for KES
+    const premium = half * 1.3
+    return Math.ceil(premium / 10) * 10 - 1
+  }
+
+  // High-tier currencies
+  if (base12m <= 1000) {
+    const premium = half * 1.2
+    return Math.ceil(premium / 100) * 100 - 1
+  }
+
+  // Very high-tier currencies (NGN, UGX, TZS)
+  const premium = half * 1.15
+  return Math.ceil(premium / 100) * 100 - 1
+}
+
+/**
  * Calculate PPP pricing for the active plan
  */
 export function calculatePPPPricedPlan(
@@ -138,7 +157,7 @@ export function calculatePPPPricedPlan(
   countryCode: string
 ): CalculatedPrice {
   const config = PPP_CONFIGS[countryCode] || PPP_CONFIGS.US // Fallback to US/Global
-  const amountLocal = planPeriod === '12m' ? config.base12mLocal : config.base6mLocal
+  const amountLocal = planPeriod === '12m' ? config.base12mLocal : calculate6MonthPrice(config.base12mLocal)
 
   // Final KES value to be passed to payment gateway (since it accepts KES)
   const finalKes = amountLocal * config.exchangeRateToKes
