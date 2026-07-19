@@ -27,11 +27,32 @@ export default function PwaManager({ profileId }: PwaManagerProps) {
     // 1. Check current notification permission
     if ('Notification' in window) {
       setPermissionState(Notification.permission)
-      const dismissed = localStorage.getItem('push_prompt_dismissed')
-      if (Notification.permission === 'default' && dismissed !== 'true') {
-        // Show soft prompt after 3 seconds
-        const timer = setTimeout(() => setShowPushPrompt(true), 3000)
-        return () => clearTimeout(timer)
+      
+      if (Notification.permission === 'granted') {
+        // Auto-sync token to Supabase if permission is already granted
+        const syncToken = async () => {
+          try {
+            const token = await requestNotificationPermissionAndGetToken()
+            if (token) {
+              const supabase = createClient()
+              await supabase.from('fcm_tokens').upsert({
+                profile_id: profileId,
+                token: token,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: 'token' })
+            }
+          } catch (err) {
+            console.error('Failed to auto-sync push token:', err)
+          }
+        }
+        syncToken()
+      } else {
+        const dismissed = localStorage.getItem('push_prompt_dismissed')
+        if (Notification.permission === 'default' && dismissed !== 'true') {
+          // Show soft prompt after 3 seconds
+          const timer = setTimeout(() => setShowPushPrompt(true), 3000)
+          return () => clearTimeout(timer)
+        }
       }
     }
 
