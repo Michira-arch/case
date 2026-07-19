@@ -48,8 +48,8 @@ export default function WeeklyReport({
   function getTip(): { text: string; cta: string; href: string } {
     if (vouchCount === 0) {
       return {
-        text: `You don't have any vouches yet. Profiles with at least one vouch get significantly more trust from visitors.`,
-        cta: 'Send a vouch request →',
+        text: `You don't have any recommendations yet. Profiles with at least one recommendation get significantly more trust from visitors.`,
+        cta: 'Send a recommendation request →',
         href: '/dashboard/vouch/new',
       }
     }
