@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         },
         notification: {
           requireInteraction: true, // Keep on screen until user dismisses or clicks
-          icon: '/logo.png',
+          icon: '/icons/icon-192.png',
         }
       },
       data: data || {},

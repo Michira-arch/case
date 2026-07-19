@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
             },
             notification: {
               requireInteraction: true,
-              icon: '/logo.png',
+              icon: '/icons/icon-192.png',
             },
           },
           data: {

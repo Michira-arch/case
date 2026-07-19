@@ -18,7 +18,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || 'Case App Update'
   const notificationOptions = {
     body: payload.notification?.body || '',
-    icon: payload.notification?.icon || '/logo.png', // Fallback to public folder logo
+    icon: payload.notification?.icon || '/icons/icon-192.png', // Fallback to public folder logo
     data: payload.data,
   }
 
