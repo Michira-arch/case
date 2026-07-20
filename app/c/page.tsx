@@ -15,6 +15,9 @@ export default async function ScanLandingPage({ searchParams }: Props) {
   const name = params?.n || 'Case Member'
   const profession = params?.p || 'Professional Member'
   const whatsapp = params?.w || ''
+  const phone = params?.ph || ''
+  const email = params?.e || ''
+  const website = params?.s || ''
   const bio = params?.b || ''
 
   const initials = name
@@ -49,10 +52,42 @@ export default async function ScanLandingPage({ searchParams }: Props) {
           <div className={styles.actions}>
             {waLink ? (
               <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn btn--brass btn--lg btn--full">
-                💬 Chat on WhatsApp
+                Chat on WhatsApp
               </a>
             ) : (
-              <p className={styles.noContact}>No contact details were encoded in this card.</p>
+              <p className={styles.noContact}>No primary WhatsApp contact was encoded in this card.</p>
+            )}
+
+            {/* Secondary Contacts List */}
+            {(phone || email || website) && (
+              <div className={styles.secondaryContacts}>
+                <h3 className={styles.secondaryTitle}>Other Contact Info</h3>
+                <div className={styles.contactsGrid}>
+                  {phone && (
+                    <a href={`tel:${phone.replace(/\D/g, '')}`} className={styles.contactLink}>
+                      <span className={styles.contactLabel}>Phone</span>
+                      <span className={styles.contactVal}>{phone}</span>
+                    </a>
+                  )}
+                  {email && (
+                    <a href={`mailto:${email}`} className={styles.contactLink}>
+                      <span className={styles.contactLabel}>Email</span>
+                      <span className={styles.contactVal}>{email}</span>
+                    </a>
+                  )}
+                  {website && (
+                    <a
+                      href={website.startsWith('http') ? website : `https://${website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.contactLink}
+                    >
+                      <span className={styles.contactLabel}>Web/Social</span>
+                      <span className={styles.contactVal}>{website}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -66,7 +101,7 @@ export default async function ScanLandingPage({ searchParams }: Props) {
           </p>
           <div className={styles.growthActions}>
             <Link href="/card-builder" className="btn btn--outline btn--full">
-              📇 Build Free Business Card
+              Build Free Business Card
             </Link>
           </div>
 

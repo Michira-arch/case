@@ -234,24 +234,29 @@
 .contactsList {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 2.5px;
   margin-top: 4px;
 }
 
 .contactItem {
-  font-size: 9.5px;
+  font-size: 9px;
   color: var(--ink-soft);
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 4px;
 }
 
-.contactIcon {
-  opacity: 0.8;
+.contactLabel {
+  font-weight: 600;
+  color: var(--ink-soft);
+  opacity: 0.7;
+  font-size: 8px;
+  text-transform: uppercase;
 }
 
 .contactVal {
   font-weight: 500;
+  color: var(--ink);
 }
 
 .tagline {

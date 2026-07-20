@@ -8,6 +8,9 @@ export default function CardBuilderPage() {
   const [name, setName] = useState('')
   const [profession, setProfession] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
+  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [website, setWebsite] = useState('')
   const [bio, setBio] = useState('')
   const [imageSrc, setImageSrc] = useState<string | null>(null)
   const [downloading, setDownloading] = useState(false)
@@ -40,11 +43,14 @@ export default function CardBuilderPage() {
     .slice(0, 2)
     .toUpperCase() || 'C'
 
-  // Construct Scan landing page URL
+  // Construct Scan landing page URL with secondary contacts
   const queryParams = new URLSearchParams()
   if (name) queryParams.set('n', name)
   if (profession) queryParams.set('p', profession)
   if (whatsapp) queryParams.set('w', whatsapp.replace(/\D/g, ''))
+  if (phone) queryParams.set('ph', phone.replace(/\D/g, ''))
+  if (email) queryParams.set('e', email)
+  if (website) queryParams.set('s', website)
   if (bio) queryParams.set('b', bio)
   
   const scanUrl = `${originUrl}/c?${queryParams.toString()}`
@@ -141,6 +147,39 @@ export default function CardBuilderPage() {
             </div>
 
             <div className="field">
+              <label className="label">Phone Number (Secondary Contact)</label>
+              <input
+                type="text"
+                placeholder="e.g. 254700000000"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                className="input"
+              />
+            </div>
+
+            <div className="field">
+              <label className="label">Email Address (Secondary Contact)</label>
+              <input
+                type="email"
+                placeholder="e.g. joy@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="input"
+              />
+            </div>
+
+            <div className="field">
+              <label className="label">Social Media Page / Website Link</label>
+              <input
+                type="text"
+                placeholder="e.g. instagram.com/joydesigns"
+                value={website}
+                onChange={e => setWebsite(e.target.value)}
+                className="input"
+              />
+            </div>
+
+            <div className="field">
               <label className="label">Short Slogan / Bio (Optional)</label>
               <textarea
                 placeholder="e.g. Bespoke tailoring and wedding garments with 5+ years experience."
@@ -189,14 +228,32 @@ export default function CardBuilderPage() {
                     <h4 className={styles.name}>{name || 'Your Name'}</h4>
                     <p className={styles.role}>{profession || 'Your Profession'}</p>
                     
-                    {whatsapp && (
-                      <div className={styles.contactsList}>
+                    <div className={styles.contactsList}>
+                      {whatsapp && (
                         <span className={styles.contactItem}>
-                          <span className={styles.contactIcon}>💬</span>
-                          <span className={styles.contactVal}>WhatsApp: {whatsapp}</span>
+                          <span className={styles.contactLabel}>WhatsApp:</span>
+                          <span className={styles.contactVal}>{whatsapp}</span>
                         </span>
-                      </div>
-                    )}
+                      )}
+                      {phone && (
+                        <span className={styles.contactItem}>
+                          <span className={styles.contactLabel}>Phone:</span>
+                          <span className={styles.contactVal}>{phone}</span>
+                        </span>
+                      )}
+                      {email && (
+                        <span className={styles.contactItem}>
+                          <span className={styles.contactLabel}>Email:</span>
+                          <span className={styles.contactVal}>{email}</span>
+                        </span>
+                      )}
+                      {website && (
+                        <span className={styles.contactItem}>
+                          <span className={styles.contactLabel}>Web:</span>
+                          <span className={styles.contactVal}>{website}</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <p className={styles.tagline}>
