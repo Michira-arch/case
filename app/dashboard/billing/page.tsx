@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { generateReference, PRICING, openPaystackCheckout } from '@/lib/paystack'
 import { getVisitorCountryCode, calculatePPPPricedPlan } from '@/lib/ppp-pricing'
-import { logPurchaseEvent } from '@/lib/analytics'
+import { logPurchaseEvent, logAnalyticsEvent } from '@/lib/analytics'
 import styles from './billing.module.css'
 
 interface PricingPlan {
@@ -69,6 +69,12 @@ export default function BillingPage() {
     const plan = plans.find(p => p.id === planId) || PRICING[planId]
     const reference = generateReference(profile.id)
 
+    logAnalyticsEvent(profile.id, 'checkout_start', {
+      plan_id: planId,
+      plan_price: plan.amount_kes,
+      transaction_id: reference,
+    })
+
     openPaystackCheckout({
       email: user.email || `${profile.handle}@caseshow.info`,
       amountKes: plan.amount_kes,
@@ -88,6 +94,11 @@ export default function BillingPage() {
             currency: 'KES',
             planId: planId,
             planName: `Case+ ${planId === '6m' ? '6-Month' : '12-Month'} Subscription`
+          })
+          logAnalyticsEvent(profile.id, 'checkout_success', {
+            plan_id: planId,
+            plan_price: plan.amount_kes,
+            transaction_id: ref,
           })
         }
 
@@ -137,6 +148,10 @@ export default function BillingPage() {
         }, 2000)
       },
       onClose: () => {
+        logAnalyticsEvent(profile.id, 'checkout_cancel', {
+          plan_id: planId,
+          transaction_id: reference,
+        })
         if (paymentStatus === 'idle') {
           // User closed modal without paying — that's ok
         }

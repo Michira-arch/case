@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { logAnalyticsEvent } from '@/lib/analytics'
 import styles from './card-builder.module.css'
 
 export default function CardBuilderPage() {
@@ -57,10 +58,18 @@ export default function CardBuilderPage() {
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(scanUrl)}`
 
   const handlePrint = () => {
+    logAnalyticsEvent(null, 'card_print_pdf', {
+      card_name: name,
+      card_profession: profession,
+    })
     window.print()
   }
 
   const handleDownload = async () => {
+    logAnalyticsEvent(null, 'card_download_png', {
+      card_name: name,
+      card_profession: profession,
+    })
     setDownloading(true)
     try {
       const html2canvas = (await import('html2canvas')).default
