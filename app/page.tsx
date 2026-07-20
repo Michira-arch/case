@@ -139,15 +139,23 @@ export default function LandingPage() {
                   <span className={styles.valItemIcon}>📇</span>
                   <div className={styles.valItemContent}>
                     <h4 className={styles.valItemTitle}>Premium Business Card</h4>
-                    <p className={styles.valItemDesc}>Get a custom-designed, premium business card you can use to share about yourself or leave your contacts behind professionally.</p>
+                    <p className={styles.valItemDesc}>
+                      Get a custom-designed, premium business card you can use to share about yourself or leave your contacts behind professionally.{' '}
+                      <Link href="/card-builder" style={{ textDecoration: 'underline', color: 'var(--brass-deep)', fontWeight: 500 }}>
+                        Create a card now →
+                      </Link>
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div className={styles.valColFooter}>
                 <span className={styles.valColCtaText}>Ready to build your credibility?</span>
-                <Link href="/signup" className="btn btn--brass btn--full">
+                <Link href="/signup" className="btn btn--brass btn--full" style={{ marginBottom: 8 }}>
                   Create your profile free
+                </Link>
+                <Link href="/card-builder" className="btn btn--outline btn--full">
+                  Make a Free Business Card (No Signup)
                 </Link>
               </div>
             </div>
