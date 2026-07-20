@@ -134,6 +134,14 @@ export default function LandingPage() {
                     <p className={styles.valItemDesc}>Your Case profile is fully SEO-optimized, meaning it can rank on Google searches and bring organic leads or job offers directly to you.</p>
                   </div>
                 </div>
+
+                <div className={styles.valItem}>
+                  <span className={styles.valItemIcon}>📇</span>
+                  <div className={styles.valItemContent}>
+                    <h4 className={styles.valItemTitle}>Premium Business Card</h4>
+                    <p className={styles.valItemDesc}>Get a custom-designed, premium business card you can use to share about yourself or leave your contacts behind professionally.</p>
+                  </div>
+                </div>
               </div>
 
               <div className={styles.valColFooter}>
