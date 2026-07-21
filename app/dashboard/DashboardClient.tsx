@@ -16,6 +16,7 @@ import BusinessCardModal from '@/components/profile/BusinessCardModal'
 import QuickActionDrawer from '@/components/dashboard/QuickActionDrawer'
 import TrustQuest from '@/components/dashboard/TrustQuest'
 import VisitorSimulator from '@/components/dashboard/VisitorSimulator'
+import SearchRankEstimator from '@/components/dashboard/SearchRankEstimator'
 import PwaManager from '@/components/dashboard/PwaManager'
 import { getDisplayDomain } from '@/lib/domain'
 import styles from './DashboardClient.module.css'
@@ -354,6 +355,16 @@ export default function DashboardClient({
         proofItems={items}
         onEdit={(field) => setActiveDrawer(field)}
       />
+
+      {/* Search Rank Simulator (Kept in codebase, hidden for now)
+      <SearchRankEstimator
+        profileId={profile.id}
+        initialCompleteness={score}
+        initialPlan={plan as 'free' | 'plus'}
+        initialViews={monthlyViews}
+        category={profile.category}
+      />
+      */}
 
       {/* Views limit bar (only for free plan) */}
       {plan === 'free' && (
