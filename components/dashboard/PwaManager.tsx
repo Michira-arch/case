@@ -56,16 +56,38 @@ export default function PwaManager({ profileId }: PwaManagerProps) {
       }
     }
 
-    // 2. Service Worker registration & PWA checks
+    // 2. Service Worker registration & PWA update management
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js')
         .then((reg) => {
           console.log('Service Worker registered successfully:', reg.scope)
+          
+          // Check for background updates
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // Tell new SW to skip waiting so clients update smoothly
+                  newWorker.postMessage({ type: 'SKIP_WAITING' })
+                }
+              })
+            }
+          })
         })
         .catch((err) => {
           console.warn('Service Worker registration failed:', err)
         })
+
+      // When the controlling Service Worker changes, smoothly refresh without losing auth cookies
+      let refreshing = false
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true
+          window.location.reload()
+        }
+      })
     }
 
     // Check if PWA is running in standalone mode (already installed)

@@ -1,7 +1,7 @@
 // Service Worker for Case PWA
-// Caches the dashboard app shell and queues uploads for offline retry
+// Uses Network-First for navigation & Next.js assets to ensure smooth app updates while preserving offline capability
 
-const CACHE_VERSION = 'case-v1'
+const CACHE_VERSION = 'case-v2'
 const SHELL_CACHE = `${CACHE_VERSION}-shell`
 const DATA_CACHE  = `${CACHE_VERSION}-data`
 
@@ -20,7 +20,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting()
 })
 
-// Activate — clean up old caches
+// Activate — clean up old caches and take control immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -34,7 +34,14 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
-// Fetch — network-first for API, cache-first for shell
+// Listen for SKIP_WAITING message from client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})
+
+// Fetch — Network-First for HTML & Next.js build assets, Stale-While-Revalidate for static assets
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
@@ -51,27 +58,43 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Dashboard navigation: serve shell from cache, fill content via network
-  if (url.pathname.startsWith('/dashboard') && request.mode === 'navigate') {
+  // Navigation (HTML pages) and Next.js JS/CSS chunks: Network-First with cache fallback
+  if (request.mode === 'navigate' || url.pathname.startsWith('/_next/')) {
     event.respondWith(
-      fetch(request).catch(() =>
-        caches.match('/dashboard') || caches.match('/offline.html')
-      )
+      fetch(request)
+        .then((response) => {
+          if (response.ok && response.type === 'basic') {
+            const clone = response.clone()
+            caches.open(SHELL_CACHE).then((cache) => cache.put(request, clone))
+          }
+          return response
+        })
+        .catch(async () => {
+          const cached = await caches.match(request)
+          if (cached) return cached
+          if (request.mode === 'navigate') {
+            return (await caches.match('/dashboard')) || (await caches.match('/offline.html'))
+          }
+          return Promise.reject('offline')
+        })
     )
     return
   }
 
-  // Static assets: cache-first
+  // Static assets (images, icons, styles): Stale-While-Revalidate
   event.respondWith(
     caches.match(request).then((cached) => {
-      if (cached) return cached
-      return fetch(request).then((response) => {
-        if (response.ok && response.type === 'basic') {
-          const clone = response.clone()
-          caches.open(SHELL_CACHE).then((c) => c.put(request, clone))
-        }
-        return response
-      }).catch(() => caches.match('/offline.html'))
+      const fetchPromise = fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse.ok && networkResponse.type === 'basic') {
+            const clone = networkResponse.clone()
+            caches.open(SHELL_CACHE).then((cache) => cache.put(request, clone))
+          }
+          return networkResponse
+        })
+        .catch(() => cached)
+
+      return cached || fetchPromise
     })
   )
 })
@@ -114,10 +137,9 @@ self.addEventListener('sync', (event) => {
 })
 
 async function processUploadQueue() {
-  // The upload queue is stored in IndexedDB by the app
-  // This sync event fires when connectivity is restored
   const clients_list = await clients.matchAll({ type: 'window' })
   for (const client of clients_list) {
     client.postMessage({ type: 'PROCESS_UPLOAD_QUEUE' })
   }
 }
+
