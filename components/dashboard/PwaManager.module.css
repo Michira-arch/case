@@ -267,6 +267,26 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
+/* Offline Toast */
+.offlineToast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  animation: slideUp 0.3s ease-out;
+}
+
 /* Responsive adjustments */
 @media (max-width: 580px) {
   .installBanner {
@@ -278,3 +298,4 @@
     text-align: center;
   }
 }
+

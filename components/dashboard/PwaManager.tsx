@@ -16,6 +16,9 @@ export default function PwaManager({ profileId }: PwaManagerProps) {
   const [isInstalled, setIsInstalled] = useState(false)
   const [showIosGuide, setShowIosGuide] = useState(false)
 
+  // Network state
+  const [isOffline, setIsOffline] = useState(false)
+
   // Notification state
   const [showPushPrompt, setShowPushPrompt] = useState(false)
   const [permissionState, setPermissionState] = useState<NotificationPermission>('default')
@@ -23,6 +26,13 @@ export default function PwaManager({ profileId }: PwaManagerProps) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+
+    // Track online/offline status
+    setIsOffline(!navigator.onLine)
+    const handleOnline = () => setIsOffline(false)
+    const handleOffline = () => setIsOffline(true)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
 
     // 1. Check current notification permission
     if ('Notification' in window) {
@@ -115,6 +125,8 @@ export default function PwaManager({ profileId }: PwaManagerProps) {
     window.addEventListener('appinstalled', handleAppInstalled)
 
     return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
     }
@@ -255,6 +267,14 @@ export default function PwaManager({ profileId }: PwaManagerProps) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 4. Live Offline Toast Banner */}
+      {isOffline && (
+        <div className={styles.offlineToast} role="status">
+          <span>📡</span>
+          <span>You are currently offline. Saved data remains accessible.</span>
         </div>
       )}
     </>
