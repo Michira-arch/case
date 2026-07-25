@@ -52,8 +52,16 @@ export default function RosterTab({ agencyId }: { agencyId: string }) {
   }
 
   const declineRequest = async (id: string) => {
-    // Note: Would need a DELETE or PATCH on join_requests endpoint, but for now just mock local removal
-    setRequests(requests.filter(r => r.id !== id))
+    try {
+      await fetch(`/api/agency/join-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId: id, action: 'reject' })
+      })
+      fetchRoster()
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   const saveOverlay = async () => {

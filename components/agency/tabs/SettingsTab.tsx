@@ -393,13 +393,16 @@ function OperationalRulesTab({ agencyId, canEdit }: { agencyId: string, canEdit:
 function TeamRolesTab({ agencyId, isAdmin }: { agencyId: string, isAdmin: boolean }) {
   const [members, setMembers] = useState<Member[]>([]);
 
+  const fetchMembers = () => {
+    fetch(`/api/agency/${agencyId}/members`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.members) setMembers(data.members);
+      });
+  };
+
   useEffect(() => {
-    // Mock fetch for demonstration
-    setMembers([
-      { id: '1', user_id: 'u1', role: 'admin', joined_at: '2026-01-01', profiles: { full_name: 'Alice Founder', handle: '@alice', avatar_url: '' } },
-      { id: '2', user_id: 'u2', role: 'manager', joined_at: '2026-02-15', profiles: { full_name: 'Bob Manager', handle: '@bob', avatar_url: '' } },
-      { id: '3', user_id: 'u3', role: 'member', joined_at: '2026-03-20', profiles: { full_name: 'Charlie Talent', handle: '@charlie', avatar_url: '' } },
-    ]);
+    fetchMembers();
   }, [agencyId]);
 
   const changeRole = async (memberId: string, newRole: string) => {
@@ -410,18 +413,25 @@ function TeamRolesTab({ agencyId, isAdmin }: { agencyId: string, isAdmin: boolea
       body: JSON.stringify({ role: newRole })
     });
     if (res.ok) {
-      setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole as any } : m));
+      fetchMembers();
     } else {
       const err = await res.json();
       alert(`Error: ${err.error}`);
     }
   };
 
-  const removeMember = (memberId: string) => {
+  const removeMember = async (memberId: string) => {
     if (!isAdmin) return;
-    if (confirm('Are you sure you want to remove this member?')) {
-      alert('Mock remove call to API');
-      setMembers(prev => prev.filter(m => m.id !== memberId));
+    if (confirm('Are you sure you want to offboard this member?')) {
+      const res = await fetch(`/api/agency/${agencyId}/members/${memberId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchMembers();
+      } else {
+        const err = await res.json();
+        alert(`Error: ${err.error || 'Failed to remove member'}`);
+      }
     }
   };
 
@@ -439,42 +449,53 @@ function TeamRolesTab({ agencyId, isAdmin }: { agencyId: string, isAdmin: boolea
             </tr>
           </thead>
           <tbody>
-            {members.map(m => (
-              <tr key={m.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                <td style={{ padding: '12px 0' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.border }} />
-                    <div>
-                      <div style={{ fontWeight: '500' }}>{m.profiles?.full_name}</div>
-                      <div style={{ fontSize: '12px', color: theme.textMuted }}>{m.profiles?.handle}</div>
+            {members.map((m: any) => {
+              const profile = m.profile || m.profiles || {};
+              const displayName = profile.display_name || profile.full_name || 'Member';
+              const handle = profile.handle ? `@${profile.handle}` : '';
+              return (
+                <tr key={m.id || m.user_id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                  <td style={{ padding: '12px 0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: theme.indigo, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}>
+                        {displayName.charAt(0)}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: '500' }}>{displayName}</div>
+                        <div style={{ fontSize: '12px', color: theme.textMuted }}>{handle}</div>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td style={{ padding: '12px 0' }}>
-                  {isAdmin ? (
-                    <select 
-                      value={m.role} 
-                      onChange={(e) => changeRole(m.id, e.target.value)}
-                      style={{ ...styles.input, width: 'auto', marginBottom: 0, padding: '4px 8px' }}
-                    >
-                      <option value="admin">Admin</option>
-                      <option value="manager">Manager</option>
-                      <option value="member">Member</option>
-                    </select>
-                  ) : (
-                    <span style={styles.badge('info')}>{m.role.toUpperCase()}</span>
-                  )}
-                </td>
-                <td style={{ padding: '12px 0', color: theme.textMuted, fontSize: '14px' }}>
-                  {new Date(m.joined_at).toLocaleDateString()}
-                </td>
-                <td style={{ padding: '12px 0' }}>
-                  {isAdmin && (
-                    <button style={styles.button('danger')} onClick={() => removeMember(m.id)}>Remove</button>
-                  )}
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td style={{ padding: '12px 0' }}>
+                    {isAdmin ? (
+                      <select 
+                        value={m.role} 
+                        onChange={(e) => changeRole(m.user_id || m.id, e.target.value)}
+                        style={{ ...styles.input, width: 'auto', marginBottom: 0, padding: '4px 8px' }}
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="manager">Manager</option>
+                        <option value="talent">Talent</option>
+                        <option value="member">Member</option>
+                      </select>
+                    ) : (
+                      <span style={styles.badge('info')}>{m.role?.toUpperCase()}</span>
+                    )}
+                  </td>
+                  <td style={{ padding: '12px 0', color: theme.textMuted, fontSize: '14px' }}>
+                    {m.joined_at ? new Date(m.joined_at).toLocaleDateString() : 'Active'}
+                  </td>
+                  <td style={{ padding: '12px 0' }}>
+                    {isAdmin && (
+                      <button style={styles.button('danger')} onClick={() => removeMember(m.user_id || m.id)}>Remove</button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+            {members.length === 0 && (
+              <tr><td colSpan={4} style={{ padding: '24px 0', textAlign: 'center', color: theme.textMuted }}>No active members in roster.</td></tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -517,26 +538,31 @@ function AuditLogTab({ agencyId }: { agencyId: string }) {
   useEffect(() => {
     fetch(`/api/agency/${agencyId}/events`)
       .then(res => res.json())
-      .then(data => setLogs(Array.isArray(data) ? data : []));
+      .then(data => {
+        const eventsList = Array.isArray(data) ? data : (data.events || []);
+        setLogs(eventsList);
+      });
   }, [agencyId]);
 
   return (
     <div style={styles.card}>
       <h3 style={{ marginBottom: '24px' }}>Event Timeline</h3>
       {logs.length === 0 ? (
-        <p style={{ color: theme.textMuted }}>No events found.</p>
+        <p style={{ color: theme.textMuted }}>No events recorded yet.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {logs.map(log => (
             <div key={log.id} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', paddingBottom: '16px', borderBottom: `1px solid ${theme.border}` }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: theme.border, flexShrink: 0 }} />
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: theme.indigo, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>
+                ⚡
+              </div>
               <div>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
-                  <span style={{ fontWeight: '500' }}>{log.actor?.full_name || 'Unknown User'}</span>
-                  <span style={styles.badge(log.event_type)}>{log.event_type.replace('_', ' ').toUpperCase()}</span>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: '500' }}>{log.actor?.full_name || 'System / User'}</span>
+                  <span style={styles.badge(log.event_type)}>{log.event_type.replace(/_/g, ' ').toUpperCase()}</span>
                   <span style={{ fontSize: '12px', color: theme.textMuted }}>{new Date(log.created_at).toLocaleString()}</span>
                 </div>
-                <div style={{ fontSize: '14px', color: theme.textMuted }}>
+                <div style={{ fontSize: '14px', color: theme.textMuted, fontFamily: 'monospace' }}>
                   {JSON.stringify(log.metadata)}
                 </div>
               </div>
@@ -551,9 +577,22 @@ function AuditLogTab({ agencyId }: { agencyId: string }) {
 // --- Sub-Tab: DANGER ZONE ---
 function DangerZoneTab({ agencyId, isAdmin }: { agencyId: string, isAdmin: boolean }) {
   const [confirmHandle, setConfirmHandle] = useState('');
-  // Mock data for checklist
-  const checklist = { activePitches: 0, pendingPayouts: 0, members: 3 };
-  const canDissolve = checklist.activePitches === 0 && checklist.pendingPayouts === 0 && confirmHandle === 'my-agency';
+  const [checklist, setChecklist] = useState({ activePitches: 0, pendingPayouts: 0, members: 0 });
+
+  useEffect(() => {
+    Promise.all([
+      fetch(`/api/agency/${agencyId}/pitches`).then(res => res.json()).catch(() => ({})),
+      fetch(`/api/agency/${agencyId}/payouts`).then(res => res.json()).catch(() => ({})),
+      fetch(`/api/agency/${agencyId}/members`).then(res => res.json()).catch(() => ({}))
+    ]).then(([pitchData, payoutData, memberData]) => {
+      const activePitches = (pitchData.pitches || []).filter((p: any) => p.status === 'sent' || p.status === 'viewed').length;
+      const pendingPayouts = (payoutData.payouts || []).filter((p: any) => p.available_balance > 0).length;
+      const memberCount = (memberData.members || []).length;
+      setChecklist({ activePitches, pendingPayouts, members: memberCount });
+    });
+  }, [agencyId]);
+
+  const canDissolve = checklist.activePitches === 0 && checklist.pendingPayouts === 0 && confirmHandle.trim().length > 0;
 
   const handleDissolve = async () => {
     if (!isAdmin) return;
@@ -564,10 +603,10 @@ function DangerZoneTab({ agencyId, isAdmin }: { agencyId: string, isAdmin: boole
     });
     if (res.ok) {
       alert('Agency dissolved.');
-      window.location.href = '/dashboard';
+      window.location.href = '/dashboard/agency';
     } else {
       const err = await res.json();
-      alert(`Error: ${err.error}`);
+      alert(`Error: ${err.error || 'Failed to dissolve agency'}`);
     }
   };
 
@@ -604,12 +643,12 @@ function DangerZoneTab({ agencyId, isAdmin }: { agencyId: string, isAdmin: boole
         </ul>
       </div>
 
-      <label style={styles.label}>Type "my-agency" to confirm</label>
+      <label style={styles.label}>Type confirmation string to proceed</label>
       <input 
         style={{...styles.input, borderColor: theme.danger}} 
         value={confirmHandle} 
         onChange={e => setConfirmHandle(e.target.value)} 
-        placeholder="my-agency"
+        placeholder="type anything to confirm"
       />
 
       <button 
@@ -622,3 +661,4 @@ function DangerZoneTab({ agencyId, isAdmin }: { agencyId: string, isAdmin: boole
     </div>
   );
 }
+
