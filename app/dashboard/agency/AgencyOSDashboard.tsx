@@ -1,40 +1,69 @@
 'use client'
 
 import { useState } from 'react'
-import RosterManager from '@/components/agency/RosterManager'
-import InvoiceSplitEngine from '@/components/agency/InvoiceSplitEngine'
-import PitchBuilder from '@/components/agency/PitchBuilder'
-import AgencyRuleCustomizer from '@/components/agency/AgencyRuleCustomizer'
-import SmartNudgePanel from '@/components/agency/SmartNudgePanel'
-import styles from '@/components/agency/agencyOS.module.css'
+import RosterTab from '@/components/agency/tabs/RosterTab'
+import FinancialsTab from '@/components/agency/tabs/FinancialsTab'
+import IntelligenceTab from '@/components/agency/tabs/IntelligenceTab'
+import SettingsTab from '@/components/agency/tabs/SettingsTab'
 import Link from 'next/link'
 
 interface AgencyOSProps {
   agency: any
-  rosterMembers: any[]
-  pendingRequests: any[]
-  transactions: any[]
+  currentUserRole?: 'admin' | 'manager' | 'member'
+  pendingCount?: number
+}
+
+const tabs = [
+  { id: 'roster', label: 'Roster & Talent', icon: '👥' },
+  { id: 'financials', label: 'Invoices & Payouts', icon: '💳' },
+  { id: 'intelligence', label: 'Intelligence', icon: '🧠' },
+  { id: 'settings', label: 'Settings & Rules', icon: '⚙️' },
+]
+
+const shell: React.CSSProperties = {
+  minHeight: '100vh',
+  backgroundColor: '#080c14',
+  color: '#f9fafb',
+  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+}
+
+const headerStyle: React.CSSProperties = {
+  background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(16,185,129,0.06) 100%)',
+  borderBottom: '1px solid rgba(255,255,255,0.07)',
+  padding: '1.5rem 2rem',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: '1rem',
 }
 
 export default function AgencyOSDashboard({
   agency,
-  rosterMembers,
-  pendingRequests,
-  transactions,
+  currentUserRole = 'admin',
+  pendingCount = 0,
 }: AgencyOSProps) {
-  const [activeTab, setActiveTab] = useState<'roster' | 'financials' | 'pitches' | 'intelligence' | 'settings'>('roster')
+  const [activeTab, setActiveTab] = useState<string>('roster')
+
+  if (!agency) return null
 
   return (
-    <div className={styles.container}>
-      {/* Header */}
-      <header className={styles.header}>
-        <div className={styles.titleGroup}>
-          <h1 className={styles.title}>
-            <span>{agency.name}</span>
-            {agency.is_verified && <span className={`${styles.badge} ${styles.badgeSuccess}`}>Verified</span>}
-          </h1>
-          <p className={styles.subtitle}>
-            case.app/agency/@{agency.handle} · {agency.country_code} ({agency.currency})
+    <div style={shell}>
+      {/* Agency Header */}
+      <header style={headerStyle}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
+            <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 800 }}>{agency.name}</h1>
+            {agency.is_verified && (
+              <span style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 10px', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.04em' }}>
+                VERIFIED
+              </span>
+            )}
+          </div>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: '#6b7280' }}>
+            case.app/agency/<strong style={{ color: '#9ca3af' }}>@{agency.handle}</strong>
+            {agency.country_code && ` · ${agency.country_code}`}
+            {agency.currency && ` (${agency.currency})`}
           </p>
         </div>
 
@@ -42,85 +71,70 @@ export default function AgencyOSDashboard({
           <Link
             href={`/agency/${agency.handle}`}
             target="_blank"
-            className={styles.btnSecondary}
+            style={{ background: 'rgba(255,255,255,0.06)', color: '#e5e7eb', border: '1px solid rgba(255,255,255,0.1)', padding: '0.55rem 1.1rem', borderRadius: '10px', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 600 }}
           >
-            Public Showcase ↗
+            View Showcase ↗
+          </Link>
+          <Link
+            href="/dashboard/agency/new"
+            style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.2)', padding: '0.55rem 1.1rem', borderRadius: '10px', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 600 }}
+          >
+            + New Agency
           </Link>
         </div>
       </header>
 
-      {/* Tabs Navigation */}
-      <nav className={styles.tabsNav}>
-        <button
-          className={`${styles.tabBtn} ${activeTab === 'roster' ? styles.tabBtnActive : ''}`}
-          onClick={() => setActiveTab('roster')}
-        >
-          👥 Roster & Overlays ({rosterMembers.length})
-        </button>
-        <button
-          className={`${styles.tabBtn} ${activeTab === 'financials' ? styles.tabBtnActive : ''}`}
-          onClick={() => setActiveTab('financials')}
-        >
-          💳 Split Invoices & Payouts
-        </button>
-        <button
-          className={`${styles.tabBtn} ${activeTab === 'pitches' ? styles.tabBtnActive : ''}`}
-          onClick={() => setActiveTab('pitches')}
-        >
-          📑 Proposal Pitches
-        </button>
-        <button
-          className={`${styles.tabBtn} ${activeTab === 'intelligence' ? styles.tabBtnActive : ''}`}
-          onClick={() => setActiveTab('intelligence')}
-        >
-          🧠 AI Smart Nudges
-        </button>
-        <button
-          className={`${styles.tabBtn} ${activeTab === 'settings' ? styles.tabBtnActive : ''}`}
-          onClick={() => setActiveTab('settings')}
-        >
-          ⚙️ Rules & Branding
-        </button>
+      {/* Tab Navigation */}
+      <nav style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '0 2rem', display: 'flex', gap: '0.25rem', overflowX: 'auto' }}>
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === tab.id ? '2px solid #6366f1' : '2px solid transparent',
+              color: activeTab === tab.id ? '#a5b4fc' : '#6b7280',
+              padding: '1rem 1.25rem',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              fontWeight: activeTab === tab.id ? 700 : 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span>{tab.icon}</span>
+            <span>{tab.label}</span>
+            {tab.id === 'roster' && pendingCount > 0 && (
+              <span style={{ background: '#f59e0b', color: '#000', borderRadius: '999px', padding: '1px 6px', fontSize: '0.7rem', fontWeight: 800 }}>
+                {pendingCount}
+              </span>
+            )}
+          </button>
+        ))}
       </nav>
 
-      {/* Main Tab Content */}
-      <main>
+      {/* Tab Content */}
+      <div style={{ padding: '2rem', maxWidth: '1300px', margin: '0 auto' }}>
         {activeTab === 'roster' && (
-          <RosterManager
-            agency={agency}
-            rosterMembers={rosterMembers}
-            pendingRequests={pendingRequests}
-          />
+          <RosterTab agencyId={agency.id} />
         )}
 
         {activeTab === 'financials' && (
-          <InvoiceSplitEngine
-            agency={agency}
-            rosterMembers={rosterMembers}
-            transactions={transactions}
-          />
-        )}
-
-        {activeTab === 'pitches' && (
-          <PitchBuilder
-            agency={agency}
-            rosterMembers={rosterMembers}
-          />
+          <FinancialsTab agencyId={agency.id} />
         )}
 
         {activeTab === 'intelligence' && (
-          <SmartNudgePanel
-            agency={agency}
-            rosterMembers={rosterMembers}
-          />
+          <IntelligenceTab agencyId={agency.id} />
         )}
 
         {activeTab === 'settings' && (
-          <AgencyRuleCustomizer
-            agency={agency}
-          />
+          <SettingsTab agencyId={agency.id} currentUserRole={currentUserRole} />
         )}
-      </main>
+      </div>
     </div>
   )
 }
