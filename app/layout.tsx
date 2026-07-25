@@ -56,13 +56,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body>
         <Suspense fallback={null}>
           <AnalyticsTracker />
         </Suspense>
         {children}
-        {/* Paystack inline JS — loaded on billing page only */}
       </body>
     </html>
   )

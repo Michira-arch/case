@@ -1,7 +1,7 @@
 // Service Worker for Case PWA
 // Uses Network-First for navigation & Next.js assets to ensure smooth app updates while preserving offline capability
 
-const CACHE_VERSION = 'case-v2'
+const CACHE_VERSION = 'case-v3'
 const SHELL_CACHE = `${CACHE_VERSION}-shell`
 const DATA_CACHE  = `${CACHE_VERSION}-data`
 
@@ -44,12 +44,25 @@ self.addEventListener('message', (event) => {
 // Fetch — Network-First for HTML & Next.js build assets, Stale-While-Revalidate for static assets
 self.addEventListener('fetch', (event) => {
   const { request } = event
+  
+  // Cache API strictly requires GET requests
+  if (request.method !== 'GET') {
+    return
+  }
+
   const url = new URL(request.url)
+
+  // Ignore non-http(s) schemes like chrome-extension://
+  if (!url.protocol.startsWith('http')) {
+    return
+  }
 
   // Never intercept Supabase or external API calls
   if (url.hostname.includes('supabase') ||
       url.hostname.includes('paystack') ||
-      url.hostname.includes('r2.cloudflarestorage')) {
+      url.hostname.includes('r2.cloudflarestorage') ||
+      url.hostname.includes('googleapis') ||
+      url.hostname.includes('firebase')) {
     return
   }
 
@@ -65,7 +78,13 @@ self.addEventListener('fetch', (event) => {
         .then((response) => {
           if (response.ok && response.type === 'basic') {
             const clone = response.clone()
-            caches.open(SHELL_CACHE).then((cache) => cache.put(request, clone))
+            caches.open(SHELL_CACHE).then((cache) => {
+              try {
+                cache.put(request, clone)
+              } catch (e) {
+                // Ignore cache put errors
+              }
+            })
           }
           return response
         })
@@ -88,7 +107,13 @@ self.addEventListener('fetch', (event) => {
         .then((networkResponse) => {
           if (networkResponse.ok && networkResponse.type === 'basic') {
             const clone = networkResponse.clone()
-            caches.open(SHELL_CACHE).then((cache) => cache.put(request, clone))
+            caches.open(SHELL_CACHE).then((cache) => {
+              try {
+                cache.put(request, clone)
+              } catch (e) {
+                // Ignore cache put errors
+              }
+            })
           }
           return networkResponse
         })
@@ -142,4 +167,3 @@ async function processUploadQueue() {
     client.postMessage({ type: 'PROCESS_UPLOAD_QUEUE' })
   }
 }
-

@@ -12,14 +12,23 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
-// Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
+// Safely initialize Firebase only if apiKey exists
+const getFirebaseApp = () => {
+  if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) return null
+  return getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
+}
 
 export const getFirebaseAnalytics = async () => {
   if (typeof window !== 'undefined') {
-    const supported = await isSupported()
-    if (supported) {
-      return getAnalytics(app)
+    const app = getFirebaseApp()
+    if (!app) return null
+    try {
+      const supported = await isSupported()
+      if (supported) {
+        return getAnalytics(app)
+      }
+    } catch {
+      // Ignore analytics initialization failure
     }
   }
   return null
@@ -27,6 +36,8 @@ export const getFirebaseAnalytics = async () => {
 
 export const getFirebaseMessaging = async (): Promise<Messaging | null> => {
   if (typeof window !== 'undefined') {
+    const app = getFirebaseApp()
+    if (!app) return null
     try {
       return getMessaging(app)
     } catch (err) {
@@ -52,8 +63,6 @@ export async function requestNotificationPermissionAndGetToken(vapidKey?: string
     const messaging = await getFirebaseMessaging()
     if (!messaging) return null
 
-    // VAPID Key can be obtained from Firebase Console Cloud Messaging settings.
-    // If not provided, it falls back to standard.
     const token = await getToken(messaging, {
       vapidKey: vapidKey || process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
     })
@@ -65,4 +74,4 @@ export async function requestNotificationPermissionAndGetToken(vapidKey?: string
   }
 }
 
-export { app as firebaseApp }
+export const firebaseApp = getFirebaseApp()
