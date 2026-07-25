@@ -17,6 +17,7 @@ export default function LandingPage() {
           <span className={styles.wordmark}>Case</span>
           <div className={styles.navActions}>
             <Link href="/search" className="btn btn--outline btn--sm" style={{ marginRight: 4 }}>Search Cases</Link>
+            <Link href="/agency/new" className="btn btn--outline btn--sm" style={{ marginRight: 4 }}>🏢 For Agencies</Link>
             <Link href="/login" className="btn btn--outline btn--sm">Log in</Link>
             <Link href="/signup" className="btn btn--brass btn--sm">Start free</Link>
           </div>
@@ -27,14 +28,14 @@ export default function LandingPage() {
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
-            <span className="stamp stamp--vouched">Proof-of-work · mobile-first</span>
+            <span className="stamp stamp--vouched">Proof-of-work · mobile-first · B2B agencies</span>
           </div>
           <h1 className={styles.heroTitle}>
             Prove you've got the skills.<br />
             <span className={styles.heroAccent}>Not just a CV line.</span>
           </h1>
           <p className={styles.heroSub}>
-            Case helps you present yourself professionally with a single shareable link. 
+            Case helps individuals and agency rosters present themselves professionally. 
             Showcase your projects, certificates, photos, and recommendations in one convincing profile.
           </p>
 
@@ -50,7 +51,7 @@ export default function LandingPage() {
               <input
                 type="text"
                 name="q"
-                placeholder="Search for chefs, tailors, nurses, or search by name..."
+                placeholder="Search for chefs, tailors, nurses, or agencies..."
                 className={styles.heroSearchInput}
               />
               <button type="submit" className={`btn btn--brass ${styles.heroSearchButton}`}>
@@ -63,17 +64,15 @@ export default function LandingPage() {
             <Link href="/signup" className="btn btn--brass btn--lg">
               Build your Case — free
             </Link>
-            <a href="/@a.njoroge" className="btn btn--outline btn--lg">
-              See example
-            </a>
+            <Link href="/dashboard/agency/new" className="btn btn--outline btn--lg">
+              Launch an Agency →
+            </Link>
           </div>
           <p className={styles.heroNote}>
-            Free forever · takes 5 minutes · share via WhatsApp
+            Free forever for individuals · B2B Agency subscriptions · share via WhatsApp
           </p>
         </div>
       </section>
-
-
 
       {/* Value Propositions */}
       <section className={styles.valuePropSection}>
@@ -81,7 +80,7 @@ export default function LandingPage() {
           <div className={styles.valuePropHeader}>
             <h2 className={styles.valuePropMainTitle}>How Case works for you</h2>
             <p className={styles.valuePropSubtitle}>
-              Whether you are showcasing your abilities to get booked, or verifying candidates to hire with confidence.
+              Whether you are showcasing your abilities to get booked, running a talent agency, or verifying candidates to hire with confidence.
             </p>
           </div>
 
@@ -99,7 +98,7 @@ export default function LandingPage() {
               </div>
 
               <p className={styles.valColIntro}>
-                Instead of sending your résumé, certificates, project files, photos, and videos separately, Case brings everything together into one convincing profile that you can share anywhere — WhatsApp, social media, email, or in person.
+                Instead of sending your résumé, certificates, project files, photos, and videos separately, Case brings everything together into one convincing profile that you can share anywhere.
               </p>
 
               <div className={styles.valList}>
@@ -115,105 +114,55 @@ export default function LandingPage() {
                   <span className={styles.valItemIcon}>🛠️</span>
                   <div className={styles.valItemContent}>
                     <h4 className={styles.valItemTitle}>Built on Proof of Work</h4>
-                    <p className={styles.valItemDesc}>No papers needed to get a job if you can prove your skill. If you don't have formal qualifications, your work speaks for itself. If you do, Case showcases them with real evidence.</p>
-                  </div>
-                </div>
-
-                <div className={styles.valItem}>
-                  <span className={styles.valItemIcon}>📈</span>
-                  <div className={styles.valItemContent}>
-                    <h4 className={styles.valItemTitle}>Multiply your visibility</h4>
-                    <p className={styles.valItemDesc}>Vastly increase your reach. You don't have to 'tarmac' much or keep calling every contact. Let your profile do the work.</p>
-                  </div>
-                </div>
-
-                <div className={styles.valItem}>
-                  <span className={styles.valItemIcon}>🌐</span>
-                  <div className={styles.valItemContent}>
-                    <h4 className={styles.valItemTitle}>Google Rankable Webpage</h4>
-                    <p className={styles.valItemDesc}>Your Case profile is fully SEO-optimized, meaning it can rank on Google searches and bring organic leads or job offers directly to you.</p>
-                  </div>
-                </div>
-
-                <div className={styles.valItem}>
-                  <span className={styles.valItemIcon}>📇</span>
-                  <div className={styles.valItemContent}>
-                    <h4 className={styles.valItemTitle}>Premium Business Card</h4>
-                    <p className={styles.valItemDesc}>
-                      Get a custom-designed, premium business card you can use to share about yourself or leave your contacts behind professionally.{' '}
-                      <Link href="/card-builder" style={{ textDecoration: 'underline', color: 'var(--brass-deep)', fontWeight: 500 }}>
-                        Create a card now →
-                      </Link>
-                    </p>
+                    <p className={styles.valItemDesc}>No papers needed to get a job if you can prove your skill. If you don't have formal qualifications, your work speaks for itself.</p>
                   </div>
                 </div>
               </div>
 
               <div className={styles.valColFooter}>
-                <span className={styles.valColCtaText}>Ready to build your credibility?</span>
                 <Link href="/signup" className="btn btn--brass btn--full" style={{ marginBottom: 8 }}>
                   Create your profile free
-                </Link>
-                <Link href="/card-builder" className="btn btn--outline btn--full">
-                  Make a Free Business Card (No Signup)
                 </Link>
               </div>
             </div>
 
-            {/* For Employers */}
+            {/* For Agencies (B2B) */}
             <div className={`${styles.valCol} ${styles.valColEmployers}`}>
               <div className={styles.valColHeader}>
                 <div className={`${styles.valColIconBadge} ${styles.valColIconBadgeEmployers}`}>
-                  💼
+                  🏢
                 </div>
                 <div>
-                  <span className={styles.valColFor}>For Employers & Clients</span>
-                  <h3 className={styles.valColTitle}>Verify skills instantly with evidence.</h3>
+                  <span className={styles.valColFor}>For Agencies & Talent Pools (B2B)</span>
+                  <h3 className={styles.valColTitle}>Run your entire agency effortlessly.</h3>
                 </div>
               </div>
 
               <p className={styles.valColIntro}>
-                Every applicant claims they have skills. Case is built around Proof of Skill, allowing you to make hiring decisions based on actual evidence rather than claims in a CV alone.
+                Build verified talent rosters, issue client invoices, and collect split payouts automatically via Paystack sub-accounts or internal escrow.
               </p>
 
               <div className={styles.valList}>
                 <div className={styles.valItem}>
-                  <span className={styles.valItemIcon}>🔍</span>
-                  <div className={styles.valItemContent}>
-                    <h4 className={styles.valItemTitle}>Hiring based on Proof of Skill</h4>
-                    <p className={styles.valItemDesc}>Give candidates the opportunity to demonstrate what they can do. See the actual quality of their work before making a decision.</p>
-                  </div>
-                </div>
-
-                <div className={styles.valItem}>
                   <span className={styles.valItemIcon}>⚡</span>
                   <div className={styles.valItemContent}>
-                    <h4 className={styles.valItemTitle}>Review everything that matters</h4>
-                    <p className={styles.valItemDesc}>With a single link, quickly review all the critical candidate details in one place:</p>
-                    <div className={styles.evidenceGrid}>
-                      <div className={styles.evidenceItem}><span className={styles.evidenceDot}>•</span> Résumé & credentials</div>
-                      <div className={styles.evidenceItem}><span className={styles.evidenceDot}>•</span> Certificates</div>
-                      <div className={styles.evidenceItem}><span className={styles.evidenceDot}>•</span> Portfolios & projects</div>
-                      <div className={styles.evidenceItem}><span className={styles.evidenceDot}>•</span> Skill videos</div>
-                      <div className={styles.evidenceItem}><span className={styles.evidenceDot}>•</span> Professional photos</div>
-                      <div className={styles.evidenceItem}><span className={styles.evidenceDot}>•</span> Contact information & documents</div>
-                    </div>
+                    <h4 className={styles.valItemTitle}>Automated Payment Splits</h4>
+                    <p className={styles.valItemDesc}>Client payments automatically split between agency and talent bank/M-Pesa accounts instantly.</p>
                   </div>
                 </div>
 
                 <div className={styles.valItem}>
-                  <span className={styles.valItemIcon}>🤝</span>
+                  <span className={styles.valItemIcon}>🛡️</span>
                   <div className={styles.valItemContent}>
-                    <h4 className={styles.valItemTitle}>Hire with greater confidence</h4>
-                    <p className={styles.valItemDesc}>Whether a candidate has years of experience, formal education, or raw ability, Case helps present the strongest evidence available.</p>
+                    <h4 className={styles.valItemTitle}>Data Sovereignty Guarantee</h4>
+                    <p className={styles.valItemDesc}>Talent retain their personal profiles intact even if an agency closes down. Members can join up to 4 agencies.</p>
                   </div>
                 </div>
               </div>
 
               <div className={styles.valColFooter}>
-                <span className={styles.valColCtaText}>Don't ask candidates to tell you they're qualified.</span>
-                <Link href="/search" className="btn btn--outline btn--full">
-                  Ask them to show you (Search Candidates)
+                <Link href="/dashboard/agency/new" className="btn btn--brass btn--full">
+                  Create an Agency (from 1k KSH/mo)
                 </Link>
               </div>
             </div>
@@ -257,47 +206,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className={styles.pricing}>
-        <div className="container">
-          <h2 className={styles.sectionTitle}>Simple, fair pricing</h2>
-          <p className={styles.sectionSub}>Free forever for the basics. Case+ for serious professionals.</p>
-          <div className={styles.pricingGrid}>
-            <PricingCard
-              name="Free"
-              isFree={true}
-              features={[
-                'Public proof-of-work profile',
-                'Up to 4 proof items per pillar',
-                '2 evidence files per item',
-                '3 open vouch requests',
-                'Basic analytics',
-                'QR code download',
-              ]}
-              cta="Start free"
-              href="/signup"
-              highlight={false}
-            />
-            <PricingCard
-              name="Case+"
-              isFree={false}
-              features={[
-                'Everything in free',
-                'Unlimited proof items',
-                'Unlimited evidence files',
-                'Unlimited vouch requests',
-                'Full analytics + referrer breakdown',
-                'Remove "Built with Case" footer',
-                'Priority in Case Search',
-              ]}
-              cta="Get Case+"
-              href="/signup?plan=plus"
-              highlight={true}
-            />
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className={styles.footer}>
         <div className="container">
@@ -305,6 +213,7 @@ export default function LandingPage() {
             <span className={styles.wordmark}>Case</span>
             <p className={styles.footerSub}>Built for the worker who proves their worth.</p>
             <div className={styles.footerLinks}>
+              <Link href="/dashboard/agency">Agency Platform</Link>
               <a href="/privacy">Privacy</a>
               <a href="/terms">Terms</a>
             </div>
@@ -314,28 +223,6 @@ export default function LandingPage() {
     </div>
   )
 }
-
-function Feature({ stamp, title, body }: { stamp: string; title: string; body: string }) {
-  return (
-    <div className={styles.feature}>
-      <span className={`stamp stamp--${stamp}`}>{stamp}</span>
-      <h3 className={styles.featureTitle}>{title}</h3>
-      <p className={styles.featureBody}>{body}</p>
-    </div>
-  )
-}
-
-function PersonaCard({ emoji, title, desc }: { emoji: string; title: string; desc: string }) {
-  return (
-    <div className={`card ${styles.personaCard}`}>
-      <div className={styles.personaEmoji}>{emoji}</div>
-      <h3 className={styles.personaTitle}>{title}</h3>
-      <p className={styles.personaDesc}>{desc}</p>
-    </div>
-  )
-}
-
-
 
 function ExampleCard({ handle, name, role, avatar, emoji, snippet }: {
   handle: string; name: string; role: string; avatar: string; emoji: string; snippet: string;

@@ -6,6 +6,7 @@ import styles from './dashboard.module.css'
 
 const navItems = [
   { href: '/dashboard',            label: 'Case',      icon: '◆' },
+  { href: '/dashboard/agency',     label: 'Agencies',  icon: '🏢' },
   { href: '/dashboard/analytics',  label: 'Analytics', icon: '↗' },
   { href: '/dashboard/billing',    label: 'Billing',   icon: '★' },
   { href: '/dashboard/affiliate',  label: 'Affiliate', icon: '🤝' },
@@ -32,7 +33,7 @@ export default function DashboardLayout({
               <Link
                 href={item.href}
                 className={`${styles.navItem} ${
-                  pathname === item.href ? styles.navItemActive : ''
+                  pathname === item.href || pathname?.startsWith('/dashboard/agency') && item.href === '/dashboard/agency' ? styles.navItemActive : ''
                 }`}
               >
                 <span className={styles.navIcon} aria-hidden="true">{item.icon}</span>
@@ -60,7 +61,7 @@ export default function DashboardLayout({
             key={item.href}
             href={item.href}
             className={`${styles.bottomNavItem} ${
-              pathname === item.href ? styles.bottomNavItemActive : ''
+              pathname === item.href || pathname?.startsWith('/dashboard/agency') && item.href === '/dashboard/agency' ? styles.bottomNavItemActive : ''
             }`}
           >
             <span className={styles.bottomNavIcon}>{item.icon}</span>
