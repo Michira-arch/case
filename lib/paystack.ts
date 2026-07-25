@@ -23,10 +23,10 @@ export type PlanPeriod = keyof typeof PRICING
 /**
  * Generate a unique payment reference
  */
-export function generateReference(profileId: string): string {
+export function generateReference(prefix: string = 'CASE'): string {
   const ts = Date.now()
   const rand = Math.random().toString(36).slice(2, 8)
-  return `CASE-${profileId.slice(0, 6)}-${ts}-${rand}`.toUpperCase()
+  return `${prefix}-${ts}-${rand}`.toUpperCase()
 }
 
 /**
@@ -56,7 +56,6 @@ export async function verifyWebhookSignature(
 
 /**
  * Verify a transaction by reference via Paystack API
- * Use for additional server-side verification if needed
  */
 export async function verifyTransaction(reference: string) {
   const secretKey = process.env.PAYSTACK_SECRET_KEY
@@ -77,8 +76,85 @@ export async function verifyTransaction(reference: string) {
 }
 
 /**
+ * Create a Paystack Subaccount for automated split settlements (server-side)
+ */
+export async function createPaystackSubaccount(opts: {
+  business_name: string
+  settlement_bank: string // e.g. "057" (M-Pesa) or Bank Code
+  account_number: string
+  percentage_charge: number // e.g. 20 (for 20% agency cut)
+}) {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY
+  if (!secretKey) throw new Error('PAYSTACK_SECRET_KEY not set')
+
+  const res = await fetch('https://api.paystack.co/subaccount', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      business_name: opts.business_name,
+      settlement_bank: opts.settlement_bank,
+      account_number: opts.account_number,
+      percentage_charge: opts.percentage_charge,
+    }),
+  })
+
+  if (!res.ok) {
+    const errorBody = await res.text()
+    throw new Error(`Failed to create Paystack subaccount: ${res.status} - ${errorBody}`)
+  }
+
+  const data = await res.json()
+  return data.data // Contains subaccount_code e.g. "ACCT_8686689696"
+}
+
+/**
+ * Initialize a Split Payment Transaction via Paystack API (server-side)
+ */
+export async function initializePaystackSplitTransaction(opts: {
+  email: string
+  amount_kes: number
+  subaccount_code: string
+  transaction_charge_kes: number // Agency fee in KES
+  reference: string
+  callback_url?: string
+  metadata?: Record<string, unknown>
+}) {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY
+  if (!secretKey) throw new Error('PAYSTACK_SECRET_KEY not set')
+
+  const res = await fetch('https://api.paystack.co/transaction/initialize', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email: opts.email,
+      amount: opts.amount_kes * 100, // Paystack expects kobo/cents (KES × 100)
+      currency: 'KES',
+      subaccount: opts.subaccount_code,
+      transaction_charge: opts.transaction_charge_kes * 100,
+      reference: opts.reference,
+      callback_url: opts.callback_url,
+      metadata: opts.metadata,
+      channels: ['card', 'mobile_money'],
+    }),
+  })
+
+  if (!res.ok) {
+    const errorBody = await res.text()
+    throw new Error(`Failed to initialize split transaction: ${res.status} - ${errorBody}`)
+  }
+
+  const data = await res.json()
+  return data.data // Contains authorization_url, access_code, reference
+}
+
+/**
  * Open the Paystack inline checkout modal (client-side)
- * Requires the Paystack inline script to be loaded
  */
 export interface CheckoutOptions {
   email: string
@@ -86,6 +162,8 @@ export interface CheckoutOptions {
   reference: string
   profileId: string
   planPeriod: string
+  subaccountCode?: string
+  transactionChargeKes?: number
   onSuccess: (reference: string) => void
   onClose: () => void
 }
@@ -105,8 +183,7 @@ export function openPaystackCheckout(opts: CheckoutOptions) {
     return
   }
 
-  // @ts-ignore
-  const handler = window.PaystackPop.setup({
+  const setupOpts: Record<string, unknown> = {
     key:       publicKey,
     email:     opts.email,
     amount:    opts.amountKes * 100,  // Paystack uses kobo (KES × 100)
@@ -129,12 +206,21 @@ export function openPaystackCheckout(opts: CheckoutOptions) {
         },
       ],
     },
-    label:     `Case+ (${opts.planPeriod})`,
+    label:     `Case Payment (${opts.planPeriod})`,
     callback:  (response: { reference: string }) => {
       opts.onSuccess(response.reference)
     },
     onClose:   opts.onClose,
-  })
+  }
 
+  if (opts.subaccountCode) {
+    setupOpts.subaccount = opts.subaccountCode
+  }
+  if (opts.transactionChargeKes) {
+    setupOpts.transaction_charge = opts.transactionChargeKes * 100
+  }
+
+  // @ts-ignore
+  const handler = window.PaystackPop.setup(setupOpts)
   handler.openIframe()
 }
