@@ -13,7 +13,7 @@ export interface NannyOrg {
   description: string | null
   logo_url: string | null
   cover_url: string | null
-  vertical: 'nanny' | 'cleaning' | 'both'
+  vertical: 'caregiving' | 'nanny' | 'cleaning' | 'both' | 'all'
   status: 'active' | 'suspended' | 'closed'
   contact_email: string | null
   contact_phone: string | null
@@ -50,7 +50,7 @@ export interface NannyCredentialType {
   name: string
   description: string | null
   issuing_body: string | null
-  vertical: 'nanny' | 'cleaning' | 'both'
+  vertical: 'caregiving' | 'nanny' | 'cleaning' | 'both' | 'all'
   requires_expiry: boolean
   default_validity_days: number | null
   is_required: boolean
@@ -67,7 +67,7 @@ export interface NannyServiceType {
   code: string
   name: string
   description: string | null
-  vertical: 'nanny' | 'cleaning'
+  vertical: 'caregiving' | 'nanny' | 'cleaning'
   pricing_model: 'hourly' | 'flat_rate' | 'quoted'
   base_rate: number | null
   min_hours: number | null
@@ -91,7 +91,7 @@ export interface NannyWorker {
   shadow_email: string | null
   worker_state: WorkerState
   suspension_reason: string | null
-  role_type: 'nanny' | 'cleaner' | 'maternity_nurse' | 'live_in' | 'both'
+  role_type: 'caregiver' | 'senior_caregiver' | 'patient_care' | 'nanny' | 'cleaner' | 'maternity_nurse' | 'live_in' | 'both' | 'all'
   availability: WorkerAvailability
   hourly_rate: number | null
   preferences: WorkerPreferences

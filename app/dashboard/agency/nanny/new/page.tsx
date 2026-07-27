@@ -13,7 +13,7 @@ const STEPS = [
 interface FormData {
   name: string
   slug: string
-  vertical: 'nanny' | 'cleaning' | 'both'
+  vertical: 'caregiving' | 'nanny' | 'cleaning' | 'all'
   tagline: string
   description: string
   contact_email: string
@@ -45,7 +45,7 @@ export default function NewAgencyPage() {
   const [form, setForm] = useState<FormData>({
     name: '',
     slug: '',
-    vertical: 'nanny',
+    vertical: 'caregiving',
     tagline: '',
     description: '',
     contact_email: '',
@@ -202,9 +202,10 @@ export default function NewAgencyPage() {
                   value={form.vertical}
                   onChange={(e) => set('vertical', e.target.value)}
                 >
-                  <option value="nanny">Nanny / Childcare</option>
-                  <option value="cleaning">Cleaning</option>
-                  <option value="both">Both</option>
+                  <option value="caregiving">Caregiving & Elderly Care (Primary Vertical)</option>
+                  <option value="nanny">Childcare & Nanny (Complementary)</option>
+                  <option value="cleaning">Domestic & Commercial Cleaning (Complementary)</option>
+                  <option value="all">All Verticals (Caregiving, Nanny & Cleaning)</option>
                 </select>
               </div>
 

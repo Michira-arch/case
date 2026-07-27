@@ -22,12 +22,17 @@ export async function generateMetadata({ params }: Props) {
 }
 
 const SERVICE_ICONS: Record<string, string> = {
-  nanny:    '👶',
-  cleaning: '🧹',
-  maternity:'🤱',
-  live_in:  '🏠',
-  overnight:'🌙',
-  default:  '✨',
+  elderly:   '🩺',
+  patient:   '🏥',
+  dementia:  '🧠',
+  companion: '🤝',
+  caregiving:'❤️',
+  nanny:     '👶',
+  maternity: '🤱',
+  live_in:   '🏠',
+  cleaning:  '🧹',
+  deep_clean:'✨',
+  default:   '🌿',
 }
 
 function getIcon(code: string) {

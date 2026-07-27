@@ -7,11 +7,14 @@ import styles from '../../nanny-dashboard.module.css'
 type Mode = 'shadow' | 'invite'
 
 const ROLE_OPTIONS = [
-  { value: 'nanny',           label: 'Nanny' },
-  { value: 'cleaner',         label: 'Cleaner' },
+  { value: 'caregiver',        label: 'Elderly & Home Caregiver (Primary)' },
+  { value: 'senior_caregiver', label: 'Senior Care Specialist' },
+  { value: 'patient_care',     label: 'Patient & Recovery Caregiver' },
+  { value: 'nanny',           label: 'Childcare Nanny' },
   { value: 'maternity_nurse', label: 'Maternity Nurse' },
+  { value: 'cleaner',         label: 'Domestic Cleaner' },
   { value: 'live_in',         label: 'Live-in Carer' },
-  { value: 'both',            label: 'Nanny & Cleaner' },
+  { value: 'all',             label: 'Multi-Role Caregiver' },
 ]
 
 export default function NewWorkerPage() {
@@ -24,7 +27,7 @@ export default function NewWorkerPage() {
     shadow_name: '',
     shadow_email: '',
     shadow_phone: '',
-    role_type: 'nanny',
+    role_type: 'caregiver',
     hourly_rate: '',
     // Invite mode
     invite_email: '',
