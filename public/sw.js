@@ -63,7 +63,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.ok && response.type === 'basic') {
+          if (response.ok && response.type === 'basic' && request.method === 'GET') {
             const clone = response.clone()
             caches.open(SHELL_CACHE).then((cache) => cache.put(request, clone))
           }
@@ -86,7 +86,7 @@ self.addEventListener('fetch', (event) => {
     caches.match(request).then((cached) => {
       const fetchPromise = fetch(request)
         .then((networkResponse) => {
-          if (networkResponse.ok && networkResponse.type === 'basic') {
+          if (networkResponse.ok && networkResponse.type === 'basic' && request.method === 'GET') {
             const clone = networkResponse.clone()
             caches.open(SHELL_CACHE).then((cache) => cache.put(request, clone))
           }

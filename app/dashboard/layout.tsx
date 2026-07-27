@@ -20,6 +20,10 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname()
 
+  if (pathname.startsWith('/dashboard/agency')) {
+    return <>{children}</>
+  }
+
   return (
     <div className={styles.shell}>
       {/* Sidebar (desktop) / Bottom nav (mobile) */}

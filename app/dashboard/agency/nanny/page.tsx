@@ -146,13 +146,6 @@ export default async function NannyAgencyDashboardPage() {
                   color: 'inherit',
                   transition: 'box-shadow 200ms ease',
                 }}
-                onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLElement).style.boxShadow =
-                    'var(--shadow)'
-                }}
-                onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
-                }}
               >
                 <span style={{ fontSize: 24 }}>{action.icon}</span>
                 <div>
