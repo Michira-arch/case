@@ -84,6 +84,19 @@ export default function AgencyBillingPage() {
     })
   }
 
+  const handleStartTrial = async () => {
+    if (!org) return
+    setPaymentStatus('confirming')
+    try {
+      const res = await fetch('/api/billing/start-trial', { method: 'POST' })
+      if (!res.ok) throw new Error('Failed to start trial')
+      setPaymentStatus('success')
+      setTimeout(() => window.location.reload(), 1500)
+    } catch (e) {
+      setPaymentStatus('error')
+    }
+  }
+
   const handleCreateSubaccount = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!org) return
@@ -213,15 +226,16 @@ export default function AgencyBillingPage() {
               </div>
 
               <button 
-                onClick={handleCheckout} 
+                onClick={isFree ? handleStartTrial : handleCheckout} 
                 className="btn btn--dark"
                 style={{ width: '100%', justifyContent: 'center' }}
               >
                 {isFree ? 'Start 14-Day Free Trial' : 'Renew Subscription'}
               </button>
 
-              {paymentStatus === 'confirming' && <p style={{ color: 'var(--warning)', marginTop: '16px', fontSize: '14px', textAlign: 'center' }}>Confirming payment...</p>}
-              {paymentStatus === 'success' && <p style={{ color: 'var(--verified)', marginTop: '16px', fontSize: '14px', textAlign: 'center', fontWeight: 600 }}>✨ Subscription active!</p>}
+              {paymentStatus === 'confirming' && <p style={{ color: 'var(--warning)', marginTop: '16px', fontSize: '14px', textAlign: 'center' }}>Processing...</p>}
+              {paymentStatus === 'error' && <p style={{ color: 'var(--danger)', marginTop: '16px', fontSize: '14px', textAlign: 'center' }}>Failed to process. Please try again.</p>}
+              {paymentStatus === 'success' && <p style={{ color: 'var(--verified)', marginTop: '16px', fontSize: '14px', textAlign: 'center', fontWeight: 600 }}>✨ Success!</p>}
             </div>
           </div>
 
