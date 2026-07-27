@@ -31,7 +31,7 @@ const DEFAULT_DEMO_ORG: NannyOrg = {
   description: 'Sunny Smiles connects families with vetted, highly-qualified nannies, maternity nurses, and domestic caregivers. Every worker is verified with proof of experience and compliance certificates.',
   logo_url: null,
   cover_url: null,
-  vertical: 'both',
+  vertical: 'all',
   status: 'active',
   contact_email: 'contact@sunnysmiles.care',
   contact_phone: '+254 712 345 678',
@@ -231,7 +231,7 @@ export async function createNannyOrg(payload: {
   owner_profile_id: string
   slug: string
   name: string
-  vertical: 'nanny' | 'cleaning' | 'both'
+  vertical: 'caregiving' | 'nanny' | 'cleaning' | 'all'
   tagline?: string
   description?: string
   contact_email?: string

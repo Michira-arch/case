@@ -78,14 +78,14 @@ export default function NewAgencyPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/nanny/orgs', {
+      const res = await fetch('/api/nanny/org', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Failed to create agency')
-      setCreatedSlug(json.slug)
+      setCreatedSlug(json.org?.slug ?? form.slug)
       setStep(3)
     } catch (err: any) {
       setError(err.message)

@@ -11,17 +11,22 @@ import styles from '../../nanny-dashboard.module.css'
 import CredentialBadge from '@/components/agency/CredentialBadge'
 import ComplianceRing from '@/components/agency/ComplianceRing'
 import WorkerStateControl from './WorkerStateControl'
+import CredentialActions from './CredentialActions'
 
 interface Props {
   params: { id: string }
 }
 
 const ROLE_LABELS: Record<string, string> = {
-  nanny: 'Nanny',
-  cleaner: 'Cleaner',
-  maternity_nurse: 'Maternity Nurse',
-  live_in: 'Live-in Carer',
-  both: 'Nanny & Cleaner',
+  caregiver:        'Caregiver',
+  senior_caregiver: 'Senior Caregiver',
+  patient_care:     'Patient Care',
+  nanny:            'Nanny',
+  cleaner:          'Cleaner',
+  maternity_nurse:  'Maternity Nurse',
+  live_in:          'Live-in Carer',
+  both:             'Nanny & Cleaner',
+  all:              'All Roles',
 }
 
 const BOOKING_STATE_LABELS: Record<string, string> = {
@@ -238,36 +243,7 @@ export default async function WorkerDetailPage({ params }: Props) {
                       </div>
                     )}
                     {cred.status === 'pending' && (
-                      <div
-                        style={{ display: 'flex', gap: 6, flexShrink: 0 }}
-                      >
-                        <form action={`/api/nanny/credentials/${cred.id}/approve`} method="POST">
-                          <button
-                            type="submit"
-                            className="btn btn--sm"
-                            style={{
-                              background: 'var(--verified-bg)',
-                              color: 'var(--verified)',
-                              border: '1px solid var(--verified)',
-                            }}
-                          >
-                            Approve
-                          </button>
-                        </form>
-                        <form action={`/api/nanny/credentials/${cred.id}/reject`} method="POST">
-                          <button
-                            type="submit"
-                            className="btn btn--sm"
-                            style={{
-                              background: 'var(--danger-bg)',
-                              color: 'var(--danger)',
-                              border: '1px solid var(--danger)',
-                            }}
-                          >
-                            Reject
-                          </button>
-                        </form>
-                      </div>
+                      <CredentialActions credentialId={cred.id} />
                     )}
                   </div>
                 ))}

@@ -31,10 +31,10 @@ export default function NannyAgencyLayout({
       <aside className={styles.sidebar}>
         <div className={styles.sidebarBrand}>
           <div className={styles.brandTop}>
-            <div className={styles.brandIcon}>🧒</div>
+            <div className={styles.brandIcon}>❤️</div>
             <div>
               <div className={styles.wordmark}>Agency</div>
-              <div className={styles.wordmarkSub}>NANNY · CARE</div>
+              <div className={styles.wordmarkSub}>CAREGIVING</div>
             </div>
           </div>
         </div>

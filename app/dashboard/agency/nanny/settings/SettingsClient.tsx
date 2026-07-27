@@ -47,10 +47,11 @@ export default function SettingsClient({ org }: Props) {
     setError(null)
     setSaved(false)
     try {
-      const res = await fetch(`/api/nanny/orgs/${org.id}`, {
+      const res = await fetch(`/api/nanny/org`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          org_id: org.id,
           name: form.name,
           tagline: form.tagline,
           description: form.description,
@@ -367,10 +368,10 @@ export default function SettingsClient({ org }: Props) {
                   'Are you sure you want to suspend your agency? Clients will not be able to book.'
                 )
               ) {
-                fetch(`/api/nanny/orgs/${org.id}`, {
+                fetch(`/api/nanny/org`, {
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ status: 'suspended' }),
+                  body: JSON.stringify({ org_id: org.id, status: 'suspended' }),
                 })
               }
             }}

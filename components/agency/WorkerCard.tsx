@@ -31,11 +31,15 @@ const BADGE_CLASSES: Record<string, string> = {
 }
 
 const ROLE_LABELS: Record<string, string> = {
-  nanny: 'Nanny',
-  cleaner: 'Cleaner',
-  maternity_nurse: 'Maternity Nurse',
-  live_in: 'Live-in Carer',
-  both: 'Nanny & Cleaner',
+  caregiver:        'Caregiver',
+  senior_caregiver: 'Senior Caregiver',
+  patient_care:     'Patient Care',
+  nanny:            'Nanny',
+  cleaner:          'Cleaner',
+  maternity_nurse:  'Maternity Nurse',
+  live_in:          'Live-in Carer',
+  both:             'Nanny & Cleaner',
+  all:              'All Roles',
 }
 
 function StarRating({ value }: { value: number }) {

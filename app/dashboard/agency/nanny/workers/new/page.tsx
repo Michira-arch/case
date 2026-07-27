@@ -57,7 +57,7 @@ export default function NewWorkerPage() {
               role_type: form.role_type,
             }
 
-      const res = await fetch('/api/nanny/workers', {
+      const res = await fetch('/api/nanny/worker', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

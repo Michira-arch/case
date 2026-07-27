@@ -30,10 +30,10 @@ export default function WorkerStateControl({ workerId, currentState }: Props) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/nanny/workers/${workerId}/state`, {
-        method: 'PATCH',
+      const res = await fetch(`/api/nanny/worker/state`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ state: newState }),
+        body: JSON.stringify({ worker_id: workerId, state: newState }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Failed to update state')

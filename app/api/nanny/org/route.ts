@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       owner_profile_id: profile.id,
       name,
       slug: slug.toLowerCase().trim().replace(/[^a-z0-9-]/g, '-'),
-      vertical: vertical || 'nanny',
+      vertical: vertical || 'caregiving',
       tagline,
       description,
       location_area,
