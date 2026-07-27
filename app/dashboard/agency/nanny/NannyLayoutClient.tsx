@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import styles from './nanny-dashboard.module.css'
+import CopilotWidget from '@/components/agency/CopilotWidget'
 
 const NAV_ITEMS = [
   { href: '/dashboard/agency/nanny',          label: 'Dashboard', icon: '◆' },
@@ -127,6 +128,8 @@ export default function NannyLayoutClient({
           </Link>
         ))}
       </nav>
+
+      {org && !isLocked && <CopilotWidget orgId={org.id} />}
     </div>
   )
 }

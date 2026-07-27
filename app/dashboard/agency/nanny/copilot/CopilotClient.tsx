@@ -8,8 +8,6 @@ import styles from '../nanny-dashboard.module.css'
 export default function CopilotClient({ org, initialInbox }: { org: any, initialInbox: any[] }) {
   const router = useRouter()
   const [inbox, setInbox] = useState(initialInbox)
-  const [messages, setMessages] = useState<{ role: string, content: string }[]>([])
-  const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [pushStatus, setPushStatus] = useState<string>('')
 
@@ -30,30 +28,6 @@ export default function CopilotClient({ org, initialInbox }: { org: any, initial
     }
   }
 
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim()) return
-
-    const userMsg = input.trim()
-    setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }])
-    setLoading(true)
-
-    try {
-      const newMessages = [...messages, { role: 'user', content: userMsg }]
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orgId: org.id, messages: newMessages })
-      })
-      const data = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.message?.content || data.error || 'Sorry, an error occurred.' }])
-    } catch (e) {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Failed to connect to AI.' }])
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const enablePush = async () => {
     try {
@@ -107,7 +81,7 @@ export default function CopilotClient({ org, initialInbox }: { org: any, initial
       </div>
       {pushStatus && <div style={{ fontSize: 13, marginBottom: 16, color: 'var(--aim)' }}>{pushStatus}</div>}
 
-      <div className={styles.formGrid}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         {/* Action Inbox */}
         <div className={styles.formSection} style={{ border: '1px solid var(--aim)', background: 'rgba(56, 189, 248, 0.05)' }}>
           <div className={styles.formSectionTitle} style={{ color: 'var(--aim)', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -139,45 +113,7 @@ export default function CopilotClient({ org, initialInbox }: { org: any, initial
             )}
           </div>
         </div>
-
-        {/* Chat */}
-        <div className={styles.formSection} style={{ display: 'flex', flexDirection: 'column', height: '600px' }}>
-          <div className={styles.formSectionTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>💬</span> Agency Assistant
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto', background: 'var(--paper)', borderRadius: 'var(--radius-md)', padding: 16, marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {messages.length === 0 ? (
-              <div style={{ textAlign: 'center', color: 'var(--ink-muted)', fontSize: 14, marginTop: 'auto', marginBottom: 'auto' }}>
-                Ask me anything about your agency data, workers, or clients!
-              </div>
-            ) : (
-              messages.map((msg, i) => (
-                <div key={i} style={{ alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', background: msg.role === 'user' ? 'var(--aim)' : 'var(--card)', color: msg.role === 'user' ? '#fff' : 'var(--ink)', padding: '10px 14px', borderRadius: 'var(--radius-md)', maxWidth: '80%', fontSize: 14, boxShadow: 'var(--shadow-sm)' }}>
-                  {msg.content}
-                </div>
-              ))
-            )}
-            {loading && (
-              <div style={{ alignSelf: 'flex-start', background: 'var(--card)', padding: '10px 14px', borderRadius: 'var(--radius-md)', fontSize: 14, color: 'var(--ink-muted)' }}>
-                Thinking...
-              </div>
-            )}
-          </div>
-          <form onSubmit={sendMessage} style={{ display: 'flex', gap: 8 }}>
-            <input 
-              type="text" 
-              value={input} 
-              onChange={e => setInput(e.target.value)}
-              className={styles.input}
-              placeholder="Type your message..."
-              style={{ flex: 1 }}
-              disabled={loading}
-            />
-            <button type="submit" className="btn btn--dark" disabled={loading || !input.trim()}>
-              Send
-            </button>
-          </form>
-        </div>
+        {/* Chat removed: Now a global widget */}
       </div>
     </div>
   )
