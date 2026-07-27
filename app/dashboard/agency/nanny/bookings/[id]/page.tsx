@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getBookingById, updateBookingState } from '@/lib/nanny-data'
-import styles from '../../../nanny-dashboard.module.css'
+import styles from '../../nanny-dashboard.module.css'
 import { revalidatePath } from 'next/cache'
 
 export default async function BookingDetailsPage({ params }: { params: { id: string } }) {
