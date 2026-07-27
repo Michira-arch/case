@@ -20,6 +20,16 @@ const TIPS = [
   "Tip: You can ask me how to scale your agency."
 ]
 
+const GREETINGS = [
+  "You summoned me! What should we conquer today?",
+  "Reporting for duty! Ready for your command.",
+  "At your service! What's the master plan?",
+  "Systems online. How can we scale the agency today?",
+  "I'm awake! What's our next strategic move?",
+  "Ready when you are! Let's make some magic happen.",
+  "Awaiting instructions. How can I lighten your workload today?"
+]
+
 export default function CopilotWidget({ orgId }: { orgId: string }) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
@@ -27,7 +37,12 @@ export default function CopilotWidget({ orgId }: { orgId: string }) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [currentTip, setCurrentTip] = useState(TIPS[0])
+  const [greeting, setGreeting] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)])
+  }, [])
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -113,7 +128,7 @@ export default function CopilotWidget({ orgId }: { orgId: string }) {
           <div className={styles.chatArea}>
             {messages.length === 0 && !loading && (
               <div className={styles.emptyState}>
-                Hi! I'm your AI cofounder. How can I help you manage the agency today?
+                {greeting}
               </div>
             )}
             

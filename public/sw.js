@@ -107,6 +107,19 @@ self.addEventListener('fetch', (event) => {
 // Push notifications
 self.addEventListener('push', (event) => {
   const data = event.data?.json() || {}
+  
+  // Send message to any open windows to show in-app toast
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((clientList) => {
+      clientList.forEach((client) => {
+        client.postMessage({
+          type: 'PUSH_NOTIFICATION',
+          payload: data
+        })
+      })
+    })
+  )
+
   event.waitUntil(
     self.registration.showNotification(data.title || 'Case', {
       body: data.body || 'You have a new notification',

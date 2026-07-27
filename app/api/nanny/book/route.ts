@@ -65,6 +65,21 @@ export async function POST(req: NextRequest) {
     const reference = result?.reference ?? result?.booking_id ?? null
     const anon_token = result?.anon_token ?? null
 
+    // Fire and forget webhook for AI to review the booking
+    if (result?.booking_id) {
+      fetch(new URL('/api/ai/webhooks/booking', req.url).toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          booking_id: result.booking_id, 
+          org_slug,
+          client_name,
+          service_code,
+          worker_id
+        })
+      }).catch(e => console.error('AI Webhook error:', e))
+    }
+
     return NextResponse.json({
       success: true,
       reference,

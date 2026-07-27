@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import styles from './nanny-dashboard.module.css'
@@ -24,6 +26,22 @@ export default function NannyLayoutClient({
   org: any
 }) {
   const pathname = usePathname()
+  const [toast, setToast] = useState<{ title: string; body: string; url?: string } | null>(null)
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'PUSH_NOTIFICATION') {
+        setToast(event.data.payload)
+        // Auto dismiss after 6 seconds
+        setTimeout(() => setToast(null), 6000)
+      }
+    }
+
+    navigator.serviceWorker.addEventListener('message', handleMessage)
+    return () => navigator.serviceWorker.removeEventListener('message', handleMessage)
+  }, [])
 
   let isLocked = false
   let lockReason = ''
@@ -130,6 +148,38 @@ export default function NannyLayoutClient({
       </nav>
 
       {org && !isLocked && <CopilotWidget orgId={org.id} />}
+
+      {/* ── Toast Notification ──────────────────────────── */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: 24,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'var(--card)',
+          border: '1px solid var(--aim)',
+          boxShadow: 'var(--shadow-lg)',
+          padding: '16px 24px',
+          borderRadius: 'var(--radius-md)',
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          minWidth: 300,
+          animation: 'slideDown 0.3s ease-out'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong style={{ color: 'var(--aim)' }}>{toast.title}</strong>
+            <button onClick={() => setToast(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5 }}>✕</button>
+          </div>
+          <div style={{ fontSize: 14, color: 'var(--ink)' }}>{toast.body}</div>
+          {toast.url && (
+            <Link href={toast.url} onClick={() => setToast(null)} style={{ fontSize: 13, color: 'var(--aim)', textDecoration: 'underline', marginTop: 4 }}>
+              View Details
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   )
 }
