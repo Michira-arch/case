@@ -14,6 +14,10 @@ export default function SettingsClient({ org }: Props) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [aiPrompt, setAiPrompt] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [aiSuccess, setAiSuccess] = useState(false)
 
   const [form, setForm] = useState({
     name: org.name,
@@ -106,6 +110,40 @@ export default function SettingsClient({ org }: Props) {
       setError(err.message)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleAiCustomize = async () => {
+    if (!aiPrompt) return
+    setAiLoading(true)
+    setAiError(null)
+    setAiSuccess(false)
+    try {
+      const res = await fetch('/api/ai/customize-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ org_id: org.id, prompt: aiPrompt })
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'AI Failed')
+      
+      // Update form state with new page config
+      setForm((p) => ({
+        ...p,
+        hero_headline: json.page_config?.hero_headline || p.hero_headline,
+        hero_subtitle: json.page_config?.hero_subtitle || p.hero_subtitle,
+        pitch_title: json.page_config?.pitch_title || p.pitch_title,
+        pitch_body: json.page_config?.pitch_body || p.pitch_body,
+        cta_text: json.page_config?.cta_text || p.cta_text,
+        cta_subtext: json.page_config?.cta_subtext || p.cta_subtext,
+        hero_pattern: json.page_config?.hero_pattern || p.hero_pattern,
+      }))
+      setAiSuccess(true)
+      setAiPrompt('')
+    } catch (err: any) {
+      setAiError(err.message)
+    } finally {
+      setAiLoading(false)
     }
   }
 
@@ -482,6 +520,47 @@ export default function SettingsClient({ org }: Props) {
             </label>
           </div>
         ))}
+      </div>
+
+      {/* AI Design Customization */}
+      <div className={styles.formSection} style={{ border: '1px solid var(--aim)', background: 'rgba(56, 189, 248, 0.05)' }}>
+        <div className={styles.formSectionTitle} style={{ color: 'var(--aim)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>✨</span> AI Design Customization
+        </div>
+        <p style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginBottom: 16 }}>
+          Describe how you want your public page to look and feel, and our AI Copilot will update your configuration automatically.
+        </p>
+
+        {aiError && (
+          <div className={`${styles.notice} ${styles.noticeDanger}`} style={{ marginBottom: 16 }}>{aiError}</div>
+        )}
+        {aiSuccess && (
+          <div className={`${styles.notice} ${styles.noticeVerified}`} style={{ marginBottom: 16 }}>
+            ✓ AI generated new settings! Click "Save Changes" below to apply them.
+          </div>
+        )}
+
+        <div className={styles.field}>
+          <textarea
+            className={`${styles.input} ${styles.textarea}`}
+            style={{ borderColor: 'var(--aim)' }}
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+            placeholder="e.g. Make my page look like a luxury hotel, formal tone, use 'grid' pattern..."
+            rows={3}
+          />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+          <button
+            type="button"
+            className="btn btn--sm"
+            style={{ background: 'var(--aim)', color: '#fff', border: 'none' }}
+            onClick={handleAiCustomize}
+            disabled={aiLoading || !aiPrompt.trim()}
+          >
+            {aiLoading ? 'Generating...' : '✨ Auto-fill with AI'}
+          </button>
+        </div>
       </div>
 
       {/* Danger Zone */}

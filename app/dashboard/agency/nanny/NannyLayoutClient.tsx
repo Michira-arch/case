@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/agency/nanny/clients',  label: 'Clients',   icon: '🏠' },
   { href: '/dashboard/agency/nanny/invoices', label: 'Invoices',  icon: '💰' },
   { href: '/dashboard/agency/nanny/billing',  label: 'Billing',   icon: '💳' },
+  { href: '/dashboard/agency/nanny/copilot',  label: 'Copilot',   icon: '✨' },
   { href: '/dashboard/agency/nanny/settings', label: 'Settings',  icon: '⚙' },
 ]
 
