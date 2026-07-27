@@ -124,8 +124,8 @@ export const aiTools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
 ];
 
 export async function executeAiTool(name: string, args: any, orgId: string) {
-  const { createClient } = await import('@/lib/supabase/server');
-  const supabase = createClient();
+  const { createServiceClient } = await import('@/lib/supabase/server');
+  const supabase = createServiceClient();
 
   switch (name) {
     case 'get_agency_stats': {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAiClient } from '@/lib/ai/client';
 import { aiTools, executeAiTool } from '@/lib/ai/tools';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import webpush from 'web-push';
 
 if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = createClient();
+    const supabase = createServiceClient();
     
     // Fetch active cron jobs
     const { data: jobs, error: jobsError } = await supabase
