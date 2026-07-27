@@ -160,7 +160,7 @@ export default function AgencyBillingPage() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
           
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Platform Subscription</h2>

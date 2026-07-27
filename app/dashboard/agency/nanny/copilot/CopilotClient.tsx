@@ -91,12 +91,12 @@ export default function CopilotClient({ org, initialInbox }: { org: any, initial
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>✨ AI Copilot</h1>
           <p style={{ color: 'var(--ink-muted)', fontSize: 14 }}>Manage AI actions, set cron jobs, and chat with your agency assistant.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <button onClick={enablePush} className="btn btn--outline" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
              🔔 Enable Push Notifications
           </button>
@@ -107,7 +107,7 @@ export default function CopilotClient({ org, initialInbox }: { org: any, initial
       </div>
       {pushStatus && <div style={{ fontSize: 13, marginBottom: 16, color: 'var(--aim)' }}>{pushStatus}</div>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div className={styles.formGrid}>
         {/* Action Inbox */}
         <div className={styles.formSection} style={{ border: '1px solid var(--aim)', background: 'rgba(56, 189, 248, 0.05)' }}>
           <div className={styles.formSectionTitle} style={{ color: 'var(--aim)', display: 'flex', alignItems: 'center', gap: '8px' }}>

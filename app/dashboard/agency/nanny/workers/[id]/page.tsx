@@ -162,17 +162,17 @@ export default async function WorkerDetailPage({ params }: Props) {
         {/* State control + quick stats */}
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0,1fr) auto',
+            display: 'flex',
+            flexWrap: 'wrap',
             gap: 20,
             marginBottom: 28,
-            alignItems: 'start',
+            alignItems: 'flex-start',
           }}
         >
           {/* Quick stats */}
           <div
             className={styles.formSection}
-            style={{ margin: 0, padding: '20px 24px' }}
+            style={{ margin: 0, padding: '20px 24px', flex: '1 1 300px' }}
           >
             <div className={styles.infoGrid}>
               {[

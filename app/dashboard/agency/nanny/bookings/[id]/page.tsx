@@ -72,7 +72,7 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
       </div>
 
       <div className={styles.content}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
           
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Client Information</h2>

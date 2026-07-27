@@ -109,7 +109,7 @@ export default function CronClient({ org, initialJobs }: { org: any, initialJobs
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {jobs.map(job => (
-              <div key={job.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--card)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--paper)' }}>
+              <div key={job.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--card)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--paper)', flexWrap: 'wrap', gap: 12 }}>
                 <div>
                   <div style={{ fontWeight: 500, marginBottom: 4 }}>{job.prompt}</div>
                   <div style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Schedule: {job.schedule}</div>
