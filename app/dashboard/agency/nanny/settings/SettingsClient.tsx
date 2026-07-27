@@ -36,6 +36,16 @@ export default function SettingsClient({ org }: Props) {
     require_timelog: org.policy.require_timelog,
     continuity_preference: org.policy.continuity_preference,
     is_public: org.is_public,
+    // Page Config
+    hero_headline: org.page_config.hero_headline ?? '',
+    hero_subtitle: org.page_config.hero_subtitle ?? '',
+    pitch_title: org.page_config.pitch_title ?? '',
+    pitch_body: org.page_config.pitch_body ?? '',
+    cta_text: org.page_config.cta_text ?? '',
+    cta_subtext: org.page_config.cta_subtext ?? '',
+    show_workers: org.page_config.show_workers,
+    show_services: org.page_config.show_services,
+    hero_pattern: org.page_config.hero_pattern,
   })
 
   const set = (k: keyof typeof form, v: any) =>
@@ -73,6 +83,18 @@ export default function SettingsClient({ org }: Props) {
             auto_invoice: form.auto_invoice,
             require_timelog: form.require_timelog,
             continuity_preference: form.continuity_preference,
+          },
+          page_config: {
+            ...org.page_config,
+            hero_headline: form.hero_headline || null,
+            hero_subtitle: form.hero_subtitle || null,
+            pitch_title: form.pitch_title || 'Why choose us?',
+            pitch_body: form.pitch_body || null,
+            cta_text: form.cta_text || 'Book Now',
+            cta_subtext: form.cta_subtext || '',
+            show_workers: form.show_workers,
+            show_services: form.show_services,
+            hero_pattern: form.hero_pattern,
           },
         }),
       })
@@ -318,6 +340,122 @@ export default function SettingsClient({ org }: Props) {
             key: 'continuity_preference' as const,
             label: 'Continuity preference',
             sub: 'Prefer the same worker for repeat clients.',
+          },
+        ].map(({ key, label, sub }) => (
+          <div key={key} className={styles.field}>
+            <label
+              style={{
+                display: 'flex',
+                gap: 10,
+                alignItems: 'flex-start',
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={form[key]}
+                onChange={(e) => set(key, e.target.checked)}
+                style={{ marginTop: 3 }}
+              />
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>{label}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>
+                  {sub}
+                </div>
+              </div>
+            </label>
+          </div>
+        ))}
+      </div>
+
+      {/* Public Page Configuration */}
+      <div className={styles.formSection}>
+        <div className={styles.formSectionTitle}>Public Page Configuration</div>
+        
+        <div className={styles.formGrid}>
+          <div className={styles.field}>
+            <label className={styles.label}>Hero Headline</label>
+            <input
+              className={styles.input}
+              value={form.hero_headline}
+              onChange={(e) => set('hero_headline', e.target.value)}
+              placeholder="e.g. Care you can trust"
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Hero Subtitle</label>
+            <input
+              className={styles.input}
+              value={form.hero_subtitle}
+              onChange={(e) => set('hero_subtitle', e.target.value)}
+              placeholder="e.g. Vetted professionals for your family"
+            />
+          </div>
+        </div>
+
+        <div className={styles.formGrid}>
+          <div className={styles.field}>
+            <label className={styles.label}>Pitch Title</label>
+            <input
+              className={styles.input}
+              value={form.pitch_title}
+              onChange={(e) => set('pitch_title', e.target.value)}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Hero Pattern</label>
+            <select
+              className={`${styles.input} ${styles.select}`}
+              value={form.hero_pattern}
+              onChange={(e) => set('hero_pattern', e.target.value)}
+            >
+              <option value="none">None</option>
+              <option value="dots">Dots</option>
+              <option value="grid">Grid</option>
+              <option value="waves">Waves</option>
+            </select>
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>Pitch Body</label>
+          <textarea
+            className={`${styles.input} ${styles.textarea}`}
+            value={form.pitch_body}
+            onChange={(e) => set('pitch_body', e.target.value)}
+            rows={3}
+          />
+        </div>
+
+        <div className={styles.formGrid}>
+          <div className={styles.field}>
+            <label className={styles.label}>CTA Text</label>
+            <input
+              className={styles.input}
+              value={form.cta_text}
+              onChange={(e) => set('cta_text', e.target.value)}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>CTA Subtext</label>
+            <input
+              className={styles.input}
+              value={form.cta_subtext}
+              onChange={(e) => set('cta_subtext', e.target.value)}
+            />
+          </div>
+        </div>
+
+        {[
+          {
+            key: 'show_services' as const,
+            label: 'Show Services Section',
+            sub: 'Display the list of services you offer.',
+          },
+          {
+            key: 'show_workers' as const,
+            label: 'Show Worker Directory',
+            sub: 'Display a list of your active public workers.',
           },
         ].map(({ key, label, sub }) => (
           <div key={key} className={styles.field}>

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getNannyOrgBySlug, getServiceTypes } from '@/lib/nanny-data'
-import type { NannyServiceType } from '@/lib/nanny-types'
+import { getNannyOrgBySlug, getServiceTypes, getPublicWorkers } from '@/lib/nanny-data'
+import type { NannyServiceType, NannyWorker } from '@/lib/nanny-types'
 
 interface Props {
   params: { handle: string }
@@ -44,13 +44,18 @@ function getIcon(code: string) {
 
 function formatRate(svc: NannyServiceType) {
   if (!svc.base_rate) return 'Quoted'
-  const unit = svc.pricing_model === 'hourly' ? '/hr' : ''
+  const unit = svc.pricing_model === 'hourly' ? '/hr' : ` / ${svc.duration_unit}`
   return `KES ${svc.base_rate.toLocaleString()}${unit}`
 }
 
 function PricingBadge({ model }: { model: NannyServiceType['pricing_model'] }) {
-  const map = {
+  const map: Record<string, { label: string; color: string; bg: string }> = {
     hourly:    { label: 'Hourly', color: 'var(--verified)', bg: 'var(--verified-bg)' },
+    per_day:   { label: 'Per Day', color: 'var(--verified)', bg: 'var(--verified-bg)' },
+    per_week:  { label: 'Per Week', color: 'var(--verified)', bg: 'var(--verified-bg)' },
+    per_month: { label: 'Per Month', color: 'var(--verified)', bg: 'var(--verified-bg)' },
+    per_shift: { label: 'Per Shift', color: 'var(--verified)', bg: 'var(--verified-bg)' },
+    per_task:  { label: 'Per Task', color: 'var(--verified)', bg: 'var(--verified-bg)' },
     flat_rate: { label: 'Flat Rate', color: 'var(--brass)', bg: 'var(--brass-bg)' },
     quoted:    { label: 'Get Quote', color: 'var(--aim)', bg: 'var(--aim-bg)' },
   }
@@ -76,6 +81,9 @@ export default async function AgencyLandingPage({ params }: Props) {
   if (!org) notFound()
 
   const services = await getServiceTypes(org.id)
+  const workers = await getPublicWorkers(org.id)
+  
+  const { page_config: config } = org
 
   return (
     <div
@@ -83,6 +91,11 @@ export default async function AgencyLandingPage({ params }: Props) {
         minHeight: '100vh',
         background: 'var(--paper)',
         fontFamily: 'var(--font-sans)',
+        ...(config.hero_pattern === 'dots'
+          ? { backgroundImage: 'radial-gradient(var(--line) 1px, transparent 0)', backgroundSize: '24px 24px' }
+          : config.hero_pattern === 'grid'
+          ? { backgroundImage: 'linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px)', backgroundSize: '40px 40px' }
+          : {}),
       }}
     >
       {/* ── Hero ── */}
@@ -121,9 +134,9 @@ export default async function AgencyLandingPage({ params }: Props) {
             marginBottom: 16,
           }}
         >
-          {org.name}
+          {config.hero_headline || org.name}
         </h1>
-        {org.tagline && (
+        {(config.hero_subtitle || org.tagline) && (
           <p
             style={{
               fontSize: 18,
@@ -133,7 +146,7 @@ export default async function AgencyLandingPage({ params }: Props) {
               lineHeight: 1.5,
             }}
           >
-            {org.tagline}
+            {config.hero_subtitle || org.tagline}
           </p>
         )}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -153,7 +166,7 @@ export default async function AgencyLandingPage({ params }: Props) {
               transition: 'background 150ms ease',
             }}
           >
-            Book Now →
+            {config.cta_text || 'Book Now'} →
           </Link>
           {org.contact_phone && (
             <a
@@ -178,29 +191,42 @@ export default async function AgencyLandingPage({ params }: Props) {
         </div>
       </div>
 
-      {/* ── About ── */}
-      {org.description && (
-        <div
+      {/* ── About / Pitch ── */}
+      <div
+        style={{
+          maxWidth: 720,
+          margin: '0 auto',
+          padding: '72px 24px 0',
+          textAlign: 'center',
+        }}
+      >
+        <h2
           style={{
-            maxWidth: 720,
-            margin: '0 auto',
-            padding: '56px 24px 0',
-            textAlign: 'center',
+            fontFamily: 'var(--font-serif)',
+            fontSize: 32,
+            fontWeight: 600,
+            color: 'var(--ink)',
+            marginBottom: 20,
           }}
         >
+          {config.pitch_title}
+        </h2>
+        {(config.pitch_body || org.description) && (
           <p
             style={{
-              fontSize: 16.5,
+              fontSize: 17,
               lineHeight: 1.7,
               color: 'var(--ink-soft)',
+              marginBottom: 32,
             }}
           >
-            {org.description}
+            {config.pitch_body || org.description}
           </p>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* ── Services ── */}
+      {config.show_services && (
       <div
         style={{
           maxWidth: 900,
@@ -321,8 +347,161 @@ export default async function AgencyLandingPage({ params }: Props) {
             ))}
           </div>
         )}
+      </div>
+      )}
 
-        {/* CTA */}
+      {/* ── Workers ── */}
+      {config.show_workers && workers.length > 0 && (
+        <div
+          style={{
+            maxWidth: 900,
+            margin: '0 auto',
+            padding: '56px 24px',
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontSize: 28,
+              fontWeight: 600,
+              letterSpacing: '-0.02em',
+              color: 'var(--ink)',
+              marginBottom: 8,
+              textAlign: 'center',
+            }}
+          >
+            Meet Our Professionals
+          </h2>
+          <p
+            style={{
+              fontSize: 15,
+              color: 'var(--ink-muted)',
+              textAlign: 'center',
+              marginBottom: 36,
+            }}
+          >
+            Highly vetted, experienced, and ready to assist you.
+          </p>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gap: 20,
+            }}
+          >
+            {workers.map((worker) => (
+              <div
+                key={worker.id}
+                style={{
+                  background: 'var(--card)',
+                  border: '1px solid var(--line)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                  alignItems: 'center',
+                  textAlign: 'center',
+                }}
+              >
+                {worker.profile?.avatar_url ? (
+                  <img
+                    src={worker.profile.avatar_url}
+                    alt={worker.profile.display_name}
+                    style={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '3px solid var(--paper-light)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: '50%',
+                      background: 'var(--ink)',
+                      color: 'var(--paper)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 28,
+                      fontWeight: 600,
+                      border: '3px solid var(--paper-light)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    }}
+                  >
+                    {worker.profile?.display_name.charAt(0)}
+                  </div>
+                )}
+
+                <div>
+                  <h3
+                    style={{
+                      fontFamily: 'var(--font-serif)',
+                      fontSize: 18,
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                      marginBottom: 4,
+                    }}
+                  >
+                    {worker.profile?.display_name}
+                  </h3>
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      background: 'var(--brass-bg)',
+                      color: 'var(--brass)',
+                      padding: '2px 8px',
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 600,
+                    }}
+                  >
+                    ★ {worker.avg_rating ? worker.avg_rating.toFixed(1) : 'New'}
+                  </div>
+                </div>
+
+                {worker.notes && (
+                  <p style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.5 }}>
+                    "{worker.notes}"
+                  </p>
+                )}
+
+                <Link
+                  href={`/agency/${params.handle}/nanny/book?worker_id=${worker.id}`}
+                  style={{
+                    marginTop: 'auto',
+                    width: '100%',
+                    display: 'inline-flex',
+                    justifyContent: 'center',
+                    background: 'var(--paper-light)',
+                    border: '1px solid var(--line)',
+                    color: 'var(--ink)',
+                    padding: '10px',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    transition: 'border-color 150ms ease',
+                  }}
+                >
+                  Book {worker.profile?.display_name.split(' ')[0]}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CTA */}
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px 56px' }}>
         <div
           style={{
             marginTop: 48,
@@ -341,7 +520,7 @@ export default async function AgencyLandingPage({ params }: Props) {
               marginBottom: 12,
             }}
           >
-            Ready to book?
+            {config.cta_text || 'Ready to book?'}
           </h3>
           <p
             style={{
@@ -350,7 +529,7 @@ export default async function AgencyLandingPage({ params }: Props) {
               fontSize: 15,
             }}
           >
-            No account required. Book in under 2 minutes.
+            {config.cta_subtext || 'No account required. Book in under 2 minutes.'}
           </p>
           <Link
             href={`/agency/${params.handle}/nanny/book`}
@@ -364,10 +543,10 @@ export default async function AgencyLandingPage({ params }: Props) {
               borderRadius: 'var(--radius-lg)',
               fontWeight: 700,
               fontSize: 16,
-              textDecoration: 'none',
+              transition: 'background 150ms ease',
             }}
           >
-            Book Now →
+            {config.cta_text || 'Book Now'} →
           </Link>
         </div>
       </div>

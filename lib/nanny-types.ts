@@ -23,8 +23,25 @@ export interface NannyOrg {
   is_public: boolean
   seo_title: string | null
   seo_description: string | null
+  page_config: NannyPageConfig
   created_at: string
   updated_at: string
+}
+
+export interface NannyPageConfig {
+  hero_headline: string | null
+  hero_subtitle: string | null
+  pitch_title: string
+  pitch_body: string | null
+  pitch_bullets: string[]
+  show_services: boolean
+  show_workers: boolean
+  show_testimonials: boolean
+  cta_text: string
+  cta_subtext: string
+  accent_color: string | null
+  hero_pattern: 'dots' | 'grid' | 'waves' | 'none'
+  stats: { label: string; value: string }[]
 }
 
 export interface NannyOrgPolicy {
@@ -68,7 +85,8 @@ export interface NannyServiceType {
   name: string
   description: string | null
   vertical: 'caregiving' | 'nanny' | 'cleaning'
-  pricing_model: 'hourly' | 'flat_rate' | 'quoted'
+  pricing_model: 'hourly' | 'per_day' | 'per_task' | 'per_week' | 'per_month' | 'per_shift' | 'flat_rate' | 'quoted'
+  duration_unit: 'hour' | 'day' | 'week' | 'month' | 'task' | 'shift'
   base_rate: number | null
   min_hours: number | null
   max_hours: number | null
@@ -99,6 +117,7 @@ export interface NannyWorker {
   total_assignments: number
   claim_token: string | null
   notes: string | null
+  show_on_public: boolean
   created_at: string
   updated_at: string
   // Joined
@@ -213,6 +232,8 @@ export interface NannyBooking {
   quoted_hours: number | null
   is_emergency: boolean
   source: 'direct' | 'widget' | 'admin' | 'api'
+  requested_worker_id?: string | null
+  pricing_unit?: string
   created_at: string
   updated_at: string
   // Joined

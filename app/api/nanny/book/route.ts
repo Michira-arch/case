@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
       service_address,
       service_notes,
       special_requirements,
+      worker_id,
     } = body
 
     const resolvedStart = scheduled_start ?? start
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
       address: resolvedAddress,
       notes: resolvedNotes,
       special: special_requirements || {},
+      worker_id,
     })
 
     if (error) {

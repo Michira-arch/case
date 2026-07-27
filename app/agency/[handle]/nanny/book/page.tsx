@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getNannyOrgBySlug, getServiceTypes } from '@/lib/nanny-data'
+import { getNannyOrgBySlug, getServiceTypes, getPublicWorkers } from '@/lib/nanny-data'
 import BookingWizard from './BookingWizard'
 
 interface Props {
@@ -20,6 +20,7 @@ export default async function BookingPage({ params }: Props) {
   if (!org) notFound()
 
   const services = await getServiceTypes(org.id)
+  const workers = await getPublicWorkers(org.id)
 
   return (
     <div
@@ -57,6 +58,7 @@ export default async function BookingPage({ params }: Props) {
 
       <BookingWizard
         services={services}
+        workers={workers}
         orgSlug={params.handle}
         orgName={org.name}
       />

@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import styles from '@/app/dashboard/agency/nanny/nanny-dashboard.module.css'
+import type { NannyWorker } from '@/lib/nanny-types'
 
 const STEPS = [
   { id: 1, name: 'Service' },
@@ -30,12 +31,14 @@ interface ServiceType {
   name: string
   description: string | null
   pricing_model: string
+  duration_unit: string
   base_rate: number | null
   min_hours: number | null
 }
 
 interface BookingWizardProps {
   services: ServiceType[]
+  workers?: NannyWorker[]
   orgSlug: string
   orgName: string
 }
@@ -63,15 +66,20 @@ function getIcon(code: string) {
 
 function formatRate(svc: ServiceType) {
   if (!svc.base_rate) return 'Quoted on request'
-  const unit = svc.pricing_model === 'hourly' ? '/hr' : ' flat rate'
+  const unit = svc.pricing_model === 'hourly' ? '/hr' : ` / ${svc.duration_unit}`
   return `KES ${svc.base_rate.toLocaleString()}${unit}`
 }
 
 export default function BookingWizard({
   services,
+  workers = [],
   orgSlug,
   orgName,
 }: BookingWizardProps) {
+  const searchParams = useSearchParams()
+  const worker_id = searchParams.get('worker_id')
+  const selectedWorker = worker_id ? workers.find((w) => w.id === worker_id) : null
+
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -119,6 +127,7 @@ export default function BookingWizard({
           end_time: end,
           address: form.address,
           notes: form.notes,
+          worker_id,
         }),
       })
       const json = await res.json()
@@ -169,6 +178,48 @@ export default function BookingWizard({
       {/* ── Step 1: Service selection ── */}
       {step === 1 && (
         <div className={styles.wizardCard}>
+          {selectedWorker && (
+            <div
+              style={{
+                background: 'var(--paper-light)',
+                padding: '16px 24px',
+                borderBottom: '1px solid var(--line-soft)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+              }}
+            >
+              {selectedWorker.profile?.avatar_url ? (
+                <img
+                  src={selectedWorker.profile.avatar_url}
+                  alt={selectedWorker.profile.display_name}
+                  style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    background: 'var(--ink)',
+                    color: 'var(--paper)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 600,
+                  }}
+                >
+                  {selectedWorker.profile?.display_name.charAt(0)}
+                </div>
+              )}
+              <div>
+                <div style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Booking</div>
+                <div style={{ fontWeight: 600, color: 'var(--ink)' }}>
+                  {selectedWorker.profile?.display_name}
+                </div>
+              </div>
+            </div>
+          )}
           <div className={styles.wizardCardHead}>
             <h2 className={styles.wizardCardTitle}>What service do you need?</h2>
             <p className={styles.wizardCardSub}>

@@ -53,6 +53,21 @@ const DEFAULT_DEMO_ORG: NannyOrg = {
   is_public: true,
   seo_title: 'Sunny Smiles Nanny & Caregiving Agency',
   seo_description: 'Book verified nannies, maternity nurses, and caregivers in Nairobi.',
+  page_config: {
+    hero_headline: null,
+    hero_subtitle: null,
+    pitch_title: 'Why choose us?',
+    pitch_body: 'We provide vetted, experienced, and highly-qualified professionals for all your caregiving needs.',
+    pitch_bullets: ['Strict background checks', 'First-aid certified', 'Flexible scheduling', 'Satisfaction guaranteed'],
+    show_services: true,
+    show_workers: true,
+    show_testimonials: false,
+    cta_text: 'Book Now',
+    cta_subtext: 'No account required. Quick & easy.',
+    accent_color: null,
+    hero_pattern: 'dots',
+    stats: [],
+  },
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 }
@@ -67,6 +82,7 @@ const DEFAULT_DEMO_SERVICES: NannyServiceType[] = [
     description: 'Dedicated daily assistance, companionship, mobility support, and medication management for seniors.',
     vertical: 'caregiving',
     pricing_model: 'hourly',
+    duration_unit: 'hour',
     base_rate: 16.00,
     min_hours: 3,
     max_hours: 12,
@@ -83,6 +99,7 @@ const DEFAULT_DEMO_SERVICES: NannyServiceType[] = [
     description: 'Post-operative and chronic illness home care provided by certified healthcare assistants.',
     vertical: 'caregiving',
     pricing_model: 'hourly',
+    duration_unit: 'hour',
     base_rate: 18.00,
     min_hours: 4,
     max_hours: 12,
@@ -99,6 +116,7 @@ const DEFAULT_DEMO_SERVICES: NannyServiceType[] = [
     description: 'Specialist, patient-centered support for individuals living with Alzheimer’s or dementia.',
     vertical: 'caregiving',
     pricing_model: 'hourly',
+    duration_unit: 'hour',
     base_rate: 20.00,
     min_hours: 4,
     max_hours: 12,
@@ -115,6 +133,7 @@ const DEFAULT_DEMO_SERVICES: NannyServiceType[] = [
     description: 'Social engagement, light meal prep, errand assistance, and home accompaniment.',
     vertical: 'caregiving',
     pricing_model: 'hourly',
+    duration_unit: 'hour',
     base_rate: 14.00,
     min_hours: 2,
     max_hours: 8,
@@ -133,6 +152,7 @@ const DEFAULT_DEMO_SERVICES: NannyServiceType[] = [
     description: 'Full-day or part-day dedicated childcare in your home by a verified nanny.',
     vertical: 'nanny',
     pricing_model: 'hourly',
+    duration_unit: 'hour',
     base_rate: 15.00,
     min_hours: 4,
     max_hours: 12,
@@ -149,6 +169,7 @@ const DEFAULT_DEMO_SERVICES: NannyServiceType[] = [
     description: 'Specialist newborn care for post-natal support and infant feeding routines.',
     vertical: 'nanny',
     pricing_model: 'hourly',
+    duration_unit: 'hour',
     base_rate: 22.00,
     min_hours: 8,
     max_hours: 24,
@@ -167,6 +188,7 @@ const DEFAULT_DEMO_SERVICES: NannyServiceType[] = [
     description: 'Weekly or fortnightly house cleaning by a background-checked cleaner.',
     vertical: 'cleaning',
     pricing_model: 'hourly',
+    duration_unit: 'hour',
     base_rate: 12.00,
     min_hours: 2,
     max_hours: 8,
@@ -183,6 +205,7 @@ const DEFAULT_DEMO_SERVICES: NannyServiceType[] = [
     description: 'Thorough one-off deep clean and sanitization of residential or commercial property.',
     vertical: 'cleaning',
     pricing_model: 'quoted',
+    duration_unit: 'task',
     base_rate: null,
     min_hours: 4,
     max_hours: 12,
@@ -298,6 +321,26 @@ export async function getWorkers(orgId: string, state?: string): Promise<NannyWo
   }
 
   const { data } = await query
+  return (data || []) as unknown as NannyWorker[]
+}
+
+export async function getPublicWorkers(orgId: string): Promise<NannyWorker[]> {
+  const supabase = createClient()
+  const { data } = await supabase
+    .from('nanny_workers')
+    .select(`
+      *,
+      profile:profiles(display_name, avatar_url, handle, category, location_area),
+      credentials:nanny_worker_credentials(
+        *,
+        credential_type:nanny_credential_types(*)
+      )
+    `)
+    .eq('org_id', orgId)
+    .eq('show_on_public', true)
+    .in('worker_state', ['vetted', 'active'])
+    .order('avg_rating', { ascending: false, nullsFirst: false })
+
   return (data || []) as unknown as NannyWorker[]
 }
 
@@ -762,6 +805,7 @@ export async function createAnonBooking(payload: {
   address: string
   notes?: string
   special?: Record<string, any>
+  worker_id?: string
 }): Promise<{ result: any; error: string | null }> {
   const supabase = createServiceClient()
 
@@ -804,6 +848,7 @@ export async function createAnonBooking(payload: {
     p_address: payload.address,
     p_notes: payload.notes || null,
     p_special: payload.special || {},
+    p_worker_id: payload.worker_id || null,
   })
   if (error) return { result: null, error: error.message }
   return { result: data, error: null }
