@@ -16,10 +16,14 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
 
 export const getFirebaseAnalytics = async () => {
-  if (typeof window !== 'undefined') {
-    const supported = await isSupported()
-    if (supported) {
-      return getAnalytics(app)
+  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+    try {
+      const supported = await isSupported()
+      if (supported) {
+        return getAnalytics(app)
+      }
+    } catch (err) {
+      console.warn('Firebase Analytics initialization skipped:', err)
     }
   }
   return null

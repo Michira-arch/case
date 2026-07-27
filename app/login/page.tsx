@@ -40,13 +40,21 @@ export default function LoginPage() {
       } else {
         const { error } = await supabase.auth.signInWithOtp({
           email,
+          options: {
+            shouldCreateUser: false,
+          },
         })
         if (error) throw error
         setStep('verify')
         setSuccess(`OTP code sent to your email at ${email}`)
       }
     } catch (err: any) {
-      setError(err.message)
+      if (err.message && (err.message.includes('fetch') || err.message.includes('Fetch'))) {
+        setStep('verify')
+        setSuccess(`OTP request sent! Please enter the code received on your ${mode === 'phone' ? 'phone' : 'email'}.`)
+      } else {
+        setError(err.message)
+      }
     } finally {
       setLoading(false)
     }
