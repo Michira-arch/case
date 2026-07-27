@@ -5,11 +5,12 @@ import { usePathname } from 'next/navigation'
 import styles from './dashboard.module.css'
 
 const navItems = [
-  { href: '/dashboard',            label: 'Case',      icon: '◆' },
-  { href: '/dashboard/analytics',  label: 'Analytics', icon: '↗' },
-  { href: '/dashboard/billing',    label: 'Billing',   icon: '★' },
-  { href: '/dashboard/affiliate',  label: 'Affiliate', icon: '🤝' },
-  { href: '/dashboard/settings',   label: 'Settings',  icon: '⚙' },
+  { href: '/dashboard',                     label: 'Case',      icon: '◆' },
+  { href: '/dashboard/agency/nanny',        label: 'Agency',    icon: '🏥' },
+  { href: '/dashboard/analytics',           label: 'Analytics', icon: '↗' },
+  { href: '/dashboard/billing',             label: 'Billing',   icon: '★' },
+  { href: '/dashboard/affiliate',           label: 'Affiliate', icon: '🤝' },
+  { href: '/dashboard/settings',            label: 'Settings',  icon: '⚙' },
 ]
 
 export default function DashboardLayout({

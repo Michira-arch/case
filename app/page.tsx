@@ -16,6 +16,7 @@ export default function LandingPage() {
         <div className={styles.navInner}>
           <span className={styles.wordmark}>Case</span>
           <div className={styles.navActions}>
+            <Link href="/agency/sunny-smiles/nanny" className="btn btn--outline btn--sm" style={{ marginRight: 4 }}>Caregiving Agency</Link>
             <Link href="/search" className="btn btn--outline btn--sm" style={{ marginRight: 4 }}>Search Cases</Link>
             <Link href="/login" className="btn btn--outline btn--sm">Log in</Link>
             <Link href="/signup" className="btn btn--brass btn--sm">Start free</Link>
@@ -27,15 +28,15 @@ export default function LandingPage() {
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
-            <span className="stamp stamp--vouched">Proof-of-work · mobile-first</span>
+            <span className="stamp stamp--vouched">Proof-of-work · Caregiving & Nanny Vertical · Mobile-First</span>
           </div>
           <h1 className={styles.heroTitle}>
             Prove you've got the skills.<br />
             <span className={styles.heroAccent}>Not just a CV line.</span>
           </h1>
           <p className={styles.heroSub}>
-            Case helps you present yourself professionally with a single shareable link. 
-            Showcase your projects, certificates, photos, and recommendations in one convincing profile.
+            Case helps service professionals and agencies manage bookings, verified credentials, and proof-of-work. 
+            Deeply integrated caregiving, nanny, and domestic cleaning platform.
           </p>
 
           {/* Big Search Bar */}
@@ -50,7 +51,7 @@ export default function LandingPage() {
               <input
                 type="text"
                 name="q"
-                placeholder="Search for chefs, tailors, nurses, or search by name..."
+                placeholder="Search for nannies, caregivers, cleaners, electricians..."
                 className={styles.heroSearchInput}
               />
               <button type="submit" className={`btn btn--brass ${styles.heroSearchButton}`}>
@@ -60,15 +61,15 @@ export default function LandingPage() {
           </form>
 
           <div className={styles.heroCtas}>
-            <Link href="/signup" className="btn btn--brass btn--lg">
-              Build your Case — free
+            <Link href="/agency/sunny-smiles/nanny" className="btn btn--brass btn--lg">
+              🏥 Book a Nanny or Caregiver
             </Link>
-            <a href="/@a.njoroge" className="btn btn--outline btn--lg">
-              See example
-            </a>
+            <Link href="/dashboard/agency/nanny" className="btn btn--outline btn--lg">
+              Agency Dashboard
+            </Link>
           </div>
           <p className={styles.heroNote}>
-            Free forever · takes 5 minutes · share via WhatsApp
+            Integrated Caregiving Agency Platform · Zero Friction Booking · Verified DBS & First Aid
           </p>
         </div>
       </section>
