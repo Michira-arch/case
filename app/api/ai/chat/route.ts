@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     // Fetch org details for the system prompt
     const { data: org } = await supabase
       .from('nanny_orgs')
-      .select('*, policy:nanny_org_policies(*)')
+      .select('*')
       .eq('id', orgId)
       .single();
 
@@ -62,9 +62,9 @@ export async function POST(req: Request) {
 Your goal is to assist the admin with coordination, scaling, and managing the agency effortlessly. 
 Context:
 - Currency: KES (Kenyan Shilling)
-- Platform Commission: ${org.policy?.[0]?.platform_commission_pct ?? 0}%
-- Matching Mode: ${org.policy?.[0]?.matching_mode}
-- Payout Cadence: ${org.policy?.[0]?.payout_cadence}
+- Platform Commission: ${org.policy?.platform_commission_pct ?? 0}%
+- Matching Mode: ${org.policy?.matching_mode}
+- Payout Cadence: ${org.policy?.payout_cadence}
 
 Strict Restrictions:
 - Do NOT invent or hallucinate information about workers, clients, or bookings. Use your tools to fetch data.

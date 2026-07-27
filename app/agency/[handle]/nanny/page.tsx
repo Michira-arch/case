@@ -16,8 +16,24 @@ export async function generateMetadata({ params }: Props) {
     description: org.seo_description ?? org.description ?? org.tagline ?? '',
     openGraph: {
       title: org.name,
-      description: org.tagline ?? '',
-      images: org.cover_url ? [{ url: org.cover_url }] : [],
+      description: org.tagline ?? org.description ?? '',
+      url: `https://case.app/agency/${params.handle}/nanny`,
+      siteName: 'Case',
+      images: org.cover_url ? [
+        {
+          url: org.cover_url,
+          width: 1200,
+          height: 630,
+          alt: `${org.name} Cover Image`,
+        }
+      ] : [],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: org.name,
+      description: org.tagline ?? org.description ?? '',
+      images: org.cover_url ? [org.cover_url] : [],
     },
   }
 }
