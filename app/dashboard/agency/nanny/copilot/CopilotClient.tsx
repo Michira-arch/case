@@ -40,13 +40,14 @@ export default function CopilotClient({ org, initialInbox }: { org: any, initial
     setLoading(true)
 
     try {
+      const newMessages = [...messages, { role: 'user', content: userMsg }]
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ org_id: org.id, message: userMsg })
+        body: JSON.stringify({ orgId: org.id, messages: newMessages })
       })
       const data = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply || 'Sorry, an error occurred.' }])
+      setMessages(prev => [...prev, { role: 'assistant', content: data.message?.content || data.error || 'Sorry, an error occurred.' }])
     } catch (e) {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Failed to connect to AI.' }])
     } finally {
@@ -63,9 +64,14 @@ export default function CopilotClient({ org, initialInbox }: { org: any, initial
         setPushStatus('Permission denied.')
         return
       }
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!vapidKey) {
+        setPushStatus('Push notifications are not configured (Missing VAPID key).')
+        return
+      }
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY // Assume env var is available
+        applicationServerKey: vapidKey
       })
 
       await fetch('/api/webhooks/push-subscribe', {
