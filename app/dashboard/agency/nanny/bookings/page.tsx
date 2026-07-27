@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getNannyOrgsByOwner, getBookings } from '@/lib/nanny-data'
@@ -33,6 +34,11 @@ export default async function BookingsPage() {
           <p className={styles.pageSubtitle}>
             {bookings.length} total booking{bookings.length !== 1 ? 's' : ''}
           </p>
+        </div>
+        <div className={styles.pageActions}>
+          <Link href="/dashboard/agency/nanny/bookings/new" className="btn btn--dark">
+            + New Booking
+          </Link>
         </div>
       </div>
 

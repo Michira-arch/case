@@ -53,8 +53,13 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // API routes: network-only
-  if (url.pathname.startsWith('/api/')) {
+  // API routes and Next.js RSC requests: network-only
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.searchParams.has('_rsc') ||
+    request.headers.has('RSC') ||
+    request.headers.has('Next-Router-State-Tree')
+  ) {
     return
   }
 
@@ -73,9 +78,9 @@ self.addEventListener('fetch', (event) => {
           const cached = await caches.match(request)
           if (cached) return cached
           if (request.mode === 'navigate') {
-            return (await caches.match('/dashboard')) || (await caches.match('/offline.html'))
+            return (await caches.match('/dashboard')) || (await caches.match('/offline.html')) || Response.error()
           }
-          return Promise.reject('offline')
+          return Response.error()
         })
     )
     return
@@ -92,7 +97,7 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse
         })
-        .catch(() => cached)
+        .catch(() => cached || Response.error())
 
       return cached || fetchPromise
     })

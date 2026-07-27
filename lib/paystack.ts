@@ -1,6 +1,5 @@
 import crypto from 'crypto'
 
-// Pricing config — mirrors pricing_plans table
 export const PRICING = {
   '6m': {
     id: '6m',
@@ -15,6 +14,20 @@ export const PRICING = {
     amount_kes: 100,
     months: 12,
     description: 'Best value — pay less per month',
+  },
+  'agency_monthly': {
+    id: 'agency_monthly',
+    label: 'Agency Monthly',
+    amount_kes: 1000,
+    months: 1,
+    description: 'Standard agency billing',
+  },
+  'agency_yearly': {
+    id: 'agency_yearly',
+    label: 'Agency Yearly',
+    amount_kes: 10000,
+    months: 12,
+    description: 'Save big with an annual plan',
   },
 } as const
 
@@ -47,7 +60,6 @@ export async function verifyWebhookSignature(
     .update(body)
     .digest('hex')
 
-  // Constant-time comparison to prevent timing attacks
   return crypto.timingSafeEqual(
     Buffer.from(computedSig, 'hex'),
     Buffer.from(signature, 'hex')
@@ -56,7 +68,6 @@ export async function verifyWebhookSignature(
 
 /**
  * Verify a transaction by reference via Paystack API
- * Use for additional server-side verification if needed
  */
 export async function verifyTransaction(reference: string) {
   const secretKey = process.env.PAYSTACK_SECRET_KEY
@@ -77,8 +88,77 @@ export async function verifyTransaction(reference: string) {
 }
 
 /**
+ * Create a Paystack subaccount for an agency (to route split payments)
+ */
+export async function createSubaccount(params: {
+  business_name: string
+  settlement_bank: string
+  account_number: string
+  percentage_charge: number
+  primary_contact_email?: string
+}) {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY
+  if (!secretKey) throw new Error('PAYSTACK_SECRET_KEY not set')
+
+  const res = await fetch(`https://api.paystack.co/subaccount`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      business_name: params.business_name,
+      settlement_bank: params.settlement_bank,
+      account_number: params.account_number,
+      percentage_charge: params.percentage_charge,
+      primary_contact_email: params.primary_contact_email,
+    })
+  })
+
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(`Paystack subaccount creation failed: ${data.message}`)
+  }
+
+  return data.data
+}
+
+/**
+ * Charge an existing authorization (for automated billing of clients)
+ */
+export async function chargeAuthorization(params: {
+  authorization_code: string
+  email: string
+  amount_kes: number
+  reference?: string
+}) {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY
+  if (!secretKey) throw new Error('PAYSTACK_SECRET_KEY not set')
+
+  const res = await fetch(`https://api.paystack.co/transaction/charge_authorization`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      authorization_code: params.authorization_code,
+      email: params.email,
+      amount: params.amount_kes * 100, // kobo
+      reference: params.reference
+    })
+  })
+
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(`Paystack charge failed: ${data.message}`)
+  }
+
+  return data.data
+}
+
+/**
  * Open the Paystack inline checkout modal (client-side)
- * Requires the Paystack inline script to be loaded
  */
 export interface CheckoutOptions {
   email: string
@@ -86,6 +166,7 @@ export interface CheckoutOptions {
   reference: string
   profileId: string
   planPeriod: string
+  subaccount?: string // Optional subaccount for splits
   onSuccess: (reference: string) => void
   onClose: () => void
 }
@@ -98,38 +179,41 @@ export function openPaystackCheckout(opts: CheckoutOptions) {
     return
   }
 
-  // @ts-ignore — Paystack global injected by script
+  // @ts-ignore
   if (typeof window === 'undefined' || !window.PaystackPop) {
     console.error('Paystack script not loaded')
     alert('Payment system not loaded. Please refresh and try again.')
     return
   }
 
+  const metadata: any = {
+    profile_id:  opts.profileId,
+    plan_period: opts.planPeriod,
+    custom_fields: [
+      {
+        display_name:  'Profile ID',
+        variable_name: 'profile_id',
+        value:         opts.profileId,
+      },
+      {
+        display_name:  'Plan Period',
+        variable_name: 'plan_period',
+        value:         opts.planPeriod,
+      },
+    ],
+  }
+
   // @ts-ignore
   const handler = window.PaystackPop.setup({
     key:       publicKey,
     email:     opts.email,
-    amount:    opts.amountKes * 100,  // Paystack uses kobo (KES × 100)
+    amount:    opts.amountKes * 100,
     currency:  'KES',
     ref:       opts.reference,
-    channels:  ['card', 'mobile_money'],  // Enable M-Pesa
-    metadata: {
-      profile_id:  opts.profileId,
-      plan_period: opts.planPeriod,
-      custom_fields: [
-        {
-          display_name:  'Profile ID',
-          variable_name: 'profile_id',
-          value:         opts.profileId,
-        },
-        {
-          display_name:  'Plan Period',
-          variable_name: 'plan_period',
-          value:         opts.planPeriod,
-        },
-      ],
-    },
-    label:     `Case+ (${opts.planPeriod})`,
+    channels:  ['card', 'mobile_money'],
+    subaccount: opts.subaccount, // For splitting if needed
+    metadata,
+    label:     `Billing (${opts.planPeriod})`,
     callback:  (response: { reference: string }) => {
       opts.onSuccess(response.reference)
     },

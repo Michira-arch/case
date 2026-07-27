@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getNannyOrgBySlug, getServiceTypes, getPublicWorkers } from '@/lib/nanny-data'
 import type { NannyServiceType, NannyWorker } from '@/lib/nanny-types'
+import RequestToJoinButton from './RequestToJoinButton'
 
 interface Props {
   params: { handle: string }
@@ -548,6 +549,14 @@ export default async function AgencyLandingPage({ params }: Props) {
           >
             {config.cta_text || 'Book Now'} →
           </Link>
+        </div>
+
+        <div style={{ marginTop: 40, textAlign: 'center' }}>
+          <h4 style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}>Are you a caregiver?</h4>
+          <p style={{ fontSize: 14, color: 'var(--ink-muted)', marginTop: 4 }}>
+            Join our agency to get matched with families and manage your bookings.
+          </p>
+          <RequestToJoinButton orgId={org.id} />
         </div>
       </div>
 

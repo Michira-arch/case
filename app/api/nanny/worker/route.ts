@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getNannyOrgsByOwner, createShadowWorker } from '@/lib/nanny-data'
+import { sendEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,8 +52,20 @@ export async function POST(req: NextRequest) {
       }
 
       const claimUrl = worker?.claim_token
-        ? `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/agency/join/${worker.claim_token}`
+        ? `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/agency/join/${worker.claim_token}`
         : null
+
+      if (claimUrl) {
+        await sendEmail({
+          to: invite_email,
+          subject: `You have been invited to join ${org.name || 'our agency'}`,
+          html: `
+            <p>You have been invited to join an agency on Case.</p>
+            <p>Click the link below to accept the invitation and set up your profile:</p>
+            <a href="${claimUrl}">${claimUrl}</a>
+          `
+        })
+      }
 
       return NextResponse.json({
         success: true,
