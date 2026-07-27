@@ -1,0 +1,843 @@
+{
+  "nodes": [
+    {
+      "id": "identity",
+      "name": "Identity Core",
+      "parent": null,
+      "category": "Identity & Party",
+      "purpose": "Root namespace for all platform participants, credentials, and access domains.",
+      "ux_intent": "An invisible foundational layer that ensures absolute clarity on who is interacting with the system.",
+      "actors": ["system"],
+      "inputs": [],
+      "outputs": [],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 0,
+      "is_leaf": false,
+      "open_questions": [],
+      "vertical_notes": "Foundation for nanny, cleaner, client, and anon interactions.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.person",
+      "name": "Person Entity",
+      "parent": "identity",
+      "category": "Identity & Party",
+      "purpose": "Groups operations related to the core human entity traversing the platform.",
+      "ux_intent": "The user is treated as a unified human being, preventing duplicated profiles.",
+      "actors": ["system"],
+      "inputs": [],
+      "outputs": [],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 1,
+      "is_leaf": false,
+      "open_questions": [],
+      "vertical_notes": "A single person might be a cleaner in Agency A, and a client booking a nanny in Agency B.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.person.create",
+      "name": "Create Person Record",
+      "parent": "identity.person",
+      "category": "Identity & Party",
+      "purpose": "Instantiates a new global person identity or a 'shadow' placeholder if initiated by an admin.",
+      "ux_intent": "Admin can effortlessly add a placeholder worker/client in seconds; the person feels known when they arrive later.",
+      "actors": ["admin", "system", "visitor"],
+      "inputs": [
+        {"name": "full_name", "type": "string"},
+        {"name": "contact_details", "type": "object"},
+        {"name": "is_shadow", "type": "boolean"}
+      ],
+      "outputs": [
+        {"name": "person_id", "type": "string"}
+      ],
+      "state_owned": "person_record",
+      "events_emitted": ["person.created", "shadow_person.created"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": ["What is the primary deduplication key for shadow persons? (Email vs Phone)"],
+      "vertical_notes": "Admins can add 'Jane, nanny, 555-1234' with no account to immediately assign her to a caregiving shift.",
+      "case_integration": "Shadow persons do not sync to Case until claimed."
+    },
+    {
+      "id": "identity.person.claim",
+      "name": "Claim Shadow Profile",
+      "parent": "identity.person",
+      "category": "Identity & Party",
+      "purpose": "Allows an unregistered worker or client to take ownership of a pre-existing shadow profile.",
+      "ux_intent": "A magic-link experience where the worker clicks and says 'Yes, this is me!'—zero manual data entry.",
+      "actors": ["worker", "client"],
+      "inputs": [
+        {"name": "claim_token", "type": "string"},
+        {"name": "auth_credentials", "type": "object"}
+      ],
+      "outputs": [
+        {"name": "success", "type": "boolean"}
+      ],
+      "state_owned": "person_account_link",
+      "events_emitted": ["shadow_person.claimed", "person.activated"],
+      "events_consumed": [],
+      "dependencies": ["auth_service"],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Crucial for onboarding legacy cleaning or nanny staff smoothly without requiring them to set up accounts upfront.",
+      "case_integration": "Triggers the creation of their unified Case Portfolio, backfilling all historical shifts worked as a shadow."
+    },
+    {
+      "id": "identity.person.update",
+      "name": "Update Person Profile",
+      "parent": "identity.person",
+      "category": "Identity & Party",
+      "purpose": "Updates core biological or contact attributes of the person entity.",
+      "ux_intent": "Fields save instantly on blur, reassuring the user without disruptive save buttons.",
+      "actors": ["worker", "client", "admin"],
+      "inputs": [
+        {"name": "person_id", "type": "string"},
+        {"name": "delta", "type": "object"}
+      ],
+      "outputs": [
+        {"name": "updated_person", "type": "object"}
+      ],
+      "state_owned": "person_record",
+      "events_emitted": ["person.updated"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": ["Should name changes trigger a re-verification of the DBS check?"],
+      "vertical_notes": "Nannies and cleaners must ensure contact info is exact for emergency communications with families.",
+      "case_integration": "Updates sync immediately to their Case profile."
+    },
+    {
+      "id": "identity.person.deactivate",
+      "name": "Deactivate Person",
+      "parent": "identity.person",
+      "category": "Identity & Party",
+      "purpose": "Soft-deletes the person's identity and revokes all active platform access.",
+      "ux_intent": "A solemn but clear offboarding flow that gracefully terminates future bookings while preserving payout history.",
+      "actors": ["admin", "system"],
+      "inputs": [
+        {"name": "person_id", "type": "string"},
+        {"name": "reason_code", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "status", "type": "string"}
+      ],
+      "state_owned": "person_status",
+      "events_emitted": ["person.deactivated", "person.access_revoked"],
+      "events_consumed": [],
+      "dependencies": ["auth_service", "billing_service"],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": ["How do we handle upcoming booked shifts when a worker is deactivated?"],
+      "vertical_notes": "Required if a caregiver loses a critical safeguarding clearance or a cleaner violates trust.",
+      "case_integration": "Case portfolio is sealed; no new activity can be recorded."
+    },
+    {
+      "id": "identity.person.view_self",
+      "name": "View Own Profile",
+      "parent": "identity.person",
+      "category": "Identity & Party",
+      "purpose": "Retrieves the full aggregated view of the person's identity, memberships, and credentials.",
+      "ux_intent": "A highly visual, reassuring 'passport' view showing the user exactly how agencies and clients see them.",
+      "actors": ["worker", "client"],
+      "inputs": [
+        {"name": "person_id", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "profile_aggregate", "type": "object"}
+      ],
+      "state_owned": null,
+      "events_emitted": ["person.viewed"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Nannies see their public-facing biography alongside their verified internal credentials.",
+      "case_integration": "Displays a direct link to their public Case Portfolio URL."
+    },
+    {
+      "id": "identity.org",
+      "name": "Organization Entity",
+      "parent": "identity",
+      "category": "Identity & Party",
+      "purpose": "Groups operations for agencies, care homes, or corporate clients.",
+      "ux_intent": "Provides a robust structure for B2B or B2B2C interactions, remaining mostly invisible to end consumers.",
+      "actors": ["system"],
+      "inputs": [],
+      "outputs": [],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 1,
+      "is_leaf": false,
+      "open_questions": [],
+      "vertical_notes": "An org could be 'Sunny Smiles Nanny Agency' or 'Downtown Commercial Cleaners'.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.org.create",
+      "name": "Create Organization",
+      "parent": "identity.org",
+      "category": "Identity & Party",
+      "purpose": "Registers a new agency or commercial client onto the platform.",
+      "ux_intent": "A seamless setup wizard that instantly generates their operational workspace.",
+      "actors": ["admin", "system"],
+      "inputs": [
+        {"name": "org_name", "type": "string"},
+        {"name": "business_type", "type": "string"},
+        {"name": "registration_number", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "org_id", "type": "string"}
+      ],
+      "state_owned": "org_record",
+      "events_emitted": ["org.created"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Important for distinguishing between residential family clients and commercial cleaning/care home clients.",
+      "case_integration": "The org becomes a verified issuer of work history on Case portfolios."
+    },
+    {
+      "id": "identity.org.update",
+      "name": "Update Organization",
+      "parent": "identity.org",
+      "category": "Identity & Party",
+      "purpose": "Modifies core details of the agency or commercial client.",
+      "ux_intent": "Form fields that autosave, ensuring the agency's public profile is always up-to-date.",
+      "actors": ["admin"],
+      "inputs": [
+        {"name": "org_id", "type": "string"},
+        {"name": "delta", "type": "object"}
+      ],
+      "outputs": [
+        {"name": "updated_org", "type": "object"}
+      ],
+      "state_owned": "org_record",
+      "events_emitted": ["org.updated"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Allows updating public-facing agency details like 'Ofsted Registration Number' for childcare agencies.",
+      "case_integration": "Updates the issuer branding on all workers' Case portfolios."
+    },
+    {
+      "id": "identity.org.suspend",
+      "name": "Suspend Organization",
+      "parent": "identity.org",
+      "category": "Identity & Party",
+      "purpose": "Temporarily freezes all activity for an organization (e.g., due to non-payment or compliance failure).",
+      "ux_intent": "Clear, unmissable banners explaining the suspension with an immediate, frictionless resolution path.",
+      "actors": ["system", "admin"],
+      "inputs": [
+        {"name": "org_id", "type": "string"},
+        {"name": "reason", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "status", "type": "string"}
+      ],
+      "state_owned": "org_status",
+      "events_emitted": ["org.suspended"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": ["Do active nanny shifts get cancelled immediately upon agency suspension?"],
+      "vertical_notes": "Crucial if a care agency loses regulatory approval and must immediately cease dispatching workers.",
+      "case_integration": "Suspends the org's ability to issue new verified work records to Case."
+    },
+    {
+      "id": "identity.org.close",
+      "name": "Close Organization",
+      "parent": "identity.org",
+      "category": "Identity & Party",
+      "purpose": "Permanently shuts down the organization and terminates all active memberships.",
+      "ux_intent": "A highly intentional, irreversible action requiring typed confirmation to prevent accidental data loss.",
+      "actors": ["admin"],
+      "inputs": [
+        {"name": "org_id", "type": "string"},
+        {"name": "confirmation_phrase", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "success", "type": "boolean"}
+      ],
+      "state_owned": "org_lifecycle",
+      "events_emitted": ["org.closed", "org.memberships_terminated"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": ["How long is historical compliance data retained for closed childcare agencies?"],
+      "vertical_notes": "Caregivers and cleaners must still retain access to their historical payout and tax data.",
+      "case_integration": "Org is marked as defunct, but previously issued Case work history remains cryptographically valid."
+    },
+    {
+      "id": "identity.org.view_settings",
+      "name": "View Organization Settings",
+      "parent": "identity.org",
+      "category": "Identity & Party",
+      "purpose": "Retrieves the organizational configuration and global preferences.",
+      "ux_intent": "A perfectly categorized settings pane where admins can find what they need in under 3 seconds.",
+      "actors": ["admin"],
+      "inputs": [
+        {"name": "org_id", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "settings", "type": "object"}
+      ],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Includes toggles for 'Require Paediatric First Aid' or 'Require COSHH Training' globally.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.membership",
+      "name": "Membership Link",
+      "parent": "identity",
+      "category": "Identity & Party",
+      "purpose": "Manages the many-to-many relationship between persons and organizations.",
+      "ux_intent": "Workers seamlessly switch contexts between different agencies without logging in and out.",
+      "actors": ["system"],
+      "inputs": [],
+      "outputs": [],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 1,
+      "is_leaf": false,
+      "open_questions": [],
+      "vertical_notes": "A person might be a 'Worker' in the Nanny Agency, but a 'Client' in the Cleaning Agency.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.membership.create",
+      "name": "Create Membership",
+      "parent": "identity.membership",
+      "category": "Identity & Party",
+      "purpose": "Links a person to an organization with a specific role (worker, client, admin).",
+      "ux_intent": "An instant, satisfying confirmation that the person is now part of the agency.",
+      "actors": ["admin", "system"],
+      "inputs": [
+        {"name": "person_id", "type": "string"},
+        {"name": "org_id", "type": "string"},
+        {"name": "role", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "membership_id", "type": "string"}
+      ],
+      "state_owned": "membership_record",
+      "events_emitted": ["membership.created"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "When a family (client) signs up for nanny services, they are given a client membership to the agency.",
+      "case_integration": "Authorizes the agency to append records to the worker's Case Portfolio."
+    },
+    {
+      "id": "identity.membership.change_role",
+      "name": "Change Membership Role",
+      "parent": "identity.membership",
+      "category": "Identity & Party",
+      "purpose": "Updates the permissions and relationship type of a person within an org.",
+      "ux_intent": "A simple dropdown selection that instantly reconfigures the user's dashboard upon next load.",
+      "actors": ["admin"],
+      "inputs": [
+        {"name": "membership_id", "type": "string"},
+        {"name": "new_role", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "success", "type": "boolean"}
+      ],
+      "state_owned": "membership_role",
+      "events_emitted": ["membership.role_changed"],
+      "events_consumed": [],
+      "dependencies": ["auth_service"],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "E.g., upgrading a Senior Caregiver to an Agency Admin role so they can dispatch others.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.membership.suspend",
+      "name": "Suspend Membership",
+      "parent": "identity.membership",
+      "category": "Identity & Party",
+      "purpose": "Temporarily blocks a person from acting within a specific organization without destroying their history.",
+      "ux_intent": "A respectful but firm state change that hides the worker from dispatch without deleting data.",
+      "actors": ["admin"],
+      "inputs": [
+        {"name": "membership_id", "type": "string"},
+        {"name": "reason", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "status", "type": "string"}
+      ],
+      "state_owned": "membership_status",
+      "events_emitted": ["membership.suspended"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": ["Does suspending a client automatically cancel their recurring cleaning schedules?"],
+      "vertical_notes": "Used when a caregiver's DBS check expires and they must be grounded until a new one is uploaded.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.membership.terminate",
+      "name": "Terminate Membership",
+      "parent": "identity.membership",
+      "category": "Identity & Party",
+      "purpose": "Permanently ends the relationship between the person and the organization.",
+      "ux_intent": "Clean severance. The worker disappears from the active roster but remains in historical billing reports.",
+      "actors": ["admin", "worker", "client"],
+      "inputs": [
+        {"name": "membership_id", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "success", "type": "boolean"}
+      ],
+      "state_owned": "membership_lifecycle",
+      "events_emitted": ["membership.terminated"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "When a nanny leaves an agency, they keep their global platform account (and Case Portfolio) but lose agency access.",
+      "case_integration": "Closes the active employment chapter on their Case Portfolio."
+    },
+    {
+      "id": "identity.membership.view_roster",
+      "name": "View Roster",
+      "parent": "identity.membership",
+      "category": "Identity & Party",
+      "purpose": "Allows agency admins to see all active and suspended workers or clients.",
+      "ux_intent": "A lightning-fast, sortable, beautifully animated list with inline quick-actions.",
+      "actors": ["admin"],
+      "inputs": [
+        {"name": "org_id", "type": "string"},
+        {"name": "role_filter", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "members", "type": "array"}
+      ],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Admins can toggle between 'Cleaners', 'Nannies', and 'Families'. Indicators show expiring credentials instantly.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.credential",
+      "name": "Credential Engine",
+      "parent": "identity",
+      "category": "Identity & Party",
+      "purpose": "Handles the ingestion, validation, and lifecycle of specialized compliance documents as unstructured data assertions.",
+      "ux_intent": "Workers take a photo of a certificate; the system magically extracts the data and turns it green.",
+      "actors": ["system"],
+      "inputs": [],
+      "outputs": [],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 1,
+      "is_leaf": false,
+      "open_questions": [],
+      "vertical_notes": "Data-not-schema approach: A 'Credential' can be anything from a DBS Check to a Carpet Cleaning Cert.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.credential.submit",
+      "name": "Submit Credential",
+      "parent": "identity.credential",
+      "category": "Identity & Party",
+      "purpose": "Allows a worker to upload proof of a required compliance qualification.",
+      "ux_intent": "A playful, frictionless upload flow that immediately OCRs the document and gives instant reassurance.",
+      "actors": ["worker"],
+      "inputs": [
+        {"name": "person_id", "type": "string"},
+        {"name": "credential_type", "type": "string"},
+        {"name": "file_url", "type": "string"},
+        {"name": "extracted_data", "type": "object"}
+      ],
+      "outputs": [
+        {"name": "credential_id", "type": "string"}
+      ],
+      "state_owned": "credential_record",
+      "events_emitted": ["credential.submitted", "credential.pending_review"],
+      "events_consumed": [],
+      "dependencies": ["ocr_service", "storage_service"],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": ["Can we auto-verify DBS checks against the UK government update service API?"],
+      "vertical_notes": "Caregivers submit NVQ Level 3, Paediatric First Aid, DBS. Cleaners submit COSHH, manual handling.",
+      "case_integration": "Verified credentials become foundational trust badges on the Case Portfolio."
+    },
+    {
+      "id": "identity.credential.review",
+      "name": "Review Credential",
+      "parent": "identity.credential",
+      "category": "Identity & Party",
+      "purpose": "Enables an admin to manually approve or reject a submitted credential.",
+      "ux_intent": "A split-screen view: document on the left, fields on the right, approved with a single confident keystroke.",
+      "actors": ["admin"],
+      "inputs": [
+        {"name": "credential_id", "type": "string"},
+        {"name": "decision", "type": "string"},
+        {"name": "expiry_date", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "success", "type": "boolean"}
+      ],
+      "state_owned": "credential_status",
+      "events_emitted": ["credential.approved", "credential.rejected"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Admins must check that the DBS certificate is clear of safeguarding concerns before assigning a nanny.",
+      "case_integration": "Approval writes a verified credential block to the worker's Case Portfolio."
+    },
+    {
+      "id": "identity.credential.expire",
+      "name": "Expire Credential",
+      "parent": "identity.credential",
+      "category": "Identity & Party",
+      "purpose": "Background process that invalidates credentials that have passed their valid-until date.",
+      "ux_intent": "Silent, robust automation that protects the agency from compliance breaches without human intervention.",
+      "actors": ["system"],
+      "inputs": [
+        {"name": "current_timestamp", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "expired_count", "type": "integer"}
+      ],
+      "state_owned": "credential_status",
+      "events_emitted": ["credential.expired", "membership.compliance_failed"],
+      "events_consumed": ["time.daily_tick"],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "If a CPR cert expires, the caregiver is instantly removed from the dispatch pool for future medical shifts.",
+      "case_integration": "Updates the Case Portfolio badge from 'Active' to 'Historical/Expired'."
+    },
+    {
+      "id": "identity.credential.revoke",
+      "name": "Revoke Credential",
+      "parent": "identity.credential",
+      "category": "Identity & Party",
+      "purpose": "Manually invalidates a credential before its natural expiry (e.g., if fraud is discovered).",
+      "ux_intent": "An emergency brake that feels secure and immediately halts the worker's operational capacity.",
+      "actors": ["admin"],
+      "inputs": [
+        {"name": "credential_id", "type": "string"},
+        {"name": "reason", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "success", "type": "boolean"}
+      ],
+      "state_owned": "credential_status",
+      "events_emitted": ["credential.revoked"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Used if a caregiver's Ofsted registration is suspended by the regulator.",
+      "case_integration": "Burns the credential badge from the Case Portfolio permanently."
+    },
+    {
+      "id": "identity.credential.view_status",
+      "name": "View Credential Dashboard",
+      "parent": "identity.credential",
+      "category": "Identity & Party",
+      "purpose": "Provides the worker with a unified view of all their required and optional compliance documents.",
+      "ux_intent": "A highly visual progress ring showing 100% compliance, creating a sense of professional pride.",
+      "actors": ["worker"],
+      "inputs": [
+        {"name": "person_id", "type": "string"},
+        {"name": "org_id", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "credential_list", "type": "array"}
+      ],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Cleaners see exactly which commercial certs they are missing to qualify for higher-paying office jobs.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.credential.renewal_reminder",
+      "name": "Send Renewal Reminder",
+      "parent": "identity.credential",
+      "category": "Identity & Party",
+      "purpose": "Proactively notifies a worker when a vital credential is 30/14/7 days from expiry.",
+      "ux_intent": "A helpful, friendly nudge (SMS/Push) that includes a one-tap magic link to upload the new document.",
+      "actors": ["system"],
+      "inputs": [
+        {"name": "credential_id", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "notification_sent", "type": "boolean"}
+      ],
+      "state_owned": null,
+      "events_emitted": ["credential.reminder_sent"],
+      "events_consumed": ["credential.expiring_soon"],
+      "dependencies": ["notification_service"],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Keeps nannies compliant without agency admins having to chase them via email.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.settlement_account",
+      "name": "Settlement Account",
+      "parent": "identity",
+      "category": "Identity & Party",
+      "purpose": "Manages the financial endpoints linked to a person or org for payouts and charges.",
+      "ux_intent": "Completely abstracts away the complexity of Stripe/Plaid; it just looks like 'Where money goes'.",
+      "actors": ["system"],
+      "inputs": [],
+      "outputs": [],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 1,
+      "is_leaf": false,
+      "open_questions": [],
+      "vertical_notes": "Vital for gig-economy routing: caregivers need payout accounts, clients need charge methods.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.settlement_account.link",
+      "name": "Link Settlement Account",
+      "parent": "identity.settlement_account",
+      "category": "Identity & Party",
+      "purpose": "Attaches a bank account or debit card to a person for receiving payouts or processing refunds.",
+      "ux_intent": "A fluid, embedded financial flow that feels as easy as adding a card to Apple Pay.",
+      "actors": ["worker", "client"],
+      "inputs": [
+        {"name": "person_id", "type": "string"},
+        {"name": "payment_method_token", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "account_id", "type": "string"}
+      ],
+      "state_owned": "settlement_record",
+      "events_emitted": ["settlement_account.linked"],
+      "events_consumed": [],
+      "dependencies": ["payment_gateway"],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Cleaners link their bank accounts to receive their weekly payouts from the platform.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.settlement_account.verify",
+      "name": "Verify Settlement Account",
+      "parent": "identity.settlement_account",
+      "category": "Identity & Party",
+      "purpose": "Triggers KYC/KYB checks on the linked account to ensure regulatory compliance.",
+      "ux_intent": "Happens silently in the background; the user only sees a celebratory 'Verified' checkmark.",
+      "actors": ["system"],
+      "inputs": [
+        {"name": "account_id", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "verification_status", "type": "string"}
+      ],
+      "state_owned": "settlement_status",
+      "events_emitted": ["settlement_account.verified"],
+      "events_consumed": [],
+      "dependencies": ["payment_gateway"],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": ["What happens to pending payouts while verification is in progress?"],
+      "vertical_notes": "Care agencies must ensure caregiver bank names match their identity to prevent fraud.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.settlement_account.remove",
+      "name": "Remove Settlement Account",
+      "parent": "identity.settlement_account",
+      "category": "Identity & Party",
+      "purpose": "Detaches a payout or charge method from the person's profile.",
+      "ux_intent": "A simple swipe-to-delete that gracefully handles replacement if it's the default account.",
+      "actors": ["worker", "client"],
+      "inputs": [
+        {"name": "account_id", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "success", "type": "boolean"}
+      ],
+      "state_owned": "settlement_record",
+      "events_emitted": ["settlement_account.removed"],
+      "events_consumed": [],
+      "dependencies": ["payment_gateway"],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "If a family removes their primary card, they must add a new one before booking the next nanny shift.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.settlement_account.set_escrow",
+      "name": "Set Escrow Preference",
+      "parent": "identity.settlement_account",
+      "category": "Identity & Party",
+      "purpose": "Configures how funds are held and routed (e.g., instant payout vs. weekly batch).",
+      "ux_intent": "A clean toggle switch allowing workers to choose between 'Get paid now (fee)' or 'Get paid Friday (free)'.",
+      "actors": ["worker"],
+      "inputs": [
+        {"name": "account_id", "type": "string"},
+        {"name": "routing_preference", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "success", "type": "boolean"}
+      ],
+      "state_owned": "settlement_preference",
+      "events_emitted": ["settlement_account.preference_updated"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Very popular with gig cleaners who may want instant payouts after a shift.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.anon_client",
+      "name": "Anonymous Client Domain",
+      "parent": "identity",
+      "category": "Identity & Party",
+      "purpose": "Manages transient identities for users who book services without creating a persistent account.",
+      "ux_intent": "Zero friction; the user flows from landing page to booked service without hitting a signup wall.",
+      "actors": ["system"],
+      "inputs": [],
+      "outputs": [],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 1,
+      "is_leaf": false,
+      "open_questions": [],
+      "vertical_notes": "Allows a desperate parent to book an emergency one-off babysitter without account fatigue.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.anon_client.create_session",
+      "name": "Create Anon Session",
+      "parent": "identity.anon_client",
+      "category": "Identity & Party",
+      "purpose": "Generates a transient, cookie/token-based identity to anchor an ongoing booking flow.",
+      "ux_intent": "Happens silently in the background the moment they click 'Book Now', securing their spot seamlessly.",
+      "actors": ["anon", "system"],
+      "inputs": [
+        {"name": "browser_fingerprint", "type": "string"},
+        {"name": "initial_intent", "type": "object"}
+      ],
+      "outputs": [
+        {"name": "anon_session_token", "type": "string"}
+      ],
+      "state_owned": "anon_session",
+      "events_emitted": ["anon_session.created"],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": ["How long should anon booking sessions live before expiring?"],
+      "vertical_notes": "Crucial for conversion rates in consumer-facing cleaning services.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.anon_client.upgrade_to_account",
+      "name": "Upgrade Anon to Account",
+      "parent": "identity.anon_client",
+      "category": "Identity & Party",
+      "purpose": "Converts a transient anonymous session into a fully persistent person account post-booking.",
+      "ux_intent": "A delightful 'post-purchase' screen that says 'Save your details for next time?' and requires exactly one password field.",
+      "actors": ["anon"],
+      "inputs": [
+        {"name": "anon_session_token", "type": "string"},
+        {"name": "email", "type": "string"},
+        {"name": "password", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "person_id", "type": "string"}
+      ],
+      "state_owned": "person_record",
+      "events_emitted": ["anon_client.upgraded", "person.created"],
+      "events_consumed": [],
+      "dependencies": ["auth_service"],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Transforms a one-off end-of-tenancy cleaning client into a recurring customer.",
+      "case_integration": null
+    },
+    {
+      "id": "identity.anon_client.track_bookings",
+      "name": "Track Anon Bookings",
+      "parent": "identity.anon_client",
+      "category": "Identity & Party",
+      "purpose": "Allows an anonymous client to view and modify their upcoming booking using a magic link sent to their email.",
+      "ux_intent": "Total empowerment without the login barrier; a single click from their inbox opens a secure portal.",
+      "actors": ["anon"],
+      "inputs": [
+        {"name": "magic_link_token", "type": "string"}
+      ],
+      "outputs": [
+        {"name": "booking_details", "type": "object"}
+      ],
+      "state_owned": null,
+      "events_emitted": ["anon_client.booking_accessed"],
+      "events_consumed": [],
+      "dependencies": ["booking_service"],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": ["What authentication level is required to cancel an anon booking via magic link?"],
+      "vertical_notes": "A parent can check who their assigned nanny is and view their Case Portfolio via this link without logging in.",
+      "case_integration": null
+    }
+  ]
+}

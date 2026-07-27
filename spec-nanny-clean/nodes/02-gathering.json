@@ -1,0 +1,863 @@
+{
+  "nodes": [
+    {
+      "id": "gathering",
+      "name": "Gathering Root",
+      "parent": null,
+      "category": "gathering",
+      "purpose": "Manages the acquisition and initial onboarding of all actors (workers, clients) and the demand (requests).",
+      "ux_intent": "The entire entry into the platform should feel effortless and highly welcoming.",
+      "actors": [
+        "system"
+      ],
+      "inputs": [],
+      "outputs": [],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 0,
+      "is_leaf": false,
+      "open_questions": [],
+      "vertical_notes": "Encompasses both the caregiving/nanny and cleaning verticals.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.worker",
+      "name": "Worker Acquisition",
+      "parent": "gathering",
+      "category": "gathering",
+      "purpose": "Manages the funnel of prospective workers applying to the agency.",
+      "ux_intent": "Frictionless, reassuring, and professional path for workers to join the platform.",
+      "actors": [
+        "admin",
+        "system",
+        "worker",
+        "visitor"
+      ],
+      "inputs": [],
+      "outputs": [],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 1,
+      "is_leaf": false,
+      "open_questions": [],
+      "vertical_notes": "Captures specific credentials for both nanny and cleaner roles.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.worker.apply",
+      "name": "Worker Apply",
+      "parent": "gathering.worker",
+      "category": "gathering",
+      "purpose": "Allows a visitor/worker to submit an application to join the agency.",
+      "ux_intent": "Feels like a friendly conversation, guiding the applicant step-by-step rather than presenting a daunting government-style form.",
+      "actors": [
+        "visitor",
+        "worker"
+      ],
+      "inputs": [
+        "personal_details",
+        "contact_info",
+        "role_type",
+        "credentials",
+        "experience",
+        "preferences"
+      ],
+      "outputs": [
+        "application_id",
+        "prospect_profile"
+      ],
+      "state_owned": [
+        "WorkerApplication"
+      ],
+      "events_emitted": [
+        "WorkerApplicationSubmitted"
+      ],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [
+        "Should we support video intros during application?"
+      ],
+      "vertical_notes": "Nanny: Experience with age groups, care types, DBS, first aid, driving. Cleaning: Property types, specialty, COSHH, equipment.",
+      "case_integration": "Early draft of Case profile is generated in the background based on application answers."
+    },
+    {
+      "id": "gathering.worker.invite_apply",
+      "name": "Invite Worker",
+      "parent": "gathering.worker",
+      "category": "gathering",
+      "purpose": "Admin sends a unique invitation link to a known prospective worker to bypass cold application steps.",
+      "ux_intent": "Worker feels uniquely valued receiving a personalized invite, fast-tracking their onboarding.",
+      "actors": [
+        "admin",
+        "worker"
+      ],
+      "inputs": [
+        "worker_email",
+        "worker_phone",
+        "role_preset"
+      ],
+      "outputs": [
+        "invite_link"
+      ],
+      "state_owned": [
+        "WorkerInvite"
+      ],
+      "events_emitted": [
+        "WorkerInviteSent",
+        "WorkerInviteAccepted"
+      ],
+      "events_consumed": [],
+      "dependencies": [
+        "EmailService",
+        "SMSService"
+      ],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Useful when agencies recruit specific senior nannies or specialized deep-cleaners directly.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.worker.admin_add",
+      "name": "Admin Quick Add Worker",
+      "parent": "gathering.worker",
+      "category": "gathering",
+      "purpose": "Allows an admin to manually and instantly add a worker to the platform.",
+      "ux_intent": "Admin can add a worker in 10 seconds while on a phone call.",
+      "actors": [
+        "admin"
+      ],
+      "inputs": [
+        "first_name",
+        "last_name",
+        "role",
+        "contact_number"
+      ],
+      "outputs": [
+        "worker_id"
+      ],
+      "state_owned": [
+        "WorkerProfile"
+      ],
+      "events_emitted": [
+        "WorkerAdminCreated"
+      ],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Admins typically use this for offline walk-ins (e.g. 'Jane, nanny, 555-1234').",
+      "case_integration": "Initializes a blank Case portfolio."
+    },
+    {
+      "id": "gathering.worker.review_queue",
+      "name": "Review Applicants",
+      "parent": "gathering.worker",
+      "category": "gathering",
+      "purpose": "Displays a queue of all pending worker applications for admin review.",
+      "ux_intent": "Clear, skimmable dashboard highlighting key qualifications and missing information at a glance.",
+      "actors": [
+        "admin"
+      ],
+      "inputs": [
+        "filters",
+        "sort_by"
+      ],
+      "outputs": [
+        "list_of_applications"
+      ],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [
+        "WorkerApplicationSubmitted"
+      ],
+      "dependencies": [
+        "gathering.worker.apply"
+      ],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Highlights DBS/First aid for nannies; COSHH/Equipment for cleaners.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.worker.vet",
+      "name": "Vet Worker",
+      "parent": "gathering.worker",
+      "category": "gathering",
+      "purpose": "Admin checks credentials, notes interview outcomes, and verifies references.",
+      "ux_intent": "Structured and seamless data entry for admins to confidently check off requirements.",
+      "actors": [
+        "admin"
+      ],
+      "inputs": [
+        "application_id",
+        "interview_notes",
+        "reference_checks",
+        "doc_verifications"
+      ],
+      "outputs": [
+        "vetting_status"
+      ],
+      "state_owned": [
+        "WorkerVettingRecord"
+      ],
+      "events_emitted": [
+        "WorkerVettingUpdated",
+        "WorkerVettingApproved"
+      ],
+      "events_consumed": [],
+      "dependencies": [
+        "gathering.worker.review_queue"
+      ],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Strict DBS and first-aid verification for nannies. Address and right-to-work for all.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.worker.activate",
+      "name": "Activate Worker",
+      "parent": "gathering.worker",
+      "category": "gathering",
+      "purpose": "Transitions a vetted applicant into the active worker pool, allowing them to take jobs.",
+      "ux_intent": "A celebratory moment; worker receives a warm welcome message and access to their profile.",
+      "actors": [
+        "admin",
+        "system"
+      ],
+      "inputs": [
+        "worker_id"
+      ],
+      "outputs": [
+        "active_worker_profile"
+      ],
+      "state_owned": [
+        "WorkerStatus"
+      ],
+      "events_emitted": [
+        "WorkerActivated"
+      ],
+      "events_consumed": [
+        "WorkerVettingApproved"
+      ],
+      "dependencies": [
+        "gathering.worker.vet"
+      ],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Once active, they can be matched to nanny shifts or cleaning jobs.",
+      "case_integration": "Worker profile seeded into Case on activation."
+    },
+    {
+      "id": "gathering.worker.reject",
+      "name": "Reject Worker",
+      "parent": "gathering.worker",
+      "category": "gathering",
+      "purpose": "Declines a worker application and archives their data appropriately.",
+      "ux_intent": "Respectful, clear communication with minimal admin effort.",
+      "actors": [
+        "admin"
+      ],
+      "inputs": [
+        "application_id",
+        "rejection_reason"
+      ],
+      "outputs": [
+        "archived_application"
+      ],
+      "state_owned": [
+        "WorkerStatus"
+      ],
+      "events_emitted": [
+        "WorkerRejected"
+      ],
+      "events_consumed": [],
+      "dependencies": [
+        "gathering.worker.review_queue"
+      ],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Often due to expired DBS or lack of required experience.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.worker.profile_share",
+      "name": "Share Worker Profile",
+      "parent": "gathering.worker",
+      "category": "gathering",
+      "purpose": "Generates a public, shareable link of the worker's best assignments and skills for families/clients.",
+      "ux_intent": "Empowers the worker to market themselves with a beautiful, professional digital resume.",
+      "actors": [
+        "worker",
+        "visitor",
+        "client"
+      ],
+      "inputs": [
+        "worker_id",
+        "visibility_settings"
+      ],
+      "outputs": [
+        "public_profile_url"
+      ],
+      "state_owned": [
+        "PublicProfileLink"
+      ],
+      "events_emitted": [
+        "WorkerProfileShared"
+      ],
+      "events_consumed": [],
+      "dependencies": [
+        "gathering.worker.activate"
+      ],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [
+        "How much personal contact info is exposed on the public link?"
+      ],
+      "vertical_notes": "Nannies share a showcase of their childcare experience; cleaners highlight reliability and specialty cleans.",
+      "case_integration": "Directly integrates with the Case Portfolio app to render the public view."
+    },
+    {
+      "id": "gathering.client",
+      "name": "Client Acquisition",
+      "parent": "gathering",
+      "category": "gathering",
+      "purpose": "Manages client accounts, registrations, and anonymous identities.",
+      "ux_intent": "Frictionless onboarding for families and businesses seeking help.",
+      "actors": [
+        "client",
+        "anon",
+        "admin",
+        "system"
+      ],
+      "inputs": [],
+      "outputs": [],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 1,
+      "is_leaf": false,
+      "open_questions": [],
+      "vertical_notes": "Caters to families needing care and homeowners/offices needing cleaning.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.client.self_register",
+      "name": "Client Self-Register",
+      "parent": "gathering.client",
+      "category": "gathering",
+      "purpose": "Client creates a full account for recurring services and auto-invoicing.",
+      "ux_intent": "Quick, straightforward account creation. Just enough info to get started securely.",
+      "actors": [
+        "client",
+        "visitor"
+      ],
+      "inputs": [
+        "name",
+        "email",
+        "password",
+        "phone",
+        "address"
+      ],
+      "outputs": [
+        "client_account_id"
+      ],
+      "state_owned": [
+        "ClientAccount"
+      ],
+      "events_emitted": [
+        "ClientRegistered"
+      ],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Families set up home address; commercial cleaning clients set up office addresses and billing contacts.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.client.admin_add",
+      "name": "Admin Add Client",
+      "parent": "gathering.client",
+      "category": "gathering",
+      "purpose": "Admin manually registers a client who called in or walked in.",
+      "ux_intent": "Lightning fast data entry for the admin while on a live call.",
+      "actors": [
+        "admin"
+      ],
+      "inputs": [
+        "name",
+        "phone",
+        "email",
+        "address"
+      ],
+      "outputs": [
+        "client_account_id"
+      ],
+      "state_owned": [
+        "ClientAccount"
+      ],
+      "events_emitted": [
+        "ClientAdminCreated"
+      ],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Common for older clients requesting elderly care or simple cleaning services via phone.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.client.anon_session",
+      "name": "Anonymous Client Session",
+      "parent": "gathering.client",
+      "category": "gathering",
+      "purpose": "Tracks a visitor who is booking a service without creating an account.",
+      "ux_intent": "Zero barriers to entry. The visitor feels trusted and not forced into a commitment.",
+      "actors": [
+        "anon",
+        "system"
+      ],
+      "inputs": [
+        "session_id",
+        "ip",
+        "device_info"
+      ],
+      "outputs": [
+        "anon_identity_token"
+      ],
+      "state_owned": [
+        "AnonSession"
+      ],
+      "events_emitted": [
+        "AnonSessionStarted"
+      ],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Perfect for one-off emergency nanny cover or a single end-of-tenancy clean.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.client.upgrade_anon",
+      "name": "Upgrade Anonymous Client",
+      "parent": "gathering.client",
+      "category": "gathering",
+      "purpose": "Converts an anonymous session/booking into a full client account seamlessly.",
+      "ux_intent": "'Since you already booked, just set a password to save your details for next time.'",
+      "actors": [
+        "anon",
+        "client",
+        "system"
+      ],
+      "inputs": [
+        "anon_identity_token",
+        "password",
+        "saved_details"
+      ],
+      "outputs": [
+        "client_account_id"
+      ],
+      "state_owned": [
+        "ClientAccount"
+      ],
+      "events_emitted": [
+        "AnonUpgradedToClient"
+      ],
+      "events_consumed": [
+        "AnonSessionStarted"
+      ],
+      "dependencies": [
+        "gathering.client.anon_session"
+      ],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Often happens when a family realizes they want the same nanny again next week.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.client.view_profile",
+      "name": "View Client Profile",
+      "parent": "gathering.client",
+      "category": "gathering",
+      "purpose": "Allows a registered client to view and edit their own account details, addresses, and payment info.",
+      "ux_intent": "Simple, centralized hub where the client feels in control of their data.",
+      "actors": [
+        "client"
+      ],
+      "inputs": [
+        "client_account_id"
+      ],
+      "outputs": [
+        "profile_data",
+        "addresses",
+        "billing_info"
+      ],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [
+        "gathering.client.self_register"
+      ],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Families manage kids' allergies here; offices manage access codes.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.demand",
+      "name": "Demand Capture",
+      "parent": "gathering",
+      "category": "gathering",
+      "purpose": "Captures and categorizes all requests for services (jobs, shifts, contracts).",
+      "ux_intent": "Making a request should be as easy as sending a text message with exactly what you need.",
+      "actors": [
+        "client",
+        "anon",
+        "admin",
+        "system"
+      ],
+      "inputs": [],
+      "outputs": [],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 1,
+      "is_leaf": false,
+      "open_questions": [],
+      "vertical_notes": "Handles one-offs, recurring, long-term, and emergency requests across caregiving and cleaning.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.demand.submit_request",
+      "name": "Submit Request",
+      "parent": "gathering.demand",
+      "category": "gathering",
+      "purpose": "Registered client submits a standard request for a nanny or cleaning service.",
+      "ux_intent": "Intuitive flow that auto-fills known details and only asks for job-specific requirements.",
+      "actors": [
+        "client"
+      ],
+      "inputs": [
+        "service_type",
+        "date_time",
+        "duration",
+        "special_requirements"
+      ],
+      "outputs": [
+        "request_id"
+      ],
+      "state_owned": [
+        "ServiceRequest"
+      ],
+      "events_emitted": [
+        "RequestSubmitted"
+      ],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Nanny: 'Toddler, needs meal prep.' Cleaning: '3 bed semi, regular clean.'",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.demand.anon_submit_request",
+      "name": "Anonymous Submit Request",
+      "parent": "gathering.demand",
+      "category": "gathering",
+      "purpose": "Allows a visitor to request a service instantly providing only essential contact and job info.",
+      "ux_intent": "Under 2 minutes to request a nanny. 'Just tell us who, when, and where to text you.'",
+      "actors": [
+        "anon"
+      ],
+      "inputs": [
+        "name",
+        "phone",
+        "service_type",
+        "date_time",
+        "address",
+        "details"
+      ],
+      "outputs": [
+        "anon_request_id",
+        "status_link"
+      ],
+      "state_owned": [
+        "ServiceRequest",
+        "AnonSession"
+      ],
+      "events_emitted": [
+        "AnonRequestSubmitted"
+      ],
+      "events_consumed": [],
+      "dependencies": [
+        "gathering.client.anon_session"
+      ],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [
+        "How do we handle spam from anonymous requests?"
+      ],
+      "vertical_notes": "Very common for last-minute emergency childcare or immediate end-of-tenancy cleans.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.demand.admin_submit_request",
+      "name": "Admin Submit Request",
+      "parent": "gathering.demand",
+      "category": "gathering",
+      "purpose": "Admin logs a service request on behalf of a client calling over the phone.",
+      "ux_intent": "Optimized for speed and shorthand so admin can type as the client speaks.",
+      "actors": [
+        "admin"
+      ],
+      "inputs": [
+        "client_id",
+        "service_details",
+        "urgency",
+        "schedule"
+      ],
+      "outputs": [
+        "request_id"
+      ],
+      "state_owned": [
+        "ServiceRequest"
+      ],
+      "events_emitted": [
+        "AdminRequestSubmitted"
+      ],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Often used to capture complex bespoke care requirements.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.demand.recurring_request",
+      "name": "Recurring Request",
+      "parent": "gathering.demand",
+      "category": "gathering",
+      "purpose": "Client sets up a repeating schedule (e.g., every Tuesday) for care or cleaning.",
+      "ux_intent": "'Set it and forget it.' Peace of mind that help will arrive predictably.",
+      "actors": [
+        "client",
+        "admin"
+      ],
+      "inputs": [
+        "service_type",
+        "frequency",
+        "days_of_week",
+        "start_date",
+        "end_date_or_continuous"
+      ],
+      "outputs": [
+        "recurring_job_id"
+      ],
+      "state_owned": [
+        "RecurringJobConfig"
+      ],
+      "events_emitted": [
+        "RecurringRequestCreated"
+      ],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Weekly cleaner, or after-school nanny every M/W/F.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.demand.long_term_job",
+      "name": "Long-Term Job Request",
+      "parent": "gathering.demand",
+      "category": "gathering",
+      "purpose": "Captures a request for a permanent or extended placement (e.g., live-in nanny).",
+      "ux_intent": "Feels consultative and thorough, acknowledging the importance of a long-term match.",
+      "actors": [
+        "client",
+        "admin"
+      ],
+      "inputs": [
+        "role_description",
+        "salary_range",
+        "accommodation_provided",
+        "start_date",
+        "contract_type"
+      ],
+      "outputs": [
+        "long_term_job_id"
+      ],
+      "state_owned": [
+        "LongTermJob"
+      ],
+      "events_emitted": [
+        "LongTermJobRequested"
+      ],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "First-class support for live-in nannies, permanent household staff, or dedicated daily office cleaners.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.demand.emergency_request",
+      "name": "Emergency Request",
+      "parent": "gathering.demand",
+      "category": "gathering",
+      "purpose": "Client requests urgent, same-day or within-hours coverage.",
+      "ux_intent": "Provides immediate reassurance. 'We are on it right now.' Visually prioritized in the UI.",
+      "actors": [
+        "client",
+        "anon",
+        "admin"
+      ],
+      "inputs": [
+        "service_type",
+        "immediate_start_time",
+        "location",
+        "critical_notes"
+      ],
+      "outputs": [
+        "emergency_request_id"
+      ],
+      "state_owned": [
+        "ServiceRequest"
+      ],
+      "events_emitted": [
+        "EmergencyRequestSubmitted"
+      ],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Nanny called in sick, need cover in 2 hours; or emergency bio-hazard/flood clean.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.demand.cancel_request",
+      "name": "Cancel Request",
+      "parent": "gathering.demand",
+      "category": "gathering",
+      "purpose": "Client or anon cancels an outstanding service request before it is fulfilled.",
+      "ux_intent": "No guilt, 1-click cancellation. Instantly updates the system to stop searching.",
+      "actors": [
+        "client",
+        "anon",
+        "admin"
+      ],
+      "inputs": [
+        "request_id",
+        "reason_optional"
+      ],
+      "outputs": [
+        "cancellation_confirmation"
+      ],
+      "state_owned": [
+        "ServiceRequest"
+      ],
+      "events_emitted": [
+        "RequestCancelled"
+      ],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [
+        "What is the cut-off time for penalty-free cancellation?"
+      ],
+      "vertical_notes": "Cancellations of caregiving might require notifying the matched worker instantly.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.demand.view_request_status",
+      "name": "View Request Status",
+      "parent": "gathering.demand",
+      "category": "gathering",
+      "purpose": "Allows clients (including anons via magic link) to check the real-time status of their booking.",
+      "ux_intent": "Like tracking a pizza delivery: totally transparent, 'Searching for your nanny...' -> 'Found!'",
+      "actors": [
+        "client",
+        "anon"
+      ],
+      "inputs": [
+        "request_id",
+        "access_token"
+      ],
+      "outputs": [
+        "current_status",
+        "matched_worker_summary"
+      ],
+      "state_owned": null,
+      "events_emitted": [],
+      "events_consumed": [
+        "RequestSubmitted",
+        "WorkerMatched"
+      ],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Particularly crucial for emergency nanny requests to reduce parent anxiety.",
+      "case_integration": null
+    },
+    {
+      "id": "gathering.demand.resubmit_request",
+      "name": "Resubmit Request",
+      "parent": "gathering.demand",
+      "category": "gathering",
+      "purpose": "Allows a client to duplicate, edit, and resubmit a past or cancelled request.",
+      "ux_intent": "'I need the exact same thing as last time, but tomorrow instead.' 1-click reorder.",
+      "actors": [
+        "client",
+        "anon"
+      ],
+      "inputs": [
+        "previous_request_id",
+        "new_date_time",
+        "modifications"
+      ],
+      "outputs": [
+        "new_request_id"
+      ],
+      "state_owned": [
+        "ServiceRequest"
+      ],
+      "events_emitted": [
+        "RequestResubmitted"
+      ],
+      "events_consumed": [],
+      "dependencies": [],
+      "depth": 2,
+      "is_leaf": true,
+      "open_questions": [],
+      "vertical_notes": "Great for recurring but irregular cleaning needs.",
+      "case_integration": null
+    }
+  ]
+}
