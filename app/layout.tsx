@@ -5,25 +5,26 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'Case — prove you\'ve got it',
+    default: 'Case',
     template: '%s | Case',
   },
   description: 'A proof-of-work profile — show what you\'ve done, how you learned it, who\'ll vouch for you, and what you\'re aiming for next. Built for Nairobi and beyond.',
   keywords: ['portfolio', 'proof of work', 'Kenya', 'freelancer', 'skills', 'testimonials', 'case'],
   authors: [{ name: 'Case' }],
   creator: 'Case',
+  applicationName: 'Case',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://caseshow.info'),
   openGraph: {
     type: 'website',
     locale: 'en_KE',
     url: '/',
     siteName: 'Case',
-    title: 'Case — prove you\'ve got it',
+    title: 'Case',
     description: 'Your proof-of-work profile. Not just a CV.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Case — prove you\'ve got it',
+    title: 'Case',
     description: 'Your proof-of-work profile. Not just a CV.',
   },
   robots: {

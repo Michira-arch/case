@@ -4,7 +4,7 @@ import PricingCard from '@/components/billing/PricingCard'
 import styles from './page.module.css'
 
 export const metadata: Metadata = {
-  title: 'Case — prove you\'ve got it',
+  title: 'Case',
   description: 'A proof-of-work profile for people who don\'t have a traditional resume. Show your work, back it with evidence, get vouched — and get hired or booked.',
 }
 
@@ -74,7 +74,19 @@ export default function LandingPage() {
         </div>
       </section>
 
-
+      {/* Google OAuth & Purpose Compliance Section */}
+      <section style={{ background: 'var(--paper-light)', padding: '40px 20px', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
+        <div className="container" style={{ textAlign: 'center', maxWidth: 800, margin: '0 auto' }}>
+          <h2 style={{ fontSize: 20, marginBottom: 16, fontWeight: 600 }}>App Purpose & Authentication</h2>
+          <p style={{ color: 'var(--ink-soft)', lineHeight: 1.6, fontSize: 15 }}>
+            <strong>Case</strong> is a proof-of-work and credentials platform for service professionals and agencies. 
+            Our platform allows professionals to build portfolios, and agencies to manage bookings and verified credentials.
+            <br/><br/>
+            We use <strong>Google Sign-In</strong> to allow users to securely create an account, log in, and manage their Case profile. 
+            We request basic profile information (email and name) solely for authentication and account identification purposes.
+          </p>
+        </div>
+      </section>
 
       {/* Value Propositions */}
       <section className={styles.valuePropSection}>
