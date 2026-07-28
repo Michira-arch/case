@@ -46,17 +46,35 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
       const paywallUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invoice/${invoice.id}`
       await sendEmail({
         to: invoice.nanny_clients.client_email,
-        subject: 'Invoice for your completed booking',
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2>Hello ${invoice.nanny_clients.client_name},</h2>
-            <p>Your recent booking has been completed. Your invoice is now ready for payment.</p>
-            <p>Please click the link below to view and pay your invoice securely:</p>
-            <a href="${paywallUrl}" style="display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 16px;">
-              Pay Invoice
-            </a>
+        fromName: 'Case+ Billing',
+        subject: \`Invoice for Completed Booking: \${invoice.nanny_clients.client_name}\`,
+        html: \`
+          <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #111827; margin: 0; font-size: 24px; letter-spacing: -0.5px;">Case+</h1>
+              <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Secure Payment Portal</p>
+            </div>
+            
+            <h2 style="color: #111827; font-size: 20px; font-weight: 600; margin-bottom: 16px;">Hello \${invoice.nanny_clients.client_name},</h2>
+            
+            <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+              Your recent booking has been successfully completed. An invoice has been generated for the caregiving services provided.
+            </p>
+            
+            <div style="text-align: center; margin-bottom: 32px;">
+              <a href="\${paywallUrl}" style="display: inline-block; padding: 14px 28px; background-color: #111827; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; width: 80%; text-align: center;">
+                View & Pay Invoice
+              </a>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin-bottom: 24px;" />
+            
+            <p style="color: #9ca3af; font-size: 12px; line-height: 1.5; text-align: center;">
+              This is an automated message from Case+ Billing.<br>
+              If you have any questions regarding this invoice, please reply directly to this email.
+            </p>
           </div>
-        `
+        \`
       })
     }
 
