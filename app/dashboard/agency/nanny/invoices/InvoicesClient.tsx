@@ -133,6 +133,7 @@ export default function InvoicesClient({ invoices, currency }: Props) {
                 <th>Due</th>
                 <th>Total</th>
                 <th>Status</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -183,6 +184,22 @@ export default function InvoicesClient({ invoices, currency }: Props) {
                     >
                       {inv.invoice_state}
                     </span>
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button
+                      className="btn btn--outline btn--sm"
+                      style={{ fontSize: 11, padding: '4px 8px' }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const url = `${window.location.origin}/invoice/${inv.id}`;
+                        navigator.clipboard.writeText(url);
+                        const btn = e.currentTarget;
+                        btn.innerText = 'Copied!';
+                        setTimeout(() => { btn.innerText = 'Copy Link'; }, 2000);
+                      }}
+                    >
+                      Copy Link
+                    </button>
                   </td>
                 </tr>
               ))}

@@ -270,35 +270,41 @@ export default function AgencyBillingPage() {
                       {subaccountError}
                     </div>
                   )}
+                  <h4 style={{ margin: '0 0 16px', fontSize: 16 }}>Set Up Settlement Account</h4>
+                  <p style={{ color: 'var(--ink-muted)', fontSize: 14, marginBottom: 20 }}>
+                    Choose your Bank or Mobile Money provider (like M-PESA) where your funds will be sent.
+                  </p>
                   
-                  <div className={styles.field}>
-                    <label className={styles.label}>Bank</label>
-                    <select
-                      className={styles.input}
-                      value={bankName}
-                      onChange={(e) => setBankName(e.target.value)}
-                      required
-                    >
-                      <option value="">Select a bank...</option>
-                      {banks.map((bank) => (
-                        <option key={bank.code} value={bank.code}>
-                          {bank.name}
-                        </option>
-                      ))}
-                    </select>
-                    <p style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '4px' }}>Select the bank provided by Paystack.</p>
-                  </div>
-                  
-                  <div className={styles.field}>
-                    <label className={styles.label}>Account Number</label>
-                    <input 
-                      type="text" 
-                      className={styles.input}
-                      value={accountNumber} 
-                      onChange={(e) => setAccountNumber(e.target.value)} 
-                      placeholder="10-digit account number"
-                      required 
-                    />
+                  <div style={{ display: 'grid', gap: 16 }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 500 }}>Bank / Provider</label>
+                      <select 
+                        className={styles.input}
+                        value={bankName}
+                        onChange={e => setBankName(e.target.value)}
+                        required
+                      >
+                        <option value="">Select a Bank or Provider</option>
+                        {banks.map((bank) => (
+                          <option key={bank.code} value={bank.code}>
+                            {bank.name}
+                          </option>
+                        ))}
+                      </select>
+                      <p style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '4px' }}>M-PESA is fully supported.</p>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 500 }}>Account Number / Phone Number</label>
+                      <input 
+                        type="text" 
+                        className={styles.input}
+                        placeholder={bankName === 'MPESA' ? '07XXXXXXXX' : 'e.g. 0123456789'}
+                        value={accountNumber}
+                        onChange={e => setAccountNumber(e.target.value)}
+                        required
+                      />
+                    </div>
                   </div>
 
                   <button 
