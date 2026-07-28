@@ -26,12 +26,13 @@ Return ONLY valid JSON.
 
 export async function POST(req: Request) {
   try {
-    const { prompt, orgId } = await req.json();
-    if (!orgId || !prompt) {
+    const { prompt, orgId, org_id } = await req.json();
+    const finalOrgId = orgId || org_id;
+    if (!finalOrgId || !prompt) {
       return NextResponse.json({ error: 'Missing orgId or prompt' }, { status: 400 });
     }
 
-    const { client, model } = await getAiClient(orgId);
+    const { client, model } = await getAiClient(finalOrgId);
 
     const response = await client.chat.completions.create({
       model,
