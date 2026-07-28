@@ -306,8 +306,8 @@ export default function LandingPage() {
             <span className={styles.wordmark}>Case</span>
             <p className={styles.footerSub}>Built for the worker who proves their worth.</p>
             <div className={styles.footerLinks}>
-              <a href="/privacy">Privacy</a>
-              <a href="/terms">Terms</a>
+              <a href="/privacy">Privacy Policy</a>
+              <a href="/terms">Terms of Service</a>
             </div>
           </div>
         </div>
