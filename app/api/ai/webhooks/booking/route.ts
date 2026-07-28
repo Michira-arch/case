@@ -136,7 +136,10 @@ If no workers are available, return:
     // Dispatch Push Notification to org members
     await fetch(new URL('/api/messaging/send', req.url).toString(), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+      },
       body: JSON.stringify({
         org_id: org.id,
         title: actionTitle,
