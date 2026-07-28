@@ -31,7 +31,7 @@ export default async function CronPage() {
     .eq('org_id', org.id)
     .order('created_at', { ascending: false })
 
-  const mappedJobs = (cronJobs || []).map(job => {
+  const mappedJobs = (cronJobs || []).map((job: any) => {
     let schedule = job.cron_expression;
     if (job.cron_expression === '0 0 * * *') schedule = 'daily';
     else if (job.cron_expression === '0 0 * * 0') schedule = 'weekly';
