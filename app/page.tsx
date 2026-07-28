@@ -68,8 +68,8 @@ export default function LandingPage() {
               Agency Dashboard
             </Link>
           </div>
-          <p className={styles.heroNote}>
-            Integrated Caregiving Agency Platform · Zero Friction Booking · Verified DBS & First Aid
+          <p className={styles.heroNote} style={{ maxWidth: '600px', margin: '24px auto 0', lineHeight: 1.5, color: 'var(--ink-soft)' }}>
+            Case is a proof-of-work and credentials platform for service professionals. Users can sign in with their Google Account to seamlessly create a profile, manage verified credentials, and access their dashboard.
           </p>
         </div>
       </section>

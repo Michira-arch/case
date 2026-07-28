@@ -201,9 +201,9 @@ function SignupPageContent() {
         <h1 className={styles.title}>
           {step === 'request' ? 'Build your Case, free' : 'Enter your OTP'}
         </h1>
-        <p style={{ fontSize: 14, color: 'var(--ink-soft)', marginBottom: 24 }}>
+        <p style={{ fontSize: 14, color: 'var(--ink-soft)', marginBottom: 24, lineHeight: 1.5 }}>
           {step === 'request'
-            ? 'Prove what you can do. No password needed.'
+            ? 'Sign in with Google or your email to create and manage your Case profile. Prove what you can do. No password needed.'
             : 'Enter the code sent to your phone.'}
         </p>
 

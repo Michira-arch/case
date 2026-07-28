@@ -191,6 +191,11 @@ export default function LoginPage() {
         <h1 className={styles.title}>
           {step === 'request' ? 'Log in to your Case' : 'Enter your OTP'}
         </h1>
+        {step === 'request' && (
+          <p style={{ fontSize: 14, color: 'var(--ink-soft)', marginBottom: 24, lineHeight: 1.5, textAlign: 'center' }}>
+            Sign in with Google or your email to access your dashboard and manage your profile.
+          </p>
+        )}
 
         {error && <div className={styles.errorBanner}>{error}</div>}
         {success && <div className={styles.successBanner}>{success}</div>}
