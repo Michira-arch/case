@@ -47,22 +47,22 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
       await sendEmail({
         to: invoice.nanny_clients.client_email,
         fromName: 'Case+ Billing',
-        subject: \`Invoice for Completed Booking: \${invoice.nanny_clients.client_name}\`,
-        html: \`
+        subject: `Invoice for Completed Booking: ${invoice.nanny_clients.client_name}`,
+        html: `
           <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
             <div style="text-align: center; margin-bottom: 30px;">
               <h1 style="color: #111827; margin: 0; font-size: 24px; letter-spacing: -0.5px;">Case+</h1>
               <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Secure Payment Portal</p>
             </div>
             
-            <h2 style="color: #111827; font-size: 20px; font-weight: 600; margin-bottom: 16px;">Hello \${invoice.nanny_clients.client_name},</h2>
+            <h2 style="color: #111827; font-size: 20px; font-weight: 600; margin-bottom: 16px;">Hello ${invoice.nanny_clients.client_name},</h2>
             
             <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
               Your recent booking has been successfully completed. An invoice has been generated for the caregiving services provided.
             </p>
             
             <div style="text-align: center; margin-bottom: 32px;">
-              <a href="\${paywallUrl}" style="display: inline-block; padding: 14px 28px; background-color: #111827; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; width: 80%; text-align: center;">
+              <a href="${paywallUrl}" style="display: inline-block; padding: 14px 28px; background-color: #111827; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; width: 80%; text-align: center;">
                 View & Pay Invoice
               </a>
             </div>
@@ -74,7 +74,7 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
               If you have any questions regarding this invoice, please reply directly to this email.
             </p>
           </div>
-        \`
+        `
       })
     }
 
