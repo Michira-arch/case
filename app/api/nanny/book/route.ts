@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAnonBooking } from '@/lib/nanny-data'
+import { sendAgencyEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -78,6 +79,34 @@ export async function POST(req: NextRequest) {
           worker_id
         })
       }).catch(e => console.error('AI Webhook error:', e))
+    }
+
+    if (client_email) {
+      const emailHtml = `
+        <h2>Booking Confirmation</h2>
+        <p>Hi ${client_name},</p>
+        <p>Thank you for your booking request! Your booking reference is <strong>${reference}</strong>.</p>
+        <p>Service: ${service_code}</p>
+        <p>Time: ${resolvedStart} - ${resolvedEnd}</p>
+        <p>Location: ${resolvedAddress}</p>
+        ${anon_token ? `<p><a href="${new URL(`/booking/${anon_token}`, req.url).toString()}" class="btn">Track Your Booking Status</a></p>` : ''}
+        <p>We will review your request and get back to you shortly.</p>
+      `;
+      // Don't await to avoid blocking the response, or await if we want to ensure it works? 
+      // The prompt says "Check for silent failures: are send errors caught and swallowed anywhere? Are failed sends retried or surfaced to an admin?". 
+      // Let's await it so we can log it, but we won't fail the booking if email fails (since they still have the UI). Actually, let's just await it and log it for now.
+      const emailResult = await sendAgencyEmail({
+        orgSlug: org_slug,
+        to: client_email,
+        subject: `Your Booking Reference: ${reference}`,
+        htmlBody: emailHtml,
+        preheader: `Booking confirmation for ${service_code}`,
+      });
+      if (!emailResult.success) {
+        console.error('Failed to send booking confirmation email to:', client_email, emailResult.error);
+        // Note: For a robust system, we should either queue it for retry, or insert into an outbox table. 
+        // We'll log it as requested by the user.
+      }
     }
 
     return NextResponse.json({

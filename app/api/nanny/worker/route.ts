@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getNannyOrgsByOwner, createShadowWorker } from '@/lib/nanny-data'
-import { sendEmail } from '@/lib/email'
+import { sendAgencyEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -56,15 +56,26 @@ export async function POST(req: NextRequest) {
         : null
 
       if (claimUrl) {
-        await sendEmail({
+        const emailResult = await sendAgencyEmail({
+          orgId: org.id,
           to: invite_email,
           subject: `You have been invited to join ${org.name || 'our agency'}`,
-          html: `
+          htmlBody: `
+            <h2>Invitation to join ${org.name || 'our agency'}</h2>
             <p>You have been invited to join an agency on Case.</p>
             <p>Click the link below to accept the invitation and set up your profile:</p>
-            <a href="${claimUrl}">${claimUrl}</a>
-          `
+            <p style="text-align: center; margin: 30px 0;">
+              <a href="${claimUrl}" class="btn">Accept Invitation →</a>
+            </p>
+            <p style="font-size: 13px; color: #666;">If the button doesn't work, copy and paste this link into your browser: <br/>
+            <a href="${claimUrl}">${claimUrl}</a></p>
+          `,
+          preheader: `You've been invited to join ${org.name || 'our agency'} on Case.`
         })
+
+        if (!emailResult.success) {
+          console.error('Failed to send invite email to worker:', emailResult.error);
+        }
       }
 
       return NextResponse.json({

@@ -27,6 +27,15 @@ export default function NannyLayoutClient({
 }) {
   const pathname = usePathname()
   const [toast, setToast] = useState<{ title: string; body: string; url?: string } | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopyLink = () => {
+    if (!org) return
+    const url = `${window.location.origin}/agency/${org.slug}/nanny`
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
@@ -103,6 +112,34 @@ export default function NannyLayoutClient({
               <div className={styles.wordmarkSub}>CAREGIVING</div>
             </div>
           </div>
+          {org && (
+            <button
+              onClick={handleCopyLink}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                width: '100%',
+                padding: '8px',
+                marginTop: '16px',
+                background: 'var(--paper-light)',
+                border: '1px solid var(--line-soft)',
+                borderRadius: 'var(--radius)',
+                cursor: 'pointer',
+                fontSize: 12,
+                color: copied ? 'var(--verified)' : 'var(--ink-muted)',
+                fontWeight: 500,
+                transition: 'all 0.2s'
+              }}
+            >
+              {copied ? (
+                <><span>✓</span> Copied!</>
+              ) : (
+                <><span>🔗</span> Copy Public Link</>
+              )}
+            </button>
+          )}
         </div>
 
         <nav className={styles.navSection} aria-label="Agency navigation">

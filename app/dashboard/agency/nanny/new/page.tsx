@@ -20,7 +20,6 @@ interface FormData {
   contact_phone: string
   location_area: string
   matching_mode: 'shortlist' | 'auto_assign'
-  platform_commission_pct: number
   auto_invoice: boolean
   require_timelog: boolean
   payout_cadence: 'daily' | 'weekly' | 'monthly'
@@ -52,7 +51,6 @@ export default function NewAgencyPage() {
     contact_phone: '',
     location_area: '',
     matching_mode: 'shortlist',
-    platform_commission_pct: 10,
     auto_invoice: true,
     require_timelog: true,
     payout_cadence: 'weekly',
@@ -324,30 +322,6 @@ export default function NewAgencyPage() {
                 ))}
               </div>
 
-              <div className={styles.formGrid}>
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="commission">
-                    Platform Commission (%)
-                  </label>
-                  <input
-                    id="commission"
-                    type="number"
-                    min={0}
-                    max={50}
-                    step={0.5}
-                    className={styles.input}
-                    value={form.platform_commission_pct}
-                    onChange={(e) =>
-                      set('platform_commission_pct', parseFloat(e.target.value))
-                    }
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="payout">
-                    Payout Cadence
-                  </label>
-                  <select
-                    id="payout"
                     className={`${styles.input} ${styles.select}`}
                     value={form.payout_cadence}
                     onChange={(e) => set('payout_cadence', e.target.value)}

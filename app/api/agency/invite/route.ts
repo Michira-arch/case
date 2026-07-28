@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendEmail } from '@/lib/email';
+import { sendAgencyEmail } from '@/lib/email';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: Request) {
@@ -34,19 +34,26 @@ export async function POST(req: Request) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const inviteLink = `${baseUrl}/agency/join?agency_id=${agencyId}`;
 
-    const html = `
-      <h1>You have been invited to join ${agencyName || 'an agency'}</h1>
-      <p>Click the link below to join:</p>
-      <a href="${inviteLink}">${inviteLink}</a>
+    const htmlBody = `
+      <h2>You have been invited to join ${agencyName || 'an agency'}!</h2>
+      <p>We're excited to have you on board. Click the link below to accept your invitation and join the agency dashboard:</p>
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="${inviteLink}" class="btn">Accept Invitation →</a>
+      </p>
+      <p style="font-size: 13px; color: #666;">If the button doesn't work, copy and paste this link into your browser: <br/>
+      <a href="${inviteLink}">${inviteLink}</a></p>
     `;
 
-    const result = await sendEmail({
+    const result = await sendAgencyEmail({
+      orgId: agencyId,
       to: email,
       subject: `Invitation to join ${agencyName || 'Agency'}`,
-      html,
+      htmlBody,
+      preheader: `You've been invited to join ${agencyName || 'an agency'} on Case.`,
     });
 
     if (!result.success) {
+      console.error('Failed to send invite email:', result.error);
       return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
     }
 

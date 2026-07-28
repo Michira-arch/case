@@ -45,6 +45,16 @@ export async function POST(req: Request) {
 
     if (!org) return NextResponse.json({ error: 'Org not found' }, { status: 404 });
 
+    // Fetch shared memories
+    const { data: memories } = await supabase
+      .from('nanny_ai_memories')
+      .select('memory_text')
+      .eq('org_id', orgId);
+
+    const memoryBullets = memories && memories.length > 0 
+      ? '\n\nShared Memories / Core Preferences:\n' + memories.map(m => '- ' + m.memory_text).join('\n')
+      : '';
+
     const { client, model } = await getAiClient(orgId);
 
     // Save the user's latest message to DB
@@ -62,7 +72,6 @@ export async function POST(req: Request) {
 Your goal is to assist the admin with coordination, scaling, and managing the agency effortlessly. 
 Context:
 - Currency: KES (Kenyan Shilling)
-- Platform Commission: ${org.policy?.platform_commission_pct ?? 0}%
 - Matching Mode: ${org.policy?.matching_mode}
 - Payout Cadence: ${org.policy?.payout_cadence}
 
@@ -70,7 +79,7 @@ Strict Restrictions:
 - Do NOT invent or hallucinate information about workers, clients, or bookings. Use your tools to fetch data.
 - If you don't know something or cannot find it via tools, explicitly say "I don't know".
 - Be concise and professional, but slightly conversational (vibe coding).
-- Format output clearly.`;
+- Format output clearly.${memoryBullets}`;
 
     const fullMessages = [
       { role: 'system', content: systemPrompt },
@@ -84,16 +93,24 @@ Strict Restrictions:
       tool_choice: 'auto',
     });
 
-    const responseMessage = response.choices[0].message;
-    let finalMessage = responseMessage;
+    let finalMessage = response.choices[0].message;
+    let iteration = 0;
+    const MAX_ITERATIONS = 7;
 
-    if (responseMessage.tool_calls) {
-      fullMessages.push(responseMessage); // Add assistant message with tool calls
+    while (finalMessage.tool_calls && iteration < MAX_ITERATIONS) {
+      iteration++;
+      fullMessages.push(finalMessage); // Add assistant message with tool calls
 
-      for (const toolCall of responseMessage.tool_calls) {
+      for (const toolCall of finalMessage.tool_calls) {
         if (toolCall.type !== 'function') continue;
         const functionName = toolCall.function.name;
-        const functionArgs = JSON.parse(toolCall.function.arguments);
+        
+        let functionArgs = {};
+        try {
+          functionArgs = toolCall.function.arguments ? JSON.parse(toolCall.function.arguments) : {};
+        } catch (e) {
+          console.warn('Failed to parse tool arguments', toolCall.function.arguments);
+        }
 
         try {
           const functionResult = await executeAiTool(functionName, functionArgs, orgId);
@@ -101,7 +118,7 @@ Strict Restrictions:
             tool_call_id: toolCall.id,
             role: 'tool',
             name: functionName,
-            content: JSON.stringify(functionResult),
+            content: typeof functionResult === 'string' ? functionResult : JSON.stringify(functionResult),
           });
         } catch (error: any) {
           fullMessages.push({
@@ -113,12 +130,14 @@ Strict Restrictions:
         }
       }
 
-      // Second call to get final response
-      const secondResponse = await client.chat.completions.create({
+      // Next call to get final response or another tool call
+      const nextResponse = await client.chat.completions.create({
         model,
         messages: fullMessages,
+        tools: aiTools,
+        tool_choice: 'auto',
       });
-      finalMessage = secondResponse.choices[0].message;
+      finalMessage = nextResponse.choices[0].message;
     }
 
     // Save AI response to DB

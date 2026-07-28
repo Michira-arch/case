@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { getBookingById, updateBookingState } from '@/lib/nanny-data'
+import { getBookingById, updateBookingState, getWorkers, assignWorkerToBooking, completeAssignment } from '@/lib/nanny-data'
 import styles from '../../nanny-dashboard.module.css'
 import { revalidatePath } from 'next/cache'
 
@@ -13,6 +13,9 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
   const booking = await getBookingById(params.id)
   if (!booking) notFound()
 
+  // Fetch active workers for this org to show in the pool
+  const workers = await getWorkers(booking.org_id, 'active')
+
   // Server action to cancel booking
   async function handleCancel() {
     'use server'
@@ -20,10 +23,28 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
     revalidatePath(`/dashboard/agency/nanny/bookings/${params.id}`)
   }
 
-  // Server action to mark as completed
-  async function handleComplete() {
+  // Server action to cancel booking
+  async function handleCancel() {
     'use server'
-    await updateBookingState(params.id, 'completed')
+    await updateBookingState(params.id, 'cancelled', 'Cancelled by agency')
+    revalidatePath(`/dashboard/agency/nanny/bookings/${params.id}`)
+  }
+
+  // Server action to manually complete an assignment with overridden hours
+  async function handleCompleteAssignment(formData: FormData) {
+    'use server'
+    const assignmentId = formData.get('assignment_id') as string
+    const hours = formData.get('hours_worked')
+    await completeAssignment(assignmentId, hours ? Number(hours) : undefined)
+    revalidatePath(`/dashboard/agency/nanny/bookings/${params.id}`)
+  }
+
+  // Server action to manually assign a worker
+  async function handleAssign(formData: FormData) {
+    'use server'
+    const workerId = formData.get('worker_id') as string
+    const rate = Number(formData.get('rate')) || 15
+    await assignWorkerToBooking(params.id, workerId, rate)
     revalidatePath(`/dashboard/agency/nanny/bookings/${params.id}`)
   }
 
@@ -61,11 +82,7 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
                   Cancel Booking
                 </button>
               </form>
-              <form action={handleComplete} style={{ display: 'inline-block', marginLeft: '8px' }}>
-                <button className="btn btn--dark btn--sm">
-                  Mark Completed
-                </button>
-              </form>
+
             </>
           )}
         </div>
@@ -123,7 +140,20 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
                     </div>
                   </div>
                   <div>
-                    {assignment.total_amount ? (
+                    {assignment.assignment_state !== 'completed' && assignment.assignment_state !== 'cancelled' ? (
+                      <form action={handleCompleteAssignment} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input type="hidden" name="assignment_id" value={assignment.id} />
+                        <input 
+                          type="number" 
+                          name="hours_worked" 
+                          placeholder="Hours" 
+                          step="0.25" 
+                          min="0"
+                          style={{ width: '70px', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--line)' }} 
+                        />
+                        <button className="btn btn--dark btn--sm">Complete</button>
+                      </form>
+                    ) : assignment.total_amount ? (
                       <span style={{ fontWeight: 600 }}>Total: ${assignment.total_amount}</span>
                     ) : (
                       <span style={{ color: 'var(--ink-muted)' }}>Hours: {assignment.hours_worked || 0}</span>
@@ -134,6 +164,44 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
             </div>
           )}
         </div>
+
+        {booking.booking_state !== 'completed' && booking.booking_state !== 'cancelled' && (
+          <div className={styles.section} style={{ marginTop: '24px' }}>
+            <h2 className={styles.sectionTitle}>Worker Pool (Manual Assignment)</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+              {workers.map((worker: any) => (
+                <div key={worker.id} style={{ background: 'var(--card)', padding: '16px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--paper)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, overflow: 'hidden' }}>
+                      {worker.profile?.avatar_url ? <img src={worker.profile.avatar_url} style={{width:'100%', height:'100%', objectFit: 'cover'}} alt="" /> : '👤'}
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '15px', fontWeight: 600, margin: '0 0 4px' }}>
+                        {worker.profile?.display_name || worker.shadow_name || 'Worker'}
+                      </h3>
+                      <div style={{ fontSize: '13px', color: 'var(--ink-muted)', display: 'flex', gap: 8, alignItems: 'center' }}>
+                        ⭐ {worker.avg_rating || 'New'}
+                        {worker.profile?.handle && (
+                          <a href={`/@${worker.profile.handle}`} target="_blank" rel="noreferrer" style={{ color: 'var(--aim)', textDecoration: 'none', fontWeight: 500 }}>
+                            Portfolio ↗
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <form action={handleAssign}>
+                    <input type="hidden" name="worker_id" value={worker.id} />
+                    <input type="hidden" name="rate" value={worker.hourly_rate || booking.quoted_rate || 15} />
+                    <button className="btn btn--sm btn--outline">Assign</button>
+                  </form>
+                </div>
+              ))}
+              {workers.length === 0 && (
+                <div style={{ color: 'var(--ink-muted)', fontSize: 14 }}>No active workers found in the pool.</div>
+              )}
+            </div>
+          </div>
+        )}
 
       </div>
     </>

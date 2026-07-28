@@ -41,11 +41,15 @@ export async function GET(request: Request) {
         </div>
       `
 
-      return sendEmail({
+      const emailResult = await sendEmail({
         to: sub.billing_email,
         subject: 'Upcoming Bill Reminder',
         html,
       })
+
+      if (!emailResult.success) {
+        console.error('Failed to send billing alert email to:', sub.billing_email, emailResult.error);
+      }
     })
 
     await Promise.all(emailPromises)

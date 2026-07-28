@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { sendEmail } from '@/lib/email';
+import { sendAgencyEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -68,14 +68,21 @@ export async function POST(req: NextRequest) {
         .single();
 
       if (ownerProfile?.email) {
-        await sendEmail({
+        const emailResult = await sendAgencyEmail({
+          orgId: org_id,
           to: ownerProfile.email,
           subject: `New Request to Join ${org.name}`,
-          html: `
-            <p><strong>${userProfile.full_name || 'A user'}</strong> has requested to join your agency: ${org.name}.</p>
-            <p>Log in to your dashboard to review this request.</p>
-          `
+          htmlBody: `
+            <h2>New Join Request</h2>
+            <p><strong>${userProfile.full_name || userProfile.display_name || 'A user'}</strong> has requested to join your agency: ${org.name}.</p>
+            <p>Please log in to your dashboard to review and approve this request.</p>
+          `,
+          preheader: `You have a new join request from ${userProfile.full_name || userProfile.display_name || 'a user'}.`
         });
+
+        if (!emailResult.success) {
+          console.error('Failed to send join request notification email to agency owner:', emailResult.error);
+        }
       }
     }
 

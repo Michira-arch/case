@@ -28,8 +28,7 @@ export default function SettingsClient({ org }: Props) {
     address: org.address ?? '',
     location_area: org.location_area ?? '',
     // Policy
-    matching_mode: org.policy.matching_mode,
-    platform_commission_pct: org.policy.platform_commission_pct,
+    matching_mode: org.policy.matching_mode || 'manual',
     cancellation_grace_hours: org.policy.cancellation_grace_hours,
     overtime_threshold_hours: org.policy.overtime_threshold_hours,
     overtime_multiplier: org.policy.overtime_multiplier,
@@ -77,7 +76,6 @@ export default function SettingsClient({ org }: Props) {
           policy: {
             ...org.policy,
             matching_mode: form.matching_mode,
-            platform_commission_pct: Number(form.platform_commission_pct),
             cancellation_grace_hours: Number(form.cancellation_grace_hours),
             overtime_threshold_hours: Number(form.overtime_threshold_hours),
             overtime_multiplier: Number(form.overtime_multiplier),

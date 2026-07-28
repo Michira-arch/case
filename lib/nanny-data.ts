@@ -45,7 +45,6 @@ const DEFAULT_DEMO_ORG: NannyOrg = {
     overtime_multiplier: 1.5,
     overtime_threshold_hours: 8,
     payout_cadence: 'weekly',
-    platform_commission_pct: 15,
     auto_invoice: true,
     require_timelog: true,
     continuity_preference: true,
@@ -613,6 +612,15 @@ export async function proposeAssignment(payload: {
     .eq('id', payload.booking_id)
 
   return { assignment: data as NannyAssignment, error: null }
+}
+
+export async function completeAssignment(assignmentId: string, hoursWorked?: number): Promise<{ error: string | null }> {
+  const supabase = createClient()
+  const { error } = await supabase.rpc('nanny_complete_assignment', {
+    p_assignment_id: assignmentId,
+    p_hours_worked: hoursWorked || null
+  })
+  return { error: error?.message || null }
 }
 
 export async function updateAssignmentState(

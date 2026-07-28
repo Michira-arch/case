@@ -52,7 +52,7 @@ export interface NannyOrgPolicy {
   overtime_multiplier: number
   overtime_threshold_hours: number
   payout_cadence: 'daily' | 'weekly' | 'monthly'
-  platform_commission_pct: number
+  agency_cut_pct: number
   auto_invoice: boolean
   require_timelog: boolean
   continuity_preference: boolean
@@ -227,10 +227,10 @@ export interface NannyBooking {
   service_address: string
   location_notes: string | null
   service_notes: string | null
-  special_requirements: Record<string, any>
-  quoted_rate: number | null
-  quoted_hours: number | null
+  special_requirements?: Record<string, any>
   is_emergency: boolean
+  quoted_rate: number
+  pricing_model: 'hourly' | 'fixed' | 'recurring_monthly'
   source: 'direct' | 'widget' | 'admin' | 'api'
   requested_worker_id?: string | null
   pricing_unit?: string
@@ -263,11 +263,13 @@ export interface NannyAssignment {
   hourly_rate: number | null
   is_emergency: boolean
   hours_worked: number | null
-  base_amount: number | null
-  surcharge_amount: number | null
-  holiday_pay: number | null
-  total_amount: number | null
-  worker_rating: number | null
+  base_amount: number
+  surcharge_amount: number
+  holiday_pay: number
+  total_amount: number
+  agency_revenue: number
+  worker_payout: number
+  rating_score?: number | null
   worker_review: string | null
   rated_at: string | null
   created_at: string
