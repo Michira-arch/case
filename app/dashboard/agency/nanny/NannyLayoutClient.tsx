@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/agency/nanny/bookings', label: 'Bookings',  icon: '📋' },
   { href: '/dashboard/agency/nanny/workers',  label: 'Workers',   icon: '👥' },
   { href: '/dashboard/agency/nanny/clients',  label: 'Clients',   icon: '🏠' },
+  { href: '/dashboard/agency/nanny/requests', label: 'Requests',  icon: '📩' },
   { href: '/dashboard/agency/nanny/invoices', label: 'Invoices',  icon: '💰' },
   { href: '/dashboard/agency/nanny/billing',  label: 'Billing',   icon: '💳' },
   { href: '/dashboard/agency/nanny/copilot',  label: 'Copilot',   icon: '✨' },

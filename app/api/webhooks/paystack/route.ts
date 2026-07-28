@@ -88,6 +88,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing metadata' }, { status: 400 })
     }
 
+    if (planPeriod === 'auth_charge') {
+      const authCode = data.authorization?.authorization_code
+      if (!authCode) {
+        console.error('No authorization code found in auth_charge webhook')
+        return NextResponse.json({ error: 'No auth code' }, { status: 400 })
+      }
+      
+      const { error: updateError } = await supabase
+        .from('nanny_clients')
+        .update({ paystack_auth_code: authCode })
+        .eq('profile_id', profileId)
+        
+      if (updateError) {
+        console.error('Failed to update client auth code:', updateError)
+        return NextResponse.json({ error: 'Database error' }, { status: 500 })
+      }
+      
+      console.log(`Saved auth code for profile ${profileId}`)
+      return NextResponse.json({ received: true })
+    }
+
     await supabase.rpc('apply_payment', {
       p_profile_id:         profileId,
       p_paystack_reference: data.reference,
