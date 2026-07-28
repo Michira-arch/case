@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getBookingById, updateBookingState, getWorkers, assignWorkerToBooking, completeAssignment } from '@/lib/nanny-data'
+import { sendEmail } from '@/lib/email'
 import styles from '../../nanny-dashboard.module.css'
 import { revalidatePath } from 'next/cache'
 
@@ -30,6 +31,35 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
     const assignmentId = formData.get('assignment_id') as string
     const hours = formData.get('hours_worked')
     await completeAssignment(assignmentId, hours ? Number(hours) : undefined)
+    
+    // Fetch the generated invoice and client email to send the paywall link
+    const supabase = createClient()
+    const { data: invoice } = await supabase
+      .from('nanny_invoices')
+      .select('id, nanny_clients(client_name, client_email)')
+      .eq('assignment_id', assignmentId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+      
+    if (invoice && invoice.nanny_clients?.client_email) {
+      const paywallUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invoice/${invoice.id}`
+      await sendEmail({
+        to: invoice.nanny_clients.client_email,
+        subject: 'Invoice for your completed booking',
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2>Hello ${invoice.nanny_clients.client_name},</h2>
+            <p>Your recent booking has been completed. Your invoice is now ready for payment.</p>
+            <p>Please click the link below to view and pay your invoice securely:</p>
+            <a href="${paywallUrl}" style="display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 16px;">
+              Pay Invoice
+            </a>
+          </div>
+        `
+      })
+    }
+
     revalidatePath(`/dashboard/agency/nanny/bookings/${params.id}`)
   }
 
