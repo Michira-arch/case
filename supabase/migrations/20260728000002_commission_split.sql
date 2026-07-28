@@ -16,7 +16,9 @@ ALTER TABLE nanny_assignments ADD COLUMN agency_revenue numeric DEFAULT 0;
 ALTER TABLE nanny_assignments ADD COLUMN worker_payout numeric DEFAULT 0;
 
 -- Support recurring / fixed price on nanny_service_types
-ALTER TABLE nanny_service_types ADD COLUMN pricing_model text DEFAULT 'hourly' CHECK (pricing_model IN ('hourly', 'fixed', 'recurring_monthly'));
+ALTER TABLE nanny_service_types DROP CONSTRAINT nanny_service_types_pricing_model_check;
+ALTER TABLE nanny_service_types ADD CONSTRAINT nanny_service_types_pricing_model_check 
+  CHECK (pricing_model IN ('hourly', 'flat_rate', 'quoted', 'fixed', 'recurring_monthly'));
 
 -- Add pricing_model to nanny_bookings so we know how to bill it at completion time
 ALTER TABLE nanny_bookings ADD COLUMN pricing_model text DEFAULT 'hourly' CHECK (pricing_model IN ('hourly', 'fixed', 'recurring_monthly'));
