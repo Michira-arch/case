@@ -9,7 +9,7 @@ export default function PrivacyPolicy() {
 
         <section style={{ marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', fontWeight: '600' }}>1. Introduction</h2>
-          <p>Welcome to Case+. We respect your privacy and are committed to protecting your personal data. This privacy policy explains how we collect, use, and safeguard your information when you use our nanny agency management software.</p>
+          <p>Welcome to Case. We respect your privacy and are committed to protecting your personal data. This privacy policy explains how we collect, use, and safeguard your information when you use our software.</p>
         </section>
 
         <section style={{ marginBottom: '2rem' }}>
@@ -24,8 +24,9 @@ export default function PrivacyPolicy() {
         </section>
 
         <section style={{ marginBottom: '2rem' }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', fontWeight: '600' }}>3. Third-Party Authentication</h2>
-          <p>You may choose to log in using third-party services, such as Google OAuth. By doing so, you grant us access to certain information (like your email and basic profile) as permitted by the third-party service. We use this information solely to facilitate your login and manage your account securely.</p>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', fontWeight: '600' }}>3. Third-Party Authentication & Google API Data</h2>
+          <p>You may choose to log in using third-party services, such as Google OAuth. By doing so, you grant us access to certain information (like your email address and basic profile name) as permitted by the third-party service. We use this information solely to facilitate your secure login and manage your account.</p>
+          <p style={{ marginTop: '0.75rem', fontWeight: '500' }}>Case's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'inherit' }}>Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
         </section>
 
         <section style={{ marginBottom: '2rem' }}>
@@ -40,7 +41,7 @@ export default function PrivacyPolicy() {
 
         <section style={{ marginBottom: '2rem' }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', fontWeight: '600' }}>6. Contact Us</h2>
-          <p>If you have any questions about this Privacy Policy, please contact us at privacy@caseplus.app.</p>
+          <p>If you have any questions about this Privacy Policy, please contact us at support@caseshow.info.</p>
         </section>
       </div>
     </div>
