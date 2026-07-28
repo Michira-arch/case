@@ -45,6 +45,7 @@ const DEFAULT_DEMO_ORG: NannyOrg = {
     overtime_multiplier: 1.5,
     overtime_threshold_hours: 8,
     payout_cadence: 'weekly',
+    agency_cut_pct: 10,
     auto_invoice: true,
     require_timelog: true,
     continuity_preference: true,
@@ -860,6 +861,35 @@ export async function createAnonBooking(payload: {
   })
   if (error) return { result: null, error: error.message }
   return { result: data, error: null }
+}
+
+export async function assignWorkerToBooking(
+  bookingId: string,
+  workerId: string,
+  hourlyRate: number
+): Promise<{ error: string | null }> {
+  const supabase = createClient()
+  const { data: booking, error: bErr } = await supabase
+    .from('nanny_bookings')
+    .select('org_id')
+    .eq('id', bookingId)
+    .single()
+  if (bErr || !booking) return { error: bErr?.message || 'Booking not found' }
+  const { error: aErr } = await supabase
+    .from('nanny_assignments')
+    .insert({
+      booking_id: bookingId,
+      worker_id: workerId,
+      org_id: booking.org_id,
+      hourly_rate: hourlyRate,
+      assignment_state: 'client_confirmed',
+    })
+  if (aErr) return { error: aErr.message }
+  await supabase
+    .from('nanny_bookings')
+    .update({ booking_state: 'confirmed', updated_at: new Date().toISOString() })
+    .eq('id', bookingId)
+  return { error: null }
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────

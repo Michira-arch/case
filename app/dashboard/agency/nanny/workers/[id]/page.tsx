@@ -11,6 +11,7 @@ import styles from '../../nanny-dashboard.module.css'
 import CredentialBadge from '@/components/agency/CredentialBadge'
 import ComplianceRing from '@/components/agency/ComplianceRing'
 import WorkerStateControl from './WorkerStateControl'
+import WorkerPaymentDetails from './WorkerPaymentDetails'
 import CredentialActions from './CredentialActions'
 
 interface Props {
@@ -198,6 +199,9 @@ export default async function WorkerDetailPage({ params }: Props) {
 
           {/* State control */}
           <WorkerStateControl workerId={params.id} currentState={worker.worker_state} />
+
+          {/* Payment Details */}
+          <WorkerPaymentDetails workerId={params.id} currentDetails={worker.payment_details || ''} />
         </div>
 
         {/* Credentials Checklist */}

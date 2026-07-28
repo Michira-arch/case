@@ -1,26 +1,50 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createSubaccount } from '@/lib/paystack'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 
 export async function POST(request: Request) {
   try {
     const { orgId, business_name, settlement_bank, account_number } = await request.json()
     
-    // In a real app, verify user is owner of orgId using Supabase auth
-    const authHeader = request.headers.get('authorization')
-    // We will assume server-side validation is done for the context of this test
+    const supabaseClient = createServerClient()
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Verify user owns the orgId
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('id')
+      .eq('owner_id', user.id)
+      .single()
+
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 403 })
+    }
+
+    const { data: org, error: orgError } = await supabaseClient
+      .from('nanny_orgs')
+      .select('id')
+      .eq('id', orgId)
+      .eq('owner_profile_id', profile.id)
+      .single()
+
+    if (orgError || !org) {
+      return NextResponse.json({ error: 'Unauthorized to manage this organization' }, { status: 403 })
+    }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Call Paystack API to create subaccount
-    // 15% platform commission
     const subaccountData = await createSubaccount({
       business_name,
       settlement_bank,
       account_number,
-      percentage_charge: 15, 
     })
 
     const subaccountCode = subaccountData.subaccount_code

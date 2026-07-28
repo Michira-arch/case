@@ -118,6 +118,7 @@ export interface NannyWorker {
   claim_token: string | null
   notes: string | null
   show_on_public: boolean
+  payment_details: string | null
   created_at: string
   updated_at: string
   // Joined

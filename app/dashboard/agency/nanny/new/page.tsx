@@ -322,15 +322,17 @@ export default function NewAgencyPage() {
                 ))}
               </div>
 
-                    className={`${styles.input} ${styles.select}`}
-                    value={form.payout_cadence}
-                    onChange={(e) => set('payout_cadence', e.target.value)}
-                  >
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                  </select>
-                </div>
+              <div className={styles.field}>
+                <label className={styles.label}>Payout Cadence</label>
+                <select
+                  className={`${styles.input} ${styles.select}`}
+                  value={form.payout_cadence}
+                  onChange={(e) => set('payout_cadence', e.target.value)}
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
               </div>
 
               {[

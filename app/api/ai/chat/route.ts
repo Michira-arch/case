@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       .eq('org_id', orgId);
 
     const memoryBullets = memories && memories.length > 0 
-      ? '\n\nShared Memories / Core Preferences:\n' + memories.map(m => '- ' + m.memory_text).join('\n')
+      ? '\n\nShared Memories / Core Preferences:\n' + memories.map((m: any) => '- ' + m.memory_text).join('\n')
       : '';
 
     const { client, model } = await getAiClient(orgId);

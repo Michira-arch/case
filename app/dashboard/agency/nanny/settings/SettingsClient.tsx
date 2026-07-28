@@ -38,6 +38,7 @@ export default function SettingsClient({ org }: Props) {
     auto_invoice: org.policy.auto_invoice,
     require_timelog: org.policy.require_timelog,
     continuity_preference: org.policy.continuity_preference,
+    agency_cut_pct: org.policy.agency_cut_pct,
     is_public: org.is_public,
     // Page Config
     hero_headline: org.page_config.hero_headline ?? '',
@@ -85,6 +86,7 @@ export default function SettingsClient({ org }: Props) {
             auto_invoice: form.auto_invoice,
             require_timelog: form.require_timelog,
             continuity_preference: form.continuity_preference,
+            agency_cut_pct: Number(form.agency_cut_pct),
           },
           page_config: {
             ...org.page_config,
@@ -282,8 +284,8 @@ export default function SettingsClient({ org }: Props) {
               max={50}
               step={0.5}
               className={styles.input}
-              value={form.platform_commission_pct}
-              onChange={(e) => set('platform_commission_pct', e.target.value)}
+              value={form.agency_cut_pct}
+              onChange={(e) => set('agency_cut_pct', e.target.value)}
             />
           </div>
           <div className={styles.field}>

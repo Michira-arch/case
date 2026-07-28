@@ -19,6 +19,7 @@ export default function AgencyBillingPage() {
   const [submittingSubaccount, setSubmittingSubaccount] = useState(false)
   const [bankName, setBankName] = useState('')
   const [accountNumber, setAccountNumber] = useState('')
+  const [banks, setBanks] = useState<any[]>([])
 
   useEffect(() => {
     // Inject Paystack script
@@ -48,6 +49,17 @@ export default function AgencyBillingPage() {
         
         setOrg(orgData)
       }
+
+      try {
+        const banksRes = await fetch('/api/paystack/banks')
+        const banksData = await banksRes.json()
+        if (banksData.data) {
+          setBanks(banksData.data)
+        }
+      } catch (err) {
+        console.error('Error fetching banks', err)
+      }
+
       setLoading(false)
     }
 
@@ -260,16 +272,21 @@ export default function AgencyBillingPage() {
                   )}
                   
                   <div className={styles.field}>
-                    <label className={styles.label}>Bank Code</label>
-                    <input 
-                      type="text" 
+                    <label className={styles.label}>Bank</label>
+                    <select
                       className={styles.input}
-                      value={bankName} 
-                      onChange={(e) => setBankName(e.target.value)} 
-                      placeholder="e.g. 044 (Access Bank)"
-                      required 
-                    />
-                    <p style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '4px' }}>Enter the 3-digit bank code provided by Paystack.</p>
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      required
+                    >
+                      <option value="">Select a bank...</option>
+                      {banks.map((bank) => (
+                        <option key={bank.code} value={bank.code}>
+                          {bank.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '4px' }}>Select the bank provided by Paystack.</p>
                   </div>
                   
                   <div className={styles.field}>

@@ -94,7 +94,6 @@ export async function createSubaccount(params: {
   business_name: string
   settlement_bank: string
   account_number: string
-  percentage_charge: number
   primary_contact_email?: string
 }) {
   const secretKey = process.env.PAYSTACK_SECRET_KEY
@@ -110,7 +109,6 @@ export async function createSubaccount(params: {
       business_name: params.business_name,
       settlement_bank: params.settlement_bank,
       account_number: params.account_number,
-      percentage_charge: params.percentage_charge,
       primary_contact_email: params.primary_contact_email,
     })
   })
@@ -164,8 +162,9 @@ export interface CheckoutOptions {
   email: string
   amountKes: number
   reference: string
-  profileId: string
-  planPeriod: string
+  profileId?: string
+  planPeriod?: string
+  invoiceId?: string
   subaccount?: string // Optional subaccount for splits
   onSuccess: (reference: string) => void
   onClose: () => void
@@ -187,20 +186,34 @@ export function openPaystackCheckout(opts: CheckoutOptions) {
   }
 
   const metadata: any = {
-    profile_id:  opts.profileId,
-    plan_period: opts.planPeriod,
-    custom_fields: [
-      {
-        display_name:  'Profile ID',
-        variable_name: 'profile_id',
-        value:         opts.profileId,
-      },
-      {
-        display_name:  'Plan Period',
-        variable_name: 'plan_period',
-        value:         opts.planPeriod,
-      },
-    ],
+    custom_fields: [],
+  }
+
+  if (opts.profileId) {
+    metadata.profile_id = opts.profileId
+    metadata.custom_fields.push({
+      display_name:  'Profile ID',
+      variable_name: 'profile_id',
+      value:         opts.profileId,
+    })
+  }
+
+  if (opts.planPeriod) {
+    metadata.plan_period = opts.planPeriod
+    metadata.custom_fields.push({
+      display_name:  'Plan Period',
+      variable_name: 'plan_period',
+      value:         opts.planPeriod,
+    })
+  }
+
+  if (opts.invoiceId) {
+    metadata.invoice_id = opts.invoiceId
+    metadata.custom_fields.push({
+      display_name:  'Invoice ID',
+      variable_name: 'invoice_id',
+      value:         opts.invoiceId,
+    })
   }
 
   // @ts-ignore
@@ -213,7 +226,7 @@ export function openPaystackCheckout(opts: CheckoutOptions) {
     channels:  ['card', 'mobile_money'],
     subaccount: opts.subaccount, // For splitting if needed
     metadata,
-    label:     `Billing (${opts.planPeriod})`,
+    label:     opts.invoiceId ? 'Invoice Payment' : `Billing (${opts.planPeriod})`,
     callback:  (response: { reference: string }) => {
       opts.onSuccess(response.reference)
     },

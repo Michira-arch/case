@@ -23,12 +23,6 @@ export default async function BookingDetailsPage({ params }: { params: { id: str
     revalidatePath(`/dashboard/agency/nanny/bookings/${params.id}`)
   }
 
-  // Server action to cancel booking
-  async function handleCancel() {
-    'use server'
-    await updateBookingState(params.id, 'cancelled', 'Cancelled by agency')
-    revalidatePath(`/dashboard/agency/nanny/bookings/${params.id}`)
-  }
 
   // Server action to manually complete an assignment with overridden hours
   async function handleCompleteAssignment(formData: FormData) {
