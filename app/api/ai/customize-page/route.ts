@@ -27,7 +27,9 @@ Return ONLY valid JSON.
 export async function POST(req: Request) {
   try {
     const { prompt, orgId, org_id } = await req.json();
-    const finalOrgId = orgId || org_id;
+    let finalOrgId = orgId || org_id;
+    if (finalOrgId === 'undefined') finalOrgId = undefined;
+    
     if (!finalOrgId || !prompt) {
       return NextResponse.json({ error: 'Missing orgId or prompt' }, { status: 400 });
     }
