@@ -120,6 +120,36 @@ export const aiTools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
         required: ['title', 'message', 'action_type', 'payload'],
       },
     },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'perform_ui_action',
+      description: 'Perform a UI action on the frontend such as clicking an element, filling an input, or redirecting to a new URL.',
+      parameters: {
+        type: 'object',
+        properties: {
+          action: {
+            type: 'string',
+            enum: ['click', 'fill', 'redirect'],
+            description: 'The type of UI action to perform.'
+          },
+          selector: {
+            type: 'string',
+            description: 'The CSS selector of the element to interact with (for click or fill).'
+          },
+          value: {
+            type: 'string',
+            description: 'The value to fill in the input element (for fill).'
+          },
+          url: {
+            type: 'string',
+            description: 'The URL to redirect to (for redirect).'
+          }
+        },
+        required: ['action'],
+      },
+    },
   }
 ];
 

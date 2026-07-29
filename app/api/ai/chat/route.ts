@@ -30,7 +30,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { messages, orgId } = await req.json();
+    const { messages, orgId, uiContext } = await req.json();
     if (!orgId) {
       return NextResponse.json({ error: 'Missing orgId' }, { status: 400 });
     }
@@ -60,12 +60,16 @@ export async function POST(req: Request) {
 
     // Save the user's latest message to DB
     const lastMessage = messages[messages.length - 1];
-    if (lastMessage.role === 'user') {
+    if (lastMessage && lastMessage.role === 'user') {
       await supabase.from('nanny_ai_chat_history').insert({
         org_id: orgId,
         role: 'user',
         content: lastMessage.content
       });
+      
+      if (uiContext) {
+        lastMessage.content += `\n\n[System Context: ${uiContext}]`;
+      }
     }
 
     // Prepare system prompt with dynamic context
@@ -101,6 +105,27 @@ Strict Restrictions:
     while (finalMessage.tool_calls && iteration < MAX_ITERATIONS) {
       iteration++;
       fullMessages.push(finalMessage); // Add assistant message with tool calls
+
+      const uiActionCall = finalMessage.tool_calls.find(tc => tc.type === 'function' && tc.function?.name === 'perform_ui_action') as any;
+      if (uiActionCall) {
+        let uiActionArgs = {};
+        try {
+          uiActionArgs = uiActionCall.function.arguments ? JSON.parse(uiActionCall.function.arguments) : {};
+        } catch (e) {}
+
+        if (finalMessage.content) {
+          await supabase.from('nanny_ai_chat_history').insert({
+            org_id: orgId,
+            role: 'assistant',
+            content: finalMessage.content
+          });
+        }
+
+        return NextResponse.json({ 
+          message: { role: 'assistant', content: finalMessage.content || 'Executing UI action...' },
+          uiAction: uiActionArgs
+        });
+      }
 
       for (const toolCall of finalMessage.tool_calls) {
         if (toolCall.type !== 'function') continue;

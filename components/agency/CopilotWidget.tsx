@@ -88,16 +88,35 @@ export default function CopilotWidget({ orgId }: { orgId: string }) {
     setInput('')
     setLoading(true)
 
+    const h1s = Array.from(document.querySelectorAll('h1')).map(el => el.innerText).join(', ');
+    const uiContext = `User is currently on path: ${window.location.pathname}` + (h1s ? `. Visible Headings: ${h1s}` : '');
+
     try {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, orgId })
+        body: JSON.stringify({ messages: newMessages, orgId, uiContext })
       })
       const data = await res.json()
       if (res.ok && data.message) {
         setMessages([...newMessages, { role: 'assistant', content: data.message.content }])
-        // If the AI took an action (we can detect this if needed), maybe show a modal popup
+        
+        if (data.uiAction) {
+          const { action, selector, value, url } = data.uiAction;
+          if (action === 'redirect' && url) {
+            router.push(url);
+          } else if (action === 'click' && selector) {
+            const el = document.querySelector(selector) as HTMLElement;
+            if (el) el.click();
+          } else if (action === 'fill' && selector && value !== undefined) {
+            const el = document.querySelector(selector) as HTMLInputElement;
+            if (el) {
+              el.value = value;
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+              el.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          }
+        }
       } else {
         throw new Error(data.error || 'Failed to get response')
       }
