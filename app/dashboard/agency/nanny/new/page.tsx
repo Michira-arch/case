@@ -176,7 +176,7 @@ export default function NewAgencyPage() {
                       pointerEvents: 'none',
                     }}
                   >
-                    case.app/agency/
+                    caseshow.info/agency/
                   </span>
                   <input
                     id="slug"

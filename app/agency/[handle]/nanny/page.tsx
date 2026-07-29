@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props) {
     openGraph: {
       title: org.name,
       description: org.tagline ?? org.description ?? '',
-      url: `https://case.app/agency/${params.handle}/nanny`,
+      url: `https://caseshow.info/agency/${params.handle}/nanny`,
       siteName: 'Case',
       images: org.cover_url ? [
         {

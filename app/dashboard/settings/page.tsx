@@ -647,13 +647,13 @@ export default function SettingsPage() {
                   type="text" 
                   readOnly 
                   className="input" 
-                  value={`case.app/pay/${profile.handle}`} 
+                  value={`caseshow.info/pay/${profile.handle}`} 
                   style={{ flex: 1, backgroundColor: 'var(--card)' }}
                 />
                 <button 
                   className="btn btn--outline" 
                   onClick={() => {
-                    navigator.clipboard.writeText(`https://case.app/pay/${profile.handle}`);
+                    navigator.clipboard.writeText(`https://caseshow.info/pay/${profile.handle}`);
                     alert('Copied to clipboard!');
                   }}
                 >
@@ -677,7 +677,7 @@ export default function SettingsPage() {
                   onClick={() => {
                     const amt = (document.getElementById('customAmount') as HTMLInputElement).value;
                     if(amt) {
-                      navigator.clipboard.writeText(`https://case.app/pay/${profile.handle}?amount=${amt}`);
+                      navigator.clipboard.writeText(`https://caseshow.info/pay/${profile.handle}?amount=${amt}`);
                       alert('Custom amount link copied!');
                     }
                   }}
@@ -690,7 +690,7 @@ export default function SettingsPage() {
             <div style={{ marginTop: 24, padding: 16, border: '1px solid var(--line)', borderRadius: 'var(--radius)', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
               <p style={{ fontSize: 13, fontWeight: 500 }}>Payment QR Code</p>
               <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://case.app/pay/${profile.handle}&color=20281F&bgcolor=F1EDE2`} 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://caseshow.info/pay/${profile.handle}&color=20281F&bgcolor=F1EDE2`} 
                 alt="QR Code" 
                 style={{ borderRadius: 8, border: '1px solid var(--line)', padding: 8, backgroundColor: 'var(--paper-light)' }}
               />

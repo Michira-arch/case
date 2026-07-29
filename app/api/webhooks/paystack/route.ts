@@ -109,6 +109,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
+    if (planPeriod === 'profile_subscription') {
+      const authCode = data.authorization?.authorization_code
+      const clientEmail = data.customer?.email || metadata.client_email
+      
+      if (!authCode || !clientEmail) {
+        console.error('Missing authCode or clientEmail for profile_subscription')
+        return NextResponse.json({ error: 'Missing details' }, { status: 400 })
+      }
+
+      // Calculate next billing date (1 month from now)
+      const nextBilling = new Date()
+      nextBilling.setMonth(nextBilling.getMonth() + 1)
+
+      const { error: insertError } = await supabase
+        .from('profile_subscriptions')
+        .insert({
+          profile_id: profileId,
+          client_email: clientEmail,
+          amount_kes: amountKes,
+          status: 'active',
+          paystack_auth_code: authCode,
+          next_billing_date: nextBilling.toISOString(),
+          paystack_reference: data.reference,
+        })
+        
+      if (insertError) {
+        console.error('Failed to create profile subscription:', insertError)
+        return NextResponse.json({ error: 'Database error' }, { status: 500 })
+      }
+      
+      console.log(`Created profile subscription for profile ${profileId} from ${clientEmail}`)
+      return NextResponse.json({ received: true })
+    }
+
     await supabase.rpc('apply_payment', {
       p_profile_id:         profileId,
       p_paystack_reference: data.reference,

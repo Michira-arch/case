@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ paystack_subaccount_code: subaccount.subaccount_code })
-      .eq('id', user.id)
+      .eq('owner_id', user.id)
 
     if (updateError) {
       console.error('Failed to update profile with subaccount code:', updateError)

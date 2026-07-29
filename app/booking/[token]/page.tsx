@@ -371,7 +371,7 @@ export default async function BookingStatusPage({ params }: Props) {
           >
             Need help?{' '}
             <a
-              href="mailto:support@case.app"
+              href="mailto:support@caseshow.info"
               style={{ color: 'var(--brass)', textDecoration: 'none' }}
             >
               Contact us

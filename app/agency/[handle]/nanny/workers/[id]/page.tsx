@@ -196,7 +196,7 @@ export default async function PublicWorkerProfilePage({ params }: Props) {
               {/* Case portfolio link */}
               {worker.profile?.handle && (
                 <a
-                  href={`https://case.app/@${worker.profile.handle}`}
+                  href={`https://caseshow.info/@${worker.profile.handle}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -216,7 +216,7 @@ export default async function PublicWorkerProfilePage({ params }: Props) {
                   }}
                 >
                   <span>◆</span>
-                  case.app/@{worker.profile.handle}
+                  caseshow.info/@{worker.profile.handle}
                 </a>
               )}
             </div>

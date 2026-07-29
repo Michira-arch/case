@@ -123,7 +123,7 @@ export default async function WorkerDetailPage({ params }: Props) {
 
           {worker.profile?.handle && (
             <a
-              href={`https://case.app/@${worker.profile.handle}`}
+              href={`https://caseshow.info/@${worker.profile.handle}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -141,7 +141,7 @@ export default async function WorkerDetailPage({ params }: Props) {
                 background: 'var(--paper-light)',
               }}
             >
-              ◆ case.app/@{worker.profile.handle}
+              ◆ caseshow.info/@{worker.profile.handle}
             </a>
           )}
         </div>

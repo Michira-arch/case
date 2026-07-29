@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
     const amountInKobo = Math.round(amount * 100)
     
-    let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://case.app'
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://caseshow.info'
     if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1)
 
     const callbackUrl = `${baseUrl}/pay/${handle}?success=true`
