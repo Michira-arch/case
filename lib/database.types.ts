@@ -4,6 +4,38 @@
 export type Database = {
   public: {
     Tables: {
+      notifications: {
+        Row: {
+          id: string
+          profile_id: string
+          type: string
+          title: string
+          content: string
+          link: string | null
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          type: string
+          title: string
+          content: string
+          link?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          type?: string
+          title?: string
+          content?: string
+          link?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+      }
       profiles: {
         Row: {
           id: string

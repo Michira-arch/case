@@ -34,7 +34,7 @@ export default function NewWorkerPage() {
     shadow_phone: '',
     role_type: 'caregiver',
     hourly_rate: '',
-    invite_email: '',
+    invite_handle: '',
   })
 
   const set = (k: keyof typeof form, v: string) =>
@@ -62,8 +62,8 @@ export default function NewWorkerPage() {
     }
   }, [searchQuery, mode])
 
-  const handleInviteUser = async (email: string) => {
-    set('invite_email', email)
+  const handleInviteUser = async (handle: string) => {
+    set('invite_handle', handle)
     setMode('invite')
   }
 
@@ -86,7 +86,7 @@ export default function NewWorkerPage() {
             }
           : {
               mode: 'invite',
-              invite_email: form.invite_email,
+              invite_handle: form.invite_handle,
               role_type: form.role_type,
             }
 
@@ -150,7 +150,7 @@ export default function NewWorkerPage() {
             onClick={() => { setMode(m); setInviteResult(null); }}
             type="button"
           >
-            {m === 'shadow' ? '👤 Shadow Worker' : m === 'search' ? '🔍 Search Users' : '✉ Send Invite'}
+            {m === 'shadow' ? '👤 Shadow Worker' : m === 'search' ? '🔍 Search Users' : '✉ Invite via Link'}
           </button>
         ))}
       </div>
@@ -158,12 +158,12 @@ export default function NewWorkerPage() {
       {mode === 'search' ? (
         <div className={styles.formSection} style={{ margin: 0 }}>
           <div className={styles.field}>
-            <label className={styles.label}>Search Users by Email</label>
+            <label className={styles.label}>Search Users by Username (Handle)</label>
             <input
               type="text"
               className={styles.input}
               value={searchQuery}
-              placeholder="e.g. user@example.com"
+              placeholder="e.g. sarahkamau"
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
@@ -176,11 +176,11 @@ export default function NewWorkerPage() {
                   <li key={u.id} style={{ padding: 12, borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <strong style={{ display: 'block' }}>{u.full_name || 'No Name'}</strong>
-                      <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{u.email}</span>
+                      <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>@{u.handle}</span>
                     </div>
                     <button 
                       className="btn btn--outline" 
-                      onClick={() => handleInviteUser(u.email)}
+                      onClick={() => handleInviteUser(u.handle)}
                       style={{ padding: '4px 8px', fontSize: 12 }}
                     >
                       Invite
@@ -204,9 +204,9 @@ export default function NewWorkerPage() {
 
             {inviteResult ? (
               <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                <h3 style={{ marginBottom: 12, color: 'var(--ink)' }}>Invitation Sent!</h3>
+                <h3 style={{ marginBottom: 12, color: 'var(--ink)' }}>Invitation Link Ready!</h3>
                 <p style={{ marginBottom: 16, color: 'var(--ink-muted)' }}>
-                  We've sent an email to <strong>{form.invite_email}</strong>.
+                  Share this link with <strong>@{form.invite_handle}</strong> so they can claim their profile.
                 </p>
                 
                 <div style={{ background: '#f5f5f5', padding: 12, borderRadius: 6, marginBottom: 16, wordBreak: 'break-all', fontSize: 13 }}>
@@ -305,18 +305,18 @@ export default function NewWorkerPage() {
                   className={`${styles.notice} ${styles.noticeVerified}`}
                   style={{ marginBottom: 20 }}
                 >
-                  📨 We'll send an invitation email with a link for them to create
-                  their Case profile and join your agency.
+                  📨 We'll generate an invitation link for them to create
+                  their Case profile and join your agency. Share it with them manually.
                 </div>
 
                 <div className={styles.field}>
-                  <label className={styles.label}>Worker's Email *</label>
+                  <label className={styles.label}>Worker's Username (Handle) *</label>
                   <input
-                    type="email"
+                    type="text"
                     className={styles.input}
-                    value={form.invite_email}
-                    placeholder="worker@example.com"
-                    onChange={(e) => set('invite_email', e.target.value)}
+                    value={form.invite_handle}
+                    placeholder="e.g. sarahkamau"
+                    onChange={(e) => set('invite_handle', e.target.value)}
                     required
                   />
                 </div>
@@ -355,7 +355,7 @@ export default function NewWorkerPage() {
                     ? 'Adding…'
                     : mode === 'shadow'
                     ? 'Add Shadow Worker'
-                    : 'Send Invitation'}
+                    : 'Generate Invite Link'}
                 </button>
               </div>
             )}

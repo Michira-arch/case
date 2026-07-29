@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import styles from './dashboard.module.css'
+import NotificationsBell from '@/components/NotificationsBell'
 
 const navItems = [
   { href: '/dashboard',                     label: 'Case',      icon: '◆' },
@@ -28,8 +29,9 @@ export default function DashboardLayout({
     <div className={styles.shell}>
       {/* Sidebar (desktop) / Bottom nav (mobile) */}
       <nav className={styles.nav} aria-label="Dashboard navigation">
-        <div className={styles.navBrand}>
+        <div className={styles.navBrand} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <span className={styles.wordmark}>Case</span>
+          <NotificationsBell />
         </div>
         <ul className={styles.navItems}>
           {navItems.map(item => (

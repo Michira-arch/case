@@ -21,8 +21,8 @@ export async function GET(req: Request) {
     // Search profiles table
     const { data: users, error } = await supabase
       .from('profiles')
-      .select('id, full_name, email')
-      .ilike('email', `%${query}%`)
+      .select('id, full_name, handle')
+      .ilike('handle', `%${query}%`)
       .limit(10);
 
     if (error) {
@@ -35,3 +35,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

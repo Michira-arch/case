@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import styles from './nanny-dashboard.module.css'
 import CopilotWidget from '@/components/agency/CopilotWidget'
+import NotificationsBell from '@/components/NotificationsBell'
 
 const NAV_ITEMS = [
   { href: '/dashboard/agency/nanny',          label: 'Dashboard', icon: '◆' },
@@ -106,12 +107,15 @@ export default function NannyLayoutClient({
       {/* ── Sidebar ───────────────────────────────────────── */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarBrand}>
-          <div className={styles.brandTop}>
-            <div className={styles.brandIcon}>❤️</div>
-            <div>
-              <div className={styles.wordmark}>Agency</div>
-              <div className={styles.wordmarkSub}>CAREGIVING</div>
+          <div className={styles.brandTop} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div className={styles.brandIcon}>❤️</div>
+              <div>
+                <div className={styles.wordmark}>Agency</div>
+                <div className={styles.wordmarkSub}>CAREGIVING</div>
+              </div>
             </div>
+            <NotificationsBell />
           </div>
           {org && (
             <button

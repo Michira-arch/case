@@ -28,22 +28,21 @@ export async function POST(req: NextRequest) {
 
     const org = orgs[0]
     const body = await req.json()
-    const { mode, shadow_name, shadow_email, shadow_phone, role_type, hourly_rate, invite_email } = body
+    const { mode, shadow_name, shadow_email, shadow_phone, role_type, hourly_rate, invite_handle } = body
 
     if (!role_type) {
       return NextResponse.json({ error: 'role_type is required' }, { status: 400 })
     }
 
     if (mode === 'invite') {
-      // Invite flow: create a shadow worker with invite email and generate claim link
-      if (!invite_email) {
-        return NextResponse.json({ error: 'invite_email is required for invite mode' }, { status: 400 })
+      // Invite flow: create a shadow worker with invite handle and generate claim link
+      if (!invite_handle) {
+        return NextResponse.json({ error: 'invite_handle is required for invite mode' }, { status: 400 })
       }
 
       const { worker, error } = await createShadowWorker({
         org_id: org.id,
-        shadow_name: invite_email.split('@')[0], // placeholder name
-        shadow_email: invite_email,
+        shadow_name: invite_handle, // use handle as placeholder name
         role_type,
       })
 
@@ -55,28 +54,7 @@ export async function POST(req: NextRequest) {
         ? `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/agency/join/${worker.claim_token}`
         : null
 
-      if (claimUrl) {
-        const emailResult = await sendAgencyEmail({
-          orgId: org.id,
-          to: invite_email,
-          subject: `You have been invited to join ${org.name || 'our agency'}`,
-          htmlBody: `
-            <h2>Invitation to join ${org.name || 'our agency'}</h2>
-            <p>You have been invited to join an agency on Case.</p>
-            <p>Click the link below to accept the invitation and set up your profile:</p>
-            <p style="text-align: center; margin: 30px 0;">
-              <a href="${claimUrl}" class="btn">Accept Invitation →</a>
-            </p>
-            <p style="font-size: 13px; color: #666;">If the button doesn't work, copy and paste this link into your browser: <br/>
-            <a href="${claimUrl}">${claimUrl}</a></p>
-          `,
-          preheader: `You've been invited to join ${org.name || 'our agency'} on Case.`
-        })
-
-        if (!emailResult.success) {
-          console.error('Failed to send invite email to worker:', emailResult.error);
-        }
-      }
+      // Email sending has been removed. The UI will present the link to the admin to manually share.
 
       return NextResponse.json({
         success: true,

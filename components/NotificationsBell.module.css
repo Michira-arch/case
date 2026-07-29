@@ -1,0 +1,177 @@
+.container {
+  position: relative;
+  display: inline-block;
+}
+
+.bellButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.bellButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.icon {
+  font-size: 1.25rem;
+}
+
+.badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #e53e3e;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  height: 16px;
+  min-width: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 320px;
+  background-color: #2a3429;
+  border: 1px solid #4a5a49;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 50;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 400px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #4a5a49;
+  background-color: #242c23;
+}
+
+.header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.markAll {
+  background: none;
+  border: none;
+  color: #a0aec0;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.markAll:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.empty {
+  padding: 24px;
+  text-align: center;
+  color: #a0aec0;
+  font-size: 0.9rem;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-bottom: 1px solid #3a4739;
+  transition: background-color 0.2s;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.item.unread {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.item.read {
+  opacity: 0.7;
+}
+
+.item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.itemContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.link:hover .title {
+  text-decoration: underline;
+}
+
+.title {
+  margin: 0 0 4px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.text {
+  margin: 0 0 6px 0;
+  font-size: 0.85rem;
+  color: #cbd5e0;
+  line-height: 1.4;
+}
+
+.time {
+  font-size: 0.75rem;
+  color: #a0aec0;
+}
+
+.markReadBtn {
+  background: none;
+  border: none;
+  color: #a0aec0;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+}
+
+.markReadBtn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
