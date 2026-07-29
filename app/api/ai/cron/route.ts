@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { getAiClient } from '@/lib/ai/client';
 import { aiTools, executeAiTool } from '@/lib/ai/tools';
 import { createServiceClient } from '@/lib/supabase/server';
