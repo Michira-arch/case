@@ -1,0 +1,2 @@
+ALTER TABLE nanny_service_types DROP CONSTRAINT IF EXISTS nanny_service_types_pricing_model_check;
+ALTER TABLE nanny_service_types ADD CONSTRAINT nanny_service_types_pricing_model_check CHECK (pricing_model IN ('hourly', 'flat_rate', 'quoted', 'per_day', 'per_task', 'per_week', 'per_month', 'per_shift'));
