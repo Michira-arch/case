@@ -633,6 +633,74 @@ export default function SettingsPage() {
           )}
         </section>
 
+        {paystackSubaccountCode && profile?.handle && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Share Payment Link</h2>
+            <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 16, lineHeight: 1.5 }}>
+              Share this link with clients to get paid instantly. They can enter any amount, or you can send a locked amount link.
+            </p>
+
+            <div className="field">
+              <label className="label">Your Personal Payment Link</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="text" 
+                  readOnly 
+                  className="input" 
+                  value={`case.app/pay/${profile.handle}`} 
+                  style={{ flex: 1, backgroundColor: 'var(--card)' }}
+                />
+                <button 
+                  className="btn btn--outline" 
+                  onClick={() => {
+                    navigator.clipboard.writeText(`https://case.app/pay/${profile.handle}`);
+                    alert('Copied to clipboard!');
+                  }}
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            <div className="field" style={{ marginTop: 16 }}>
+              <label className="label">Custom Amount Link</label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input 
+                  type="number" 
+                  className="input" 
+                  placeholder="e.g. 5000" 
+                  id="customAmount"
+                  style={{ width: '120px' }}
+                />
+                <button 
+                  className="btn btn--outline" 
+                  onClick={() => {
+                    const amt = (document.getElementById('customAmount') as HTMLInputElement).value;
+                    if(amt) {
+                      navigator.clipboard.writeText(`https://case.app/pay/${profile.handle}?amount=${amt}`);
+                      alert('Custom amount link copied!');
+                    }
+                  }}
+                >
+                  Copy Link
+                </button>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 24, padding: 16, border: '1px solid var(--line)', borderRadius: 'var(--radius)', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <p style={{ fontSize: 13, fontWeight: 500 }}>Payment QR Code</p>
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://case.app/pay/${profile.handle}&color=20281F&bgcolor=F1EDE2`} 
+                alt="QR Code" 
+                style={{ borderRadius: 8, border: '1px solid var(--line)', padding: 8, backgroundColor: 'var(--paper-light)' }}
+              />
+              <p style={{ fontSize: 11, color: 'var(--ink-muted)', textAlign: 'center' }}>
+                Clients can scan this to pay you directly.
+              </p>
+            </div>
+          </section>
+        )}
+
         <section className={`${styles.section} ${styles.dangerSection}`}>
           <h2 className={styles.sectionTitle}>Account</h2>
           <div className={styles.dangerActions}>
