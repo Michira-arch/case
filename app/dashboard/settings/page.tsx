@@ -35,6 +35,10 @@ export default function SettingsPage() {
   const [contactVisibility, setContactVisibility] = useState<ContactVisibility>({ phone: true, email: true, whatsapp: true, location: true })
   const [claimText, setClaimText]     = useState('')
 
+  const [paystackSubaccountCode, setPaystackSubaccountCode] = useState('')
+  const [mpesaNumber, setMpesaNumber] = useState('')
+  const [linkingMpesa, setLinkingMpesa] = useState(false)
+
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -66,6 +70,7 @@ export default function SettingsPage() {
         setDiscoverable(data.discoverable)
         setContactVisibility(data.contact_visibility || { phone: true, email: true, whatsapp: true, location: true })
         setClaimText(data.claim_text || '')
+        setPaystackSubaccountCode(data.paystack_subaccount_code || '')
 
         // Fetch subscription to verify tier
         const { data: sub } = await supabase
@@ -217,6 +222,29 @@ export default function SettingsPage() {
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     window.location.href = '/'
+  }
+
+  const handleLinkMpesa = async () => {
+    if (!mpesaNumber) return
+    setLinkingMpesa(true)
+    try {
+      const res = await fetch('/api/paystack/subaccounts/personal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_name: displayName || profile.handle,
+          settlement_bank: 'MPESA',
+          account_number: mpesaNumber
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setPaystackSubaccountCode(data.subaccount_code)
+    } catch (err: any) {
+      alert(`Failed to link M-PESA: ${err.message}`)
+    } finally {
+      setLinkingMpesa(false)
+    }
   }
 
   if (loading) return <div className={styles.page}><div className="spinner" style={{ margin: '100px auto' }} /></div>
@@ -524,6 +552,49 @@ export default function SettingsPage() {
             {saving ? 'Saving…' : 'Save changes'}
           </button>
         </div>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>M-PESA Settlement</h2>
+          <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 16, lineHeight: 1.5 }}>
+            Link your M-PESA number to receive payments directly when clients book you.
+          </p>
+
+          {paystackSubaccountCode ? (
+            <div className={styles.publicInfoBox} style={{ backgroundColor: 'var(--paper)', border: '1px solid var(--brass)', borderRadius: 'var(--radius)', padding: '16px' }}>
+              <span className={styles.publicInfoIcon}>✅</span>
+              <div>
+                <strong style={{ color: 'var(--brass)', display: 'block', marginBottom: '4px' }}>M-PESA Linked</strong>
+                <span style={{ fontSize: '13px', color: 'var(--ink-soft)' }}>
+                  Your subaccount code is <code style={{ backgroundColor: 'var(--card)', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--line)' }}>{paystackSubaccountCode}</code>.
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="field">
+              <label className="label">M-PESA Phone Number</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="text" 
+                  className="input" 
+                  placeholder="e.g. 0712345678" 
+                  value={mpesaNumber} 
+                  onChange={e => setMpesaNumber(e.target.value)} 
+                />
+                <button 
+                  className="btn btn--dark" 
+                  onClick={handleLinkMpesa}
+                  disabled={linkingMpesa || !mpesaNumber}
+                  style={{ whiteSpace: 'nowrap', backgroundColor: 'var(--ink)', color: 'var(--paper)' }}
+                >
+                  {linkingMpesa ? 'Linking...' : 'Link M-PESA'}
+                </button>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 4 }}>
+                Enter your Safaricom registered phone number.
+              </p>
+            </div>
+          )}
+        </section>
 
         <section className={`${styles.section} ${styles.dangerSection}`}>
           <h2 className={styles.sectionTitle}>Account</h2>
