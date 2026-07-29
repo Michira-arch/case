@@ -167,6 +167,7 @@ export interface CheckoutOptions {
   planPeriod?: string
   invoiceId?: string
   subaccount?: string // Optional subaccount for splits
+  isSubscription?: boolean // If true, force card only to get reusable auth
   onSuccess: (reference: string) => void
   onClose: () => void
 }
@@ -224,7 +225,7 @@ export function openPaystackCheckout(opts: CheckoutOptions) {
     amount:    opts.amountKes * 100,
     currency:  'KES',
     ref:       opts.reference,
-    channels:  ['card', 'mobile_money'],
+    channels:  opts.isSubscription ? ['card'] : ['card', 'mobile_money'],
     subaccount: opts.subaccount, // For splitting if needed
     metadata,
     label:     opts.invoiceId ? 'Invoice Payment' : `Billing (${opts.planPeriod})`,
@@ -236,3 +237,51 @@ export function openPaystackCheckout(opts: CheckoutOptions) {
 
   handler.openIframe()
 }
+
+/**
+ * Charges a saved authorization for a recurring custom subscription.
+ * Using a subaccount here if needed, but subaccount split on charge_authorization
+ * requires passing `subaccount` code directly into the charge authorization payload.
+ */
+export async function chargeSubscription(params: {
+  authorization_code: string
+  email: string
+  amount_kes: number
+  subaccount?: string
+  reference?: string
+}) {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY
+  if (!secretKey) throw new Error('PAYSTACK_SECRET_KEY not set')
+
+  const payload: any = {
+    authorization_code: params.authorization_code,
+    email: params.email,
+    amount: params.amount_kes * 100, // in kobo
+  }
+
+  if (params.reference) {
+    payload.reference = params.reference
+  }
+  if (params.subaccount) {
+    payload.subaccount = params.subaccount
+    // typically for a subscription split, the provider gets almost everything minus paystack fees and our platform fees
+    // we can specify a flat `transaction_charge` if we want to take a cut, but standard split applies
+  }
+
+  const res = await fetch(`https://api.paystack.co/transaction/charge_authorization`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  })
+
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(`Paystack subscription charge failed: ${data.message}`)
+  }
+
+  return data.data
+}
+
