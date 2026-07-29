@@ -36,8 +36,10 @@ export default function SettingsPage() {
   const [claimText, setClaimText]     = useState('')
 
   const [paystackSubaccountCode, setPaystackSubaccountCode] = useState('')
-  const [mpesaNumber, setMpesaNumber] = useState('')
-  const [linkingMpesa, setLinkingMpesa] = useState(false)
+  const [accountNumber, setAccountNumber] = useState('')
+  const [selectedBank, setSelectedBank] = useState('MPESA')
+  const [banks, setBanks] = useState<any[]>([])
+  const [linkingAccount, setLinkingAccount] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -80,6 +82,25 @@ export default function SettingsPage() {
           .single()
         setSubscription(sub)
       }
+
+      try {
+        const banksRes = await fetch('/api/paystack/banks')
+        const banksData = await banksRes.json()
+        if (banksData.data) {
+          // Put M-PESA at the top if it exists
+          const sorted = banksData.data.sort((a: any, b: any) => {
+            if (a.name.toUpperCase().includes('MPESA') || a.name.toUpperCase().includes('M-PESA')) return -1
+            return a.name.localeCompare(b.name)
+          })
+          setBanks(sorted)
+          if (sorted.length > 0) {
+            setSelectedBank(sorted[0].code)
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching banks', err)
+      }
+
       setLoading(false)
     }
     load()
@@ -224,26 +245,26 @@ export default function SettingsPage() {
     window.location.href = '/'
   }
 
-  const handleLinkMpesa = async () => {
-    if (!mpesaNumber) return
-    setLinkingMpesa(true)
+  const handleLinkAccount = async () => {
+    if (!accountNumber) return
+    setLinkingAccount(true)
     try {
       const res = await fetch('/api/paystack/subaccounts/personal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           business_name: displayName || profile.handle,
-          settlement_bank: 'MPESA',
-          account_number: mpesaNumber
+          settlement_bank: selectedBank,
+          account_number: accountNumber
         })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setPaystackSubaccountCode(data.subaccount_code)
     } catch (err: any) {
-      alert(`Failed to link M-PESA: ${err.message}`)
+      alert(`Failed to link account: ${err.message}`)
     } finally {
-      setLinkingMpesa(false)
+      setLinkingAccount(false)
     }
   }
 
@@ -554,43 +575,59 @@ export default function SettingsPage() {
         </div>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>M-PESA Settlement</h2>
+          <h2 className={styles.sectionTitle}>Digital Wallet & Settlements</h2>
           <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 16, lineHeight: 1.5 }}>
-            Link your M-PESA number to receive payments directly when clients book you.
+            Provide your clients a seamless, digital way to pay for your services using Cards or Mobile Money.
+            You'll receive funds directly to your M-PESA or Bank Account automatically — without exposing your personal phone number or needing complex business documents.
           </p>
 
           {paystackSubaccountCode ? (
             <div className={styles.publicInfoBox} style={{ backgroundColor: 'var(--paper)', border: '1px solid var(--brass)', borderRadius: 'var(--radius)', padding: '16px' }}>
               <span className={styles.publicInfoIcon}>✅</span>
               <div>
-                <strong style={{ color: 'var(--brass)', display: 'block', marginBottom: '4px' }}>M-PESA Linked</strong>
+                <strong style={{ color: 'var(--brass)', display: 'block', marginBottom: '4px' }}>Wallet Active</strong>
                 <span style={{ fontSize: '13px', color: 'var(--ink-soft)' }}>
-                  Your subaccount code is <code style={{ backgroundColor: 'var(--card)', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--line)' }}>{paystackSubaccountCode}</code>.
+                  Your sub-account code is <code style={{ backgroundColor: 'var(--card)', padding: '2px 4px', borderRadius: '4px', border: '1px solid var(--line)' }}>{paystackSubaccountCode}</code>.
+                  You are now ready to receive digital settlements directly!
                 </span>
               </div>
             </div>
           ) : (
             <div className="field">
-              <label className="label">M-PESA Phone Number</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input 
-                  type="text" 
+              <label className="label">Settlement Account Details</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <select 
                   className="input" 
-                  placeholder="e.g. 0712345678" 
-                  value={mpesaNumber} 
-                  onChange={e => setMpesaNumber(e.target.value)} 
-                />
-                <button 
-                  className="btn btn--dark" 
-                  onClick={handleLinkMpesa}
-                  disabled={linkingMpesa || !mpesaNumber}
-                  style={{ whiteSpace: 'nowrap', backgroundColor: 'var(--ink)', color: 'var(--paper)' }}
+                  value={selectedBank} 
+                  onChange={e => setSelectedBank(e.target.value)}
+                  style={{ width: '100%', maxWidth: '300px' }}
                 >
-                  {linkingMpesa ? 'Linking...' : 'Link M-PESA'}
-                </button>
+                  {banks.map(b => (
+                    <option key={b.code} value={b.code}>{b.name}</option>
+                  ))}
+                  {banks.length === 0 && <option value="MPESA">M-PESA</option>}
+                </select>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input 
+                    type="text" 
+                    className="input" 
+                    placeholder="Account / Phone Number (e.g. 0712345678)" 
+                    value={accountNumber} 
+                    onChange={e => setAccountNumber(e.target.value)} 
+                    style={{ flex: 1 }}
+                  />
+                  <button 
+                    className="btn btn--dark" 
+                    onClick={handleLinkAccount}
+                    disabled={linkingAccount || !accountNumber}
+                    style={{ whiteSpace: 'nowrap', backgroundColor: 'var(--ink)', color: 'var(--paper)' }}
+                  >
+                    {linkingAccount ? 'Linking...' : 'Link Account'}
+                  </button>
+                </div>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 4 }}>
-                Enter your Safaricom registered phone number.
+              <p style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 8 }}>
+                Your information is securely vaulted with Paystack and is never exposed to your clients.
               </p>
             </div>
           )}
