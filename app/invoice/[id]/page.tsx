@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import InvoiceClient from './InvoiceClient'
 import Script from 'next/script'
+import ChatUI from '@/components/ChatUI'
 
 export default async function InvoicePage({ params }: { params: { id: string } }) {
   const supabase = createServiceClient()
@@ -11,9 +12,9 @@ export default async function InvoicePage({ params }: { params: { id: string } }
     .from('nanny_invoices')
     .select(`
       *,
-      nanny_clients(client_name, client_email),
+      nanny_clients(id, client_name, client_email),
       nanny_invoice_items(*),
-      nanny_orgs(name, logo_url, profiles(avatar_url, display_name))
+      nanny_orgs(id, name, logo_url, profiles(avatar_url, display_name))
     `)
     .eq('id', params.id)
     .single()
@@ -34,8 +35,19 @@ export default async function InvoicePage({ params }: { params: { id: string } }
         <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{invoice.nanny_orgs?.name || 'Case+'}</h1>
         <p className="mt-2 text-sm text-gray-500">Secure Payment Portal</p>
       </div>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto space-y-8">
         <InvoiceClient invoice={invoice} />
+        
+        {invoice.client_id && invoice.org_id && (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-bold mb-4">Contact {invoice.nanny_orgs?.name}</h2>
+            <ChatUI 
+              clientId={invoice.client_id}
+              orgId={invoice.org_id}
+              senderType="client"
+            />
+          </div>
+        )}
       </div>
     </div>
   )

@@ -26,10 +26,13 @@ export default async function NannyAgencyDashboardPage() {
   if (orgs.length === 0) redirect('/dashboard/agency/nanny/new')
 
   const org = orgs[0]
-  const [stats, recentBookings] = await Promise.all([
+  const [stats, recentBookings, actionInbox] = await Promise.all([
     getNannyDashboardStats(org.id),
     getBookings(org.id, { limit: 5 }),
+    supabase.from('nanny_action_inbox').select('*').eq('org_id', org.id).eq('status', 'pending').order('created_at', { ascending: false }).limit(3)
   ])
+
+  const pendingActions = actionInbox.data || [];
 
   return (
     <>
@@ -61,6 +64,45 @@ export default async function NannyAgencyDashboardPage() {
       <div className={styles.content}>
         {/* Stats */}
         <NannyDashboard stats={stats} orgId={org.id} />
+
+        {/* Action Inbox (Copilot) */}
+        {pendingActions.length > 0 && (
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>
+                <span style={{ marginRight: '8px' }}>✨</span>
+                Copilot Suggestions
+              </h2>
+              <Link
+                href="/dashboard/agency/nanny/copilot"
+                className={styles.sectionLink}
+              >
+                Review Inbox →
+              </Link>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {pendingActions.map((action: any) => (
+                <div key={action.id} style={{ 
+                  background: 'var(--brand-muted)', 
+                  border: '1px solid var(--brand)',
+                  borderRadius: 'var(--radius-md)', 
+                  padding: '16px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--brand)', margin: '0 0 4px 0' }}>{action.title}</h3>
+                    <p style={{ fontSize: '13px', color: 'var(--ink-soft)', margin: 0 }}>{action.message}</p>
+                  </div>
+                  <Link href="/dashboard/agency/nanny/copilot" className="btn btn--brass btn--sm">
+                    Review
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Recent Bookings */}
         <div className={styles.section}>

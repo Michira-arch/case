@@ -65,21 +65,24 @@ export default async function ClientsPage() {
                     <th>Phone</th>
                     <th>Status</th>
                     <th>Since</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {clients.map((client) => (
                     <tr key={client.id}>
                       <td>
-                        <div style={{ fontWeight: 600, fontSize: 14 }}>
-                          {client.client_name}
-                        </div>
-                        {client.details?.children?.length ? (
-                          <div style={{ fontSize: 12, color: 'var(--ink-muted)' }}>
-                            {client.details.children.length} child
-                            {client.details.children.length !== 1 ? 'ren' : ''}
+                        <Link href={`/dashboard/agency/nanny/clients/${client.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                          <div style={{ fontWeight: 600, fontSize: 14 }}>
+                            {client.client_name}
                           </div>
-                        ) : null}
+                          {client.details?.children?.length ? (
+                            <div style={{ fontSize: 12, color: 'var(--ink-muted)' }}>
+                              {client.details.children.length} child
+                              {client.details.children.length !== 1 ? 'ren' : ''}
+                            </div>
+                          ) : null}
+                        </Link>
                       </td>
                       <td>
                         <span
@@ -126,6 +129,11 @@ export default async function ClientsPage() {
                           month: 'short',
                           year: 'numeric',
                         })}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <Link href={`/dashboard/agency/nanny/clients/${client.id}`} style={{ fontSize: 13, color: 'var(--brass)', textDecoration: 'none', fontWeight: 500 }}>
+                          View &rarr;
+                        </Link>
                       </td>
                     </tr>
                   ))}
