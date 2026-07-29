@@ -23,11 +23,12 @@ export async function POST(req: Request) {
     }
 
     const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY || 'dummy_key_to_prevent_crash'
+      baseURL: 'https://api.groq.com/openai/v1',
+      apiKey: process.env.GROQ_API_KEY || 'dummy_key'
     })
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o', // Defaulting to robust model
+      model: 'llama3-70b-8192', // Defaulting to robust model
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         ...messages

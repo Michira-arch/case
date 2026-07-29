@@ -17,7 +17,20 @@ export default function AICustomizationPage() {
   const [draftHtml, setDraftHtml] = useState('')
   const [isCustomPage, setIsCustomPage] = useState(false)
   const [publishing, setPublishing] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [showChatOnMobile, setShowChatOnMobile] = useState(true)
   const chatEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      if (!mobile) setShowChatOnMobile(true)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -152,9 +165,17 @@ export default function AICustomizationPage() {
         </div>
       </header>
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Chat Left Side */}
-        <div style={{ width: '400px', borderRight: '1px solid var(--line)', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--paper-light)' }}>
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+        {/* Chat Left Side (or Drawer on mobile) */}
+        <div style={{ 
+          width: isMobile ? '100%' : '400px', 
+          borderRight: isMobile ? 'none' : '1px solid var(--line)', 
+          display: showChatOnMobile ? 'flex' : 'none', 
+          flexDirection: 'column', 
+          backgroundColor: 'var(--paper-light)',
+          position: isMobile ? 'absolute' : 'relative',
+          top: 0, bottom: 0, left: 0, zIndex: 10
+        }}>
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {messages.length === 0 && (
               <div style={{ color: 'var(--ink-soft)', fontSize: '14px', textAlign: 'center', marginTop: '40px' }}>
@@ -217,6 +238,25 @@ export default function AICustomizationPage() {
             />
           ) : (
             <div style={{ color: '#888' }}>No preview available yet. Chat to generate a design!</div>
+          )}
+          
+          {/* Mobile Toggle Button */}
+          {isMobile && (
+            <button 
+              onClick={() => setShowChatOnMobile(!showChatOnMobile)}
+              className="btn btn--dark"
+              style={{ 
+                position: 'absolute', 
+                bottom: '24px', 
+                right: '24px', 
+                zIndex: 20,
+                borderRadius: '50px',
+                padding: '12px 24px',
+                boxShadow: 'var(--shadow-lg)'
+              }}
+            >
+              {showChatOnMobile ? 'Hide Chat' : 'Open Chat'}
+            </button>
           )}
         </div>
       </div>
