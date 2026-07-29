@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || ''
-})
+export const dynamic = 'force-dynamic'
+
+
 
 const SYSTEM_PROMPT = `You are an expert AI Website Designer. Your task is to generate a custom, single-file HTML/CSS page based on the user's request.
 Follow these frontend-design guidelines:
@@ -21,6 +21,10 @@ export async function POST(req: Request) {
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: 'Messages required' }, { status: 400 })
     }
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || 'dummy_key_to_prevent_crash'
+    })
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o', // Defaulting to robust model
