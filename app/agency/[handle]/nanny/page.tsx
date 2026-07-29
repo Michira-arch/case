@@ -100,6 +100,16 @@ export default async function AgencyLandingPage({ params }: Props) {
   const services = await getServiceTypes(org.id)
   const workers = await getPublicWorkers(org.id)
   
+  const pageConfig = org.page_config as any
+  if (pageConfig?.is_custom_page && pageConfig?.custom_html) {
+    return (
+      <div 
+        style={{ width: '100%', minHeight: '100vh' }}
+        dangerouslySetInnerHTML={{ __html: pageConfig.custom_html }}
+      />
+    )
+  }
+
   const { page_config: config } = org
 
   return (
@@ -204,6 +214,25 @@ export default async function AgencyLandingPage({ params }: Props) {
             >
               📞 {org.contact_phone}
             </a>
+          )}
+          {org.paystack_subaccount_code && (
+            <Link
+              href={`/agency/${params.handle}/pay`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'rgba(255,255,255,0.12)',
+                color: 'var(--paper)',
+                padding: '14px 24px',
+                borderRadius: 'var(--radius-lg)',
+                fontWeight: 600,
+                fontSize: 15,
+                textDecoration: 'none',
+              }}
+            >
+              💳 Pay Agency
+            </Link>
           )}
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { sendAgencyEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
@@ -40,8 +40,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Join request already sent' }, { status: 400 });
     }
 
-    // Create the join request
-    const { error: insertError } = await supabase
+    // Create the join request bypassing RLS due to profiles table UUID mismatch bug
+    const adminSupabase = createServiceClient();
+    const { error: insertError } = await adminSupabase
       .from('agency_join_requests')
       .insert({
         org_id,

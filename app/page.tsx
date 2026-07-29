@@ -16,7 +16,7 @@ export default function LandingPage() {
         <div className={styles.navInner}>
           <span className={styles.wordmark}>Case</span>
           <div className={styles.navActions}>
-            <Link href="/agency/sunny-smiles/nanny" className="btn btn--outline btn--sm" style={{ marginRight: 4 }}>Caregiving Agency</Link>
+            <Link href="/agencies" className="btn btn--outline btn--sm" style={{ marginRight: 4 }}>Caregiving Agencies</Link>
             <Link href="/search" className="btn btn--outline btn--sm" style={{ marginRight: 4 }}>Search Cases</Link>
             <Link href="/login" className="btn btn--outline btn--sm">Log in</Link>
             <Link href="/signup" className="btn btn--brass btn--sm">Start free</Link>
@@ -61,7 +61,7 @@ export default function LandingPage() {
           </form>
 
           <div className={styles.heroCtas}>
-            <Link href="/agency/sunny-smiles/nanny" className="btn btn--brass btn--lg">
+            <Link href="/agencies" className="btn btn--brass btn--lg">
               🏥 Book a Nanny or Caregiver
             </Link>
             <Link href="/dashboard/agency/nanny" className="btn btn--outline btn--lg">

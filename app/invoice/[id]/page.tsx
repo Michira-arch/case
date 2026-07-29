@@ -12,7 +12,8 @@ export default async function InvoicePage({ params }: { params: { id: string } }
     .select(`
       *,
       nanny_clients(client_name, client_email),
-      nanny_invoice_items(*)
+      nanny_invoice_items(*),
+      nanny_orgs(name, logo_url, profiles(avatar_url, display_name))
     `)
     .eq('id', params.id)
     .single()
@@ -24,8 +25,13 @@ export default async function InvoicePage({ params }: { params: { id: string } }
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">
       <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
-      <div className="max-w-3xl mx-auto mb-8 text-center">
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Case+</h1>
+      <div className="max-w-3xl mx-auto mb-8 text-center flex flex-col items-center">
+        {invoice.nanny_orgs?.logo_url ? (
+          <img src={invoice.nanny_orgs.logo_url} alt={invoice.nanny_orgs.name} className="h-16 w-auto mb-4 object-contain rounded-md" />
+        ) : invoice.nanny_orgs?.profiles?.avatar_url ? (
+          <img src={invoice.nanny_orgs.profiles.avatar_url} alt={invoice.nanny_orgs.name} className="h-16 w-16 mb-4 rounded-full object-cover" />
+        ) : null}
+        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{invoice.nanny_orgs?.name || 'Case+'}</h1>
         <p className="mt-2 text-sm text-gray-500">Secure Payment Portal</p>
       </div>
       <div className="max-w-3xl mx-auto">

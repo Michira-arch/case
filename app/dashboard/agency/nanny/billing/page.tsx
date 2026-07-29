@@ -261,7 +261,19 @@ export default function AgencyBillingPage() {
               {org.paystack_subaccount_code ? (
                 <div style={{ background: 'var(--verified-bg)', padding: '16px', borderRadius: 'var(--radius)', border: '1px solid var(--verified)' }}>
                   <p style={{ color: 'var(--verified)', fontWeight: 600, margin: '0 0 8px' }}>✅ Settlement Account Active</p>
-                  <p style={{ fontSize: '13px', color: 'var(--ink)', margin: 0 }}>Subaccount Code: <code style={{ background: 'rgba(255,255,255,0.5)', padding: '2px 6px', borderRadius: '4px' }}>{org.paystack_subaccount_code}</code></p>
+                  <p style={{ fontSize: '13px', color: 'var(--ink)', margin: '0 0 16px' }}>Subaccount Code: <code style={{ background: 'rgba(255,255,255,0.5)', padding: '2px 6px', borderRadius: '4px' }}>{org.paystack_subaccount_code}</code></p>
+                  
+                  <div style={{ padding: '12px', background: 'var(--paper)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line)' }}>
+                    <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Public Payment Links</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <a href={`https://caseshow.info/agency/${org.slug}/pay`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        🔗 Generic Paywall (caseshow.info/agency/{org.slug}/pay)
+                      </a>
+                      <a href={`https://caseshow.info/agency/${org.slug}/subscribe`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        🔗 Recurring Subscription (caseshow.info/agency/{org.slug}/subscribe)
+                      </a>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={handleCreateSubaccount} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

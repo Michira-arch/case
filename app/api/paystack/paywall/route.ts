@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req: Request) {
   try {
-    const { handle, amount, email } = await req.json()
+    const { handle, amount, email, isAgency } = await req.json()
 
     if (!handle || !amount || !email) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -14,14 +14,29 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, paystack_subaccount_code')
-      .eq('handle', handle)
-      .single()
+    let subaccountCode = null;
+    if (isAgency) {
+      const { data: org } = await supabase
+        .from('nanny_orgs')
+        .select('id, paystack_subaccount_code')
+        .eq('slug', handle)
+        .single()
+      if (org) {
+        subaccountCode = org.paystack_subaccount_code
+      }
+    } else {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, paystack_subaccount_code')
+        .eq('handle', handle)
+        .single()
+      if (profile) {
+        subaccountCode = profile.paystack_subaccount_code
+      }
+    }
 
-    if (!profile || !profile.paystack_subaccount_code) {
-      return NextResponse.json({ error: 'User not found or wallet not set up' }, { status: 404 })
+    if (!subaccountCode) {
+      return NextResponse.json({ error: 'User/Agency not found or wallet not set up' }, { status: 404 })
     }
 
     const paystackSecret = process.env.PAYSTACK_SECRET_KEY
@@ -34,7 +49,9 @@ export async function POST(req: Request) {
     let baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://caseshow.info'
     if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1)
 
-    const callbackUrl = `${baseUrl}/pay/${handle}?success=true`
+    const callbackUrl = isAgency 
+      ? `${baseUrl}/agency/${handle}/pay?success=true`
+      : `${baseUrl}/pay/${handle}?success=true`
 
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
@@ -47,12 +64,12 @@ export async function POST(req: Request) {
         amount: amountInKobo,
         currency: 'KES',
         callback_url: callbackUrl,
-        subaccount: profile.paystack_subaccount_code,
+        subaccount: subaccountCode,
         metadata: {
           custom_fields: [
             {
-              display_name: "Profile Handle",
-              variable_name: "profile_handle",
+              display_name: isAgency ? "Agency Slug" : "Profile Handle",
+              variable_name: isAgency ? "agency_slug" : "profile_handle",
               value: handle
             }
           ]

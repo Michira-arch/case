@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
     // Security validation
     const isEvidence = storageKey.startsWith('evidence/')
     const isAvatar = storageKey.startsWith('avatars/')
-    if (!isEvidence && !isAvatar) {
+    const isLogo = storageKey.startsWith('logos/')
+    if (!isEvidence && !isAvatar && !isLogo) {
       return NextResponse.json({ error: 'Invalid storage key prefix' }, { status: 400 })
     }
 

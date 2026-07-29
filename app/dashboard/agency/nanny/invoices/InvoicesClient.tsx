@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import styles from '../nanny-dashboard.module.css'
 import type { NannyInvoice, InvoiceState } from '@/lib/nanny-types'
 import { formatCurrency } from '@/lib/nanny-utils'
@@ -186,6 +187,13 @@ export default function InvoicesClient({ invoices, currency }: Props) {
                     </span>
                   </td>
                   <td style={{ textAlign: 'right' }}>
+                    <Link
+                      href={`/dashboard/agency/nanny/invoices/${inv.id}/edit`}
+                      className="btn btn--outline btn--sm"
+                      style={{ fontSize: 11, padding: '4px 8px', marginRight: 8 }}
+                    >
+                      Edit
+                    </Link>
                     <button
                       className="btn btn--outline btn--sm"
                       style={{ fontSize: 11, padding: '4px 8px' }}

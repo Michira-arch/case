@@ -64,7 +64,7 @@ export async function createManualBookingAction(formData: FormData) {
   const scheduledEnd = new Date(endStr).toISOString()
   const quotedRate = rateStr ? parseFloat(rateStr) : 0
 
-  // Insert Booking
+  // Insert Booking as 'in_progress' first
   const { data: booking, error: bookingErr } = await supabase
     .from('nanny_bookings')
     .insert({
@@ -72,11 +72,10 @@ export async function createManualBookingAction(formData: FormData) {
       client_id: clientId,
       service_type_id: serviceTypeId,
       reference,
-      booking_state: 'completed',
+      booking_state: 'in_progress',
       scheduled_start: scheduledStart,
       scheduled_end: scheduledEnd,
       actual_start: scheduledStart,
-      actual_end: scheduledEnd,
       service_address: address,
       quoted_rate: quotedRate,
       source: 'admin'
@@ -89,21 +88,37 @@ export async function createManualBookingAction(formData: FormData) {
     return { error: 'Failed to create booking.' }
   }
 
-  // Insert Assignment
-  const { error: assignErr } = await supabase
+  // Insert Assignment as 'in_progress'
+  const { data: assignment, error: assignErr } = await supabase
     .from('nanny_assignments')
     .insert({
       booking_id: booking.id,
       worker_id: workerId,
       org_id: orgId,
-      assignment_state: 'completed',
-      completed_at: scheduledEnd,
+      assignment_state: 'in_progress',
       base_amount: quotedRate
     })
+    .select('id')
+    .single()
 
-  if (assignErr) {
+  if (assignErr || !assignment) {
     console.error('Error creating assignment:', assignErr)
     return { error: 'Failed to create assignment.' }
+  }
+
+  // Calculate hours based on scheduled times
+  const hours = (new Date(scheduledEnd).getTime() - new Date(scheduledStart).getTime()) / (1000 * 60 * 60);
+
+  // Now properly complete the assignment, computing financials and creating the invoice
+  const { error: completeErr } = await supabase.rpc('nanny_complete_assignment', {
+    p_assignment_id: assignment.id,
+    p_clocked_out_at: scheduledEnd,
+    p_hours_worked: hours > 0 ? hours : 1 // fallback to 1 hr if dates are same
+  })
+
+  if (completeErr) {
+    console.error('Error completing assignment:', completeErr)
+    return { error: 'Failed to generate invoice for booking.' }
   }
 
   revalidatePath('/dashboard/agency/nanny/bookings')
