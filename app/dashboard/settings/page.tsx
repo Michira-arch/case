@@ -41,6 +41,9 @@ export default function SettingsPage() {
   const [banks, setBanks] = useState<any[]>([])
   const [linkingAccount, setLinkingAccount] = useState(false)
 
+  const [subscriptionAmount, setSubscriptionAmount] = useState('1000')
+  const [subscriptionInterval, setSubscriptionInterval] = useState('monthly')
+
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -73,6 +76,8 @@ export default function SettingsPage() {
         setContactVisibility(data.contact_visibility || { phone: true, email: true, whatsapp: true, location: true })
         setClaimText(data.claim_text || '')
         setPaystackSubaccountCode(data.paystack_subaccount_code || '')
+        if (data.subscription_amount_kes) setSubscriptionAmount(data.subscription_amount_kes.toString())
+        if (data.subscription_interval) setSubscriptionInterval(data.subscription_interval)
 
         // Fetch subscription to verify tier
         const { data: sub } = await supabase
@@ -697,6 +702,66 @@ export default function SettingsPage() {
               <p style={{ fontSize: 11, color: 'var(--ink-muted)', textAlign: 'center' }}>
                 Clients can scan this to pay you directly.
               </p>
+            </div>
+          </section>
+        )}
+
+        {paystackSubaccountCode && profile?.handle && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Client Subscriptions</h2>
+            <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 16, lineHeight: 1.5 }}>
+              Allow clients to subscribe to your services on a recurring basis. Set your flat rate and interval here, then share your subscription link.
+            </p>
+
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+              <div className="field" style={{ flex: 1 }}>
+                <label className="label">Subscription Amount (KES)</label>
+                <input 
+                  type="number" 
+                  className="input" 
+                  placeholder="e.g. 1000" 
+                  value={subscriptionAmount} 
+                  onChange={e => setSubscriptionAmount(e.target.value)} 
+                  onBlur={() => triggerAutosave({ subscription_amount_kes: parseInt(subscriptionAmount) || 1000 })}
+                />
+              </div>
+              <div className="field" style={{ flex: 1 }}>
+                <label className="label">Billing Interval</label>
+                <select 
+                  className="input" 
+                  value={subscriptionInterval} 
+                  onChange={e => {
+                    setSubscriptionInterval(e.target.value)
+                    triggerAutosave({ subscription_interval: e.target.value })
+                  }}
+                >
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="annually">Annually</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="field">
+              <label className="label">Your Subscription Link</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="text" 
+                  readOnly 
+                  className="input" 
+                  value={`caseshow.info/${profile.handle}/subscribe`} 
+                  style={{ flex: 1, backgroundColor: 'var(--card)' }}
+                />
+                <button 
+                  className="btn btn--outline" 
+                  onClick={() => {
+                    navigator.clipboard.writeText(`https://caseshow.info/${profile.handle}/subscribe`);
+                    alert('Copied subscription link to clipboard!');
+                  }}
+                >
+                  Copy
+                </button>
+              </div>
             </div>
           </section>
         )}
