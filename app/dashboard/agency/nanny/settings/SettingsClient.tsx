@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import styles from '../nanny-dashboard.module.css'
 import type { NannyOrg } from '@/lib/nanny-types'
 
@@ -18,9 +19,11 @@ export default function SettingsClient({ org }: Props) {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const [aiSuccess, setAiSuccess] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
 
   const [form, setForm] = useState({
     name: org.name,
+    logo_url: org.logo_url ?? '',
     tagline: org.tagline ?? '',
     description: org.description ?? '',
     contact_email: org.contact_email ?? '',
@@ -67,6 +70,7 @@ export default function SettingsClient({ org }: Props) {
         body: JSON.stringify({
           org_id: org.id,
           name: form.name,
+          logo_url: form.logo_url,
           tagline: form.tagline,
           description: form.description,
           contact_email: form.contact_email,
@@ -147,6 +151,61 @@ export default function SettingsClient({ org }: Props) {
     }
   }
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingLogo(true)
+    setError(null)
+
+    try {
+      // Convert to WebP using Canvas
+      const webpBlob = await new Promise<Blob>((resolve, reject) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          // scale down if needed, but let's keep it max 512x512
+          const maxSize = 512
+          let { width, height } = img
+          if (width > maxSize || height > maxSize) {
+            const ratio = Math.min(maxSize / width, maxSize / height)
+            width *= ratio
+            height *= ratio
+          }
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          ctx?.drawImage(img, 0, 0, width, height)
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob)
+            else reject(new Error('Canvas toBlob failed'))
+          }, 'image/webp', 0.85)
+        }
+        img.onerror = () => reject(new Error('Failed to load image'))
+        img.src = URL.createObjectURL(file)
+      })
+
+      const webpFile = new File([webpBlob], 'logo.webp', { type: 'image/webp' })
+      const formData = new FormData()
+      formData.append('file', webpFile)
+      formData.append('storageKey', `logos/${org.owner_profile_id}/logo-${Date.now()}.webp`)
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Upload failed')
+
+      setForm((p) => ({ ...p, logo_url: data.publicUrl }))
+    } catch (err: any) {
+      setError(err.message || 'Error uploading logo')
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
+
   return (
     <form onSubmit={handleSave}>
       {error && (
@@ -161,6 +220,27 @@ export default function SettingsClient({ org }: Props) {
       {/* Agency Identity */}
       <div className={styles.formSection}>
         <div className={styles.formSectionTitle}>Agency Identity</div>
+
+        <div className={styles.field} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {form.logo_url ? (
+            <img 
+              src={form.logo_url} 
+              alt="Logo" 
+              style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--line)' }} 
+            />
+          ) : (
+            <div style={{ width: 64, height: 64, borderRadius: 8, background: 'var(--paper-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, border: '1px dashed var(--line)' }}>
+              🏢
+            </div>
+          )}
+          <div>
+            <label className="btn btn--outline btn--sm" style={{ cursor: 'pointer' }}>
+              {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} disabled={uploadingLogo} />
+            </label>
+            <p style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 4 }}>Will be shown on your paywalls and outgoing documents.</p>
+          </div>
+        </div>
 
         <div className={styles.field}>
           <label className={styles.label}>Agency Name</label>
@@ -528,38 +608,17 @@ export default function SettingsClient({ org }: Props) {
           <span>✨</span> AI Design Customization
         </div>
         <p style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginBottom: 16 }}>
-          Describe how you want your public page to look and feel, and our AI Copilot will update your configuration automatically.
+          Use our AI Copilot to design your public page in real-time. Launch the designer to start generating and previewing your custom look!
         </p>
 
-        {aiError && (
-          <div className={`${styles.notice} ${styles.noticeDanger}`} style={{ marginBottom: 16 }}>{aiError}</div>
-        )}
-        {aiSuccess && (
-          <div className={`${styles.notice} ${styles.noticeVerified}`} style={{ marginBottom: 16 }}>
-            ✓ AI generated new settings! Click "Save Changes" below to apply them.
-          </div>
-        )}
-
-        <div className={styles.field}>
-          <textarea
-            className={`${styles.input} ${styles.textarea}`}
-            style={{ borderColor: 'var(--aim)' }}
-            value={aiPrompt}
-            onChange={(e) => setAiPrompt(e.target.value)}
-            placeholder="e.g. Make my page look like a luxury hotel, formal tone, use 'grid' pattern..."
-            rows={3}
-          />
-        </div>
         <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-          <button
-            type="button"
+          <Link
+            href="/dashboard/agency/nanny/settings/ai"
             className="btn btn--sm"
-            style={{ background: 'var(--aim)', color: '#fff', border: 'none' }}
-            onClick={handleAiCustomize}
-            disabled={aiLoading || !aiPrompt.trim()}
+            style={{ background: 'var(--aim)', color: '#fff', border: 'none', textDecoration: 'none' }}
           >
-            {aiLoading ? 'Generating...' : '✨ Auto-fill with AI'}
-          </button>
+            ✨ Launch AI Designer
+          </Link>
         </div>
       </div>
 

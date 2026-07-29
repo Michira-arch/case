@@ -51,6 +51,7 @@ const DEFAULT_DEMO_ORG: NannyOrg = {
     continuity_preference: true,
   },
   is_public: true,
+  paystack_subaccount_code: null,
   seo_title: 'Sunny Smiles Nanny & Caregiving Agency',
   seo_description: 'Book verified nannies, maternity nurses, and caregivers in Nairobi.',
   page_config: {
@@ -619,6 +620,7 @@ export async function completeAssignment(assignmentId: string, hoursWorked?: num
   const supabase = createClient()
   const { error } = await supabase.rpc('nanny_complete_assignment', {
     p_assignment_id: assignmentId,
+    p_clocked_out_at: new Date().toISOString(),
     p_hours_worked: hoursWorked || null
   })
   return { error: error?.message || null }

@@ -21,6 +21,7 @@ export interface NannyOrg {
   location_area: string | null
   policy: NannyOrgPolicy
   is_public: boolean
+  paystack_subaccount_code: string | null
   seo_title: string | null
   seo_description: string | null
   page_config: NannyPageConfig
