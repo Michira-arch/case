@@ -236,6 +236,10 @@ export interface NannyBooking {
   source: 'direct' | 'widget' | 'admin' | 'api'
   requested_worker_id?: string | null
   pricing_unit?: string
+  custom_pricing_enabled?: boolean
+  agency_commission_pct?: number | null
+  unit_rate?: number | null
+  advanced_settings?: Record<string, any> | null
   created_at: string
   updated_at: string
   // Joined

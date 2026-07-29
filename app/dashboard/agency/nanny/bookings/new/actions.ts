@@ -15,9 +15,14 @@ export async function createManualBookingAction(formData: FormData) {
   const startStr = formData.get('scheduled_start') as string
   const endStr = formData.get('scheduled_end') as string
   const rateStr = formData.get('quoted_rate') as string
+  const bookingState = formData.get('booking_state') as string || 'completed'
   
-  if (!orgId || !serviceTypeId || !workerId || !address || !startStr || !endStr) {
+  if (!orgId || !serviceTypeId || !address || !startStr || !endStr) {
     return { error: 'Missing required fields' }
+  }
+
+  if (bookingState !== 'open' && !workerId) {
+    return { error: 'A worker must be assigned unless the status is Open' }
   }
 
   let clientId = formData.get('client_id') as string
@@ -64,7 +69,9 @@ export async function createManualBookingAction(formData: FormData) {
   const scheduledEnd = new Date(endStr).toISOString()
   const quotedRate = rateStr ? parseFloat(rateStr) : 0
 
-  // Insert Booking as 'in_progress' first
+  // Insert Booking
+  const initialBookingState = bookingState === 'completed' ? 'in_progress' : bookingState
+  
   const { data: booking, error: bookingErr } = await supabase
     .from('nanny_bookings')
     .insert({
@@ -72,10 +79,10 @@ export async function createManualBookingAction(formData: FormData) {
       client_id: clientId,
       service_type_id: serviceTypeId,
       reference,
-      booking_state: 'in_progress',
+      booking_state: initialBookingState,
       scheduled_start: scheduledStart,
       scheduled_end: scheduledEnd,
-      actual_start: scheduledStart,
+      actual_start: bookingState === 'in_progress' || bookingState === 'completed' ? scheduledStart : null,
       service_address: address,
       quoted_rate: quotedRate,
       source: 'admin'
@@ -88,37 +95,45 @@ export async function createManualBookingAction(formData: FormData) {
     return { error: 'Failed to create booking.' }
   }
 
-  // Insert Assignment as 'in_progress'
-  const { data: assignment, error: assignErr } = await supabase
-    .from('nanny_assignments')
-    .insert({
-      booking_id: booking.id,
-      worker_id: workerId,
-      org_id: orgId,
-      assignment_state: 'in_progress',
-      base_amount: quotedRate
-    })
-    .select('id')
-    .single()
+  // If a worker is assigned (i.e. not open), create assignment
+  if (workerId) {
+    let assignmentState = 'scheduled'
+    if (bookingState === 'in_progress' || bookingState === 'completed') {
+      assignmentState = 'in_progress'
+    }
 
-  if (assignErr || !assignment) {
-    console.error('Error creating assignment:', assignErr)
-    return { error: 'Failed to create assignment.' }
-  }
+    const { data: assignment, error: assignErr } = await supabase
+      .from('nanny_assignments')
+      .insert({
+        booking_id: booking.id,
+        worker_id: workerId,
+        org_id: orgId,
+        assignment_state: assignmentState,
+        base_amount: quotedRate
+      })
+      .select('id')
+      .single()
 
-  // Calculate hours based on scheduled times
-  const hours = (new Date(scheduledEnd).getTime() - new Date(scheduledStart).getTime()) / (1000 * 60 * 60);
+    if (assignErr || !assignment) {
+      console.error('Error creating assignment:', assignErr)
+      return { error: 'Failed to create assignment.' }
+    }
 
-  // Now properly complete the assignment, computing financials and creating the invoice
-  const { error: completeErr } = await supabase.rpc('nanny_complete_assignment', {
-    p_assignment_id: assignment.id,
-    p_clocked_out_at: scheduledEnd,
-    p_hours_worked: hours > 0 ? hours : 1 // fallback to 1 hr if dates are same
-  })
+    // Only complete if they selected completed
+    if (bookingState === 'completed') {
+      const hours = (new Date(scheduledEnd).getTime() - new Date(scheduledStart).getTime()) / (1000 * 60 * 60);
 
-  if (completeErr) {
-    console.error('Error completing assignment:', completeErr)
-    return { error: 'Failed to generate invoice for booking.' }
+      const { error: completeErr } = await supabase.rpc('nanny_complete_assignment', {
+        p_assignment_id: assignment.id,
+        p_clocked_out_at: scheduledEnd,
+        p_hours_worked: hours > 0 ? hours : 1
+      })
+
+      if (completeErr) {
+        console.error('Error completing assignment:', completeErr)
+        return { error: 'Failed to generate invoice for booking.' }
+      }
+    }
   }
 
   revalidatePath('/dashboard/agency/nanny/bookings')

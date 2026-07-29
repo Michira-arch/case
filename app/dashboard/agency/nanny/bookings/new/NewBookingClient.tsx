@@ -111,8 +111,8 @@ export default function NewBookingClient({ orgId, clients, workers, serviceTypes
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>Assigned Worker *</label>
-            <select name="worker_id" className={`${styles.input} ${styles.select}`} required defaultValue="">
+            <label className={styles.label}>Assigned Worker (Optional if Open)</label>
+            <select name="worker_id" className={`${styles.input} ${styles.select}`} defaultValue="">
               <option value="" disabled>-- Select a worker --</option>
               {workers.map(w => (
                 <option key={w.id} value={w.id}>{w.profile?.display_name || w.shadow_name || 'Unknown Worker'}</option>
@@ -138,11 +138,23 @@ export default function NewBookingClient({ orgId, clients, workers, serviceTypes
           <input name="service_address" className={styles.input} required placeholder="Full address of where the service took place" />
         </div>
 
-        <div className={styles.field} style={{ maxWidth: '50%' }}>
-          <label className={styles.label}>Amount Paid (Quoted Rate) *</label>
-          <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 12, top: 9, color: 'var(--ink-muted)' }}>$</span>
-            <input name="quoted_rate" type="number" step="0.01" min="0" className={styles.input} style={{ paddingLeft: 24 }} required placeholder="0.00" />
+        <div className={styles.formGrid}>
+          <div className={styles.field} style={{ maxWidth: '50%' }}>
+            <label className={styles.label}>Amount Paid (Quoted Rate) *</label>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 12, top: 9, color: 'var(--ink-muted)' }}>$</span>
+              <input name="quoted_rate" type="number" step="0.01" min="0" className={styles.input} style={{ paddingLeft: 24 }} required placeholder="0.00" />
+            </div>
+          </div>
+
+          <div className={styles.field} style={{ maxWidth: '50%' }}>
+            <label className={styles.label}>Initial Status *</label>
+            <select name="booking_state" className={`${styles.input} ${styles.select}`} required defaultValue="completed">
+              <option value="open">Open (Needs Worker)</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed (Create Invoice)</option>
+            </select>
           </div>
         </div>
       </div>

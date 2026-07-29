@@ -51,6 +51,18 @@ export default function BookingCard({ booking, href }: BookingCardProps) {
   const badgeClass =
     BADGE_CLASSES[booking.booking_state] ?? styles.badgeCompleted
 
+  const BORDER_COLORS: Record<string, string> = {
+    open: 'var(--aim)',
+    matched: 'var(--brass)',
+    scheduled: 'var(--brass)',
+    confirmed: 'var(--verified)',
+    in_progress: 'var(--verified)',
+    completed: 'var(--ink-soft)',
+    cancelled: 'var(--danger)',
+    closed: 'var(--ink-muted)'
+  }
+  const borderColor = BORDER_COLORS[booking.booking_state] ?? 'var(--line)'
+
   const inner = (
     <>
       {/* State badge */}
@@ -96,11 +108,11 @@ export default function BookingCard({ booking, href }: BookingCardProps) {
 
   if (href) {
     return (
-      <Link href={href} className={styles.bookingCard}>
+      <Link href={href} className={styles.bookingCard} style={{ borderLeft: `4px solid ${borderColor}` }}>
         {inner}
       </Link>
     )
   }
 
-  return <div className={styles.bookingCard}>{inner}</div>
+  return <div className={styles.bookingCard} style={{ borderLeft: `4px solid ${borderColor}` }}>{inner}</div>
 }

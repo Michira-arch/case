@@ -23,8 +23,23 @@ interface Props {
 export default function BookingsClient({ bookings }: Props) {
   const [tab, setTab] = useState<BookingState | 'all'>('all')
 
-  const filtered =
-    tab === 'all' ? bookings : bookings.filter((b) => b.booking_state === tab)
+  const STATE_ORDER: Record<string, number> = {
+    open: 1,
+    scheduled: 2,
+    matched: 3,
+    confirmed: 4,
+    in_progress: 5,
+    completed: 6,
+    closed: 7,
+    cancelled: 8,
+  }
+
+  const filtered = (tab === 'all' ? bookings : bookings.filter((b) => b.booking_state === tab))
+    .sort((a, b) => {
+      const stateDiff = (STATE_ORDER[a.booking_state] ?? 99) - (STATE_ORDER[b.booking_state] ?? 99)
+      if (stateDiff !== 0) return stateDiff
+      return new Date(b.scheduled_start).getTime() - new Date(a.scheduled_start).getTime()
+    })
 
   return (
     <>
