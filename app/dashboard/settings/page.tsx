@@ -766,6 +766,16 @@ export default function SettingsPage() {
           </section>
         )}
 
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>AI Customization</h2>
+          <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 16, lineHeight: 1.5 }}>
+            Use our AI to generate a fully custom layout and design for your public page. 
+          </p>
+          <Link href="/dashboard/settings/ai" className="btn btn--outline" style={{ borderColor: 'var(--brand)', color: 'var(--brand)' }}>
+            Open AI Customization ✨
+          </Link>
+        </section>
+
         <section className={`${styles.section} ${styles.dangerSection}`}>
           <h2 className={styles.sectionTitle}>Account</h2>
           <div className={styles.dangerActions}>

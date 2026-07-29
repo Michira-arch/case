@@ -174,6 +174,18 @@ export default async function PublicProfilePage({ params }: Props) {
       })),
   }
 
+  if ((profile as any).is_custom_page && (profile as any).custom_html) {
+    return (
+      <>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <div dangerouslySetInnerHTML={{ __html: (profile as any).custom_html }} suppressHydrationWarning />
+      </>
+    )
+  }
+
   return (
     <>
       <script
