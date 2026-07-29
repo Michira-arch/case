@@ -110,6 +110,7 @@ export async function createSubaccount(params: {
       settlement_bank: params.settlement_bank,
       account_number: params.account_number,
       primary_contact_email: params.primary_contact_email,
+      percentage_charge: 0
     })
   })
 
