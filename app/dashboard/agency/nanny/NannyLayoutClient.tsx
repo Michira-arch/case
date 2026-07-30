@@ -22,10 +22,14 @@ const NAV_ITEMS = [
 
 export default function NannyLayoutClient({
   children,
-  org
+  org,
+  serverLocked = false,
+  serverLockReason = ''
 }: {
   children: React.ReactNode
   org: any
+  serverLocked?: boolean
+  serverLockReason?: string
 }) {
   const pathname = usePathname()
   const [toast, setToast] = useState<{ title: string; body: string; url?: string } | null>(null)
@@ -54,32 +58,8 @@ export default function NannyLayoutClient({
     return () => navigator.serviceWorker.removeEventListener('message', handleMessage)
   }, [])
 
-  let isLocked = false
-  let lockReason = ''
-
-  if (org) {
-    const now = new Date()
-    const createdAt = new Date(org.created_at)
-    const gracePeriodEnd = new Date(createdAt.getTime() + 3 * 24 * 60 * 60 * 1000)
-
-    if (org.billing_status === 'suspended') {
-      isLocked = true
-      lockReason = 'Your account is suspended. Please renew your subscription to continue.'
-    } else if (org.billing_status === 'past_due') {
-      isLocked = true
-      lockReason = 'Your account is past due. Please update your payment method to continue.'
-    } else if (org.billing_plan === 'free' || !org.billing_plan) {
-      if (now > gracePeriodEnd) {
-        isLocked = true
-        lockReason = 'Your 3-day setup period has ended. Start your 14-day free trial to continue using the platform.'
-      }
-    } else if (org.billing_status === 'trial') {
-      if (org.next_billing_date && now > new Date(org.next_billing_date)) {
-        isLocked = true
-        lockReason = 'Your 14-day free trial has expired. Please subscribe to a plan to continue.'
-      }
-    }
-  }
+  let isLocked = serverLocked
+  let lockReason = serverLockReason
 
   const isBillingPage = pathname === '/dashboard/agency/nanny/billing'
   

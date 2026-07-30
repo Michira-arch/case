@@ -106,7 +106,7 @@ export default function RequestsClient({ requests }: Props) {
                   <div>
                     <h3 style={{ margin: '0 0 4px', fontSize: 16 }}>{name}</h3>
                     <p style={{ margin: 0, color: 'var(--ink-muted)', fontSize: 13 }}>{email}</p>
-                    <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--ink-lighter)' }}>
+                    <p suppressHydrationWarning style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--ink-lighter)' }}>
                       Requested on {new Date(req.created_at).toLocaleDateString()}
                     </p>
                   </div>

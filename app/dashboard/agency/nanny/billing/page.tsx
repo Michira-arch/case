@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 import { openPaystackCheckout } from '@/lib/paystack'
 import { NannyOrg } from '@/lib/nanny-types'
 import { CheckCircle2, AlertCircle, CreditCard, CalendarDays, Loader2, Landmark } from 'lucide-react'
@@ -10,6 +11,7 @@ export default function AgencyBillingPage() {
   const [org, setOrg] = useState<NannyOrg | null>(null)
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
+  const router = useRouter()
   const supabase = createClient()
   
   // Subaccount state
@@ -90,7 +92,8 @@ export default function AgencyBillingPage() {
             alert(`Subscription failed: ${err.error}`)
           } else {
             alert('Subscription successful!')
-            fetchOrg()
+            await fetchOrg()
+            router.refresh()
           }
           setProcessing(false)
         },
@@ -114,7 +117,8 @@ export default function AgencyBillingPage() {
         throw new Error(data.error || 'Failed to start trial')
       }
       alert('14-day free trial started successfully!')
-      fetchOrg()
+      await fetchOrg()
+      router.refresh()
     } catch (err: any) {
       alert(err.message)
     } finally {
