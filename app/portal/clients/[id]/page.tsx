@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import ChatUI from '@/components/ChatUI'
+import ClientBillingPanel from '@/components/agency/ClientBillingPanel'
 
 interface PageProps {
   params: { id: string }
@@ -55,6 +56,8 @@ export default async function ClientPortalPage({ params }: PageProps): Promise<J
             senderType="client"
           />
         </div>
+        
+        <ClientBillingPanel client={client} />
       </div>
     </div>
   )

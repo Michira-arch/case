@@ -69,6 +69,11 @@ const DEFAULT_DEMO_ORG: NannyOrg = {
     hero_pattern: 'dots',
     stats: [],
   },
+  billing_plan: 'free',
+  billing_status: 'active',
+  next_billing_date: null,
+  paystack_auth_code: null,
+  billing_email: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 }

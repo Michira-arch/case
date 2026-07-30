@@ -26,7 +26,7 @@ create table if not exists public.profiles (
                     check (handle ~ '^[a-z0-9._-]{3,30}$'),
   persona         text not null
                     constraint persona_values
-                    check (persona in ('service','professional','jobseeker')),
+                    check (persona in ('service','professional','jobseeker','client')),
   display_name    text not null,
   role_line       text,                       -- "Freelance hairstylist & braider · Nairobi"
   tagline         text,

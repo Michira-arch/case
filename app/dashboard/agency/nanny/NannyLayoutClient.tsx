@@ -65,6 +65,9 @@ export default function NannyLayoutClient({
     if (org.billing_status === 'suspended') {
       isLocked = true
       lockReason = 'Your account is suspended. Please renew your subscription to continue.'
+    } else if (org.billing_status === 'past_due') {
+      isLocked = true
+      lockReason = 'Your account is past due. Please update your payment method to continue.'
     } else if (org.billing_plan === 'free' || !org.billing_plan) {
       if (now > gracePeriodEnd) {
         isLocked = true

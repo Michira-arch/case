@@ -2,110 +2,95 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { generateReference, PRICING, openPaystackCheckout } from '@/lib/paystack'
-import styles from '../nanny-dashboard.module.css'
+import { openPaystackCheckout } from '@/lib/paystack'
+import { NannyOrg } from '@/lib/nanny-types'
+import { CheckCircle2, AlertCircle, CreditCard, CalendarDays, Loader2, Landmark } from 'lucide-react'
 
 export default function AgencyBillingPage() {
-  const supabase = createClient()
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
-  const [org, setOrg] = useState<any>(null)
+  const [org, setOrg] = useState<NannyOrg | null>(null)
   const [loading, setLoading] = useState(true)
-  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'confirming' | 'success' | 'error'>('idle')
-  const [selectedPlan, setSelectedPlan] = useState<'agency_monthly' | 'agency_yearly'>('agency_monthly')
-  const [subaccountError, setSubaccountError] = useState<string | null>(null)
-
-  // Subaccount form state
+  const [processing, setProcessing] = useState(false)
+  const supabase = createClient()
+  
+  // Subaccount state
   const [submittingSubaccount, setSubmittingSubaccount] = useState(false)
   const [bankName, setBankName] = useState('')
   const [accountNumber, setAccountNumber] = useState('')
   const [banks, setBanks] = useState<any[]>([])
+  const [subaccountError, setSubaccountError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Inject Paystack script
-    const script = document.createElement('script')
-    script.src = 'https://js.paystack.co/v1/inline.js'
-    script.async = true
-    document.body.appendChild(script)
-
-    const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      setUser(user)
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('owner_id', user.id)
-        .single()
-      setProfile(profile)
-
-      if (profile) {
-        const { data: orgData } = await supabase
-          .from('nanny_orgs')
-          .select('*')
-          .eq('owner_profile_id', profile.id)
-          .single()
-        
-        setOrg(orgData)
-      }
-
-      try {
-        const banksRes = await fetch('/api/paystack/banks')
-        const banksData = await banksRes.json()
-        if (banksData.data) {
-          setBanks(banksData.data)
-        }
-      } catch (err) {
-        console.error('Error fetching banks', err)
-      }
-
-      setLoading(false)
-    }
-
-    load()
+    fetchOrg()
+    fetchBanks()
   }, [])
 
-  const handleCheckout = () => {
-    if (!user || !profile || !org) return
+  async function fetchOrg() {
+    setLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-    setPaymentStatus('idle')
-    const plan = PRICING[selectedPlan]
-    const ref = generateReference(profile.id)
-
-    openPaystackCheckout({
-      email: user.email,
-      amountKes: plan.amount_kes,
-      reference: ref,
-      profileId: profile.id,
-      planPeriod: selectedPlan,
-      onSuccess: async (reference) => {
-        setPaymentStatus('confirming')
-        
-        // Let webhook handle updating the actual nanny_orgs billing_status
-        // For UI purposes, we can poll or just assume success after a delay
-        setTimeout(() => {
-          setPaymentStatus('success')
-        }, 3000)
-      },
-      onClose: () => {
-        if (paymentStatus !== 'success') {
-          setPaymentStatus('idle')
-        }
-      }
-    })
+    const { data: orgData } = await supabase
+      .from('nanny_orgs')
+      .select('*')
+      .eq('owner_profile_id', user.id)
+      .single()
+    
+    if (orgData) {
+      setOrg(orgData)
+    }
+    setLoading(false)
   }
 
-  const handleStartTrial = async () => {
-    if (!org) return
-    setPaymentStatus('confirming')
+  async function fetchBanks() {
     try {
-      const res = await fetch('/api/billing/start-trial', { method: 'POST' })
-      if (!res.ok) throw new Error('Failed to start trial')
-      setPaymentStatus('success')
-      setTimeout(() => window.location.reload(), 1500)
-    } catch (e) {
-      setPaymentStatus('error')
+      const banksRes = await fetch('/api/paystack/banks')
+      const banksData = await banksRes.json()
+      if (banksData.data) {
+        setBanks(banksData.data)
+      }
+    } catch (err) {
+      console.error('Error fetching banks', err)
+    }
+  }
+
+  const handleSubscribe = async (planType: 'agency_monthly' | 'agency_yearly', amountKes: number) => {
+    if (!org) return
+    setProcessing(true)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user?.email) throw new Error('No user email')
+
+      openPaystackCheckout({
+        email: user.email,
+        amountKes: amountKes,
+        reference: `SUB-${org.id}-${Date.now()}`,
+        planPeriod: planType,
+        isSubscription: true,
+        onSuccess: async (ref) => {
+          const res = await fetch('/api/billing/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reference: ref, orgId: org.id, plan: planType }),
+          })
+
+          if (!res.ok) {
+            const err = await res.json()
+            alert(`Subscription failed: ${err.error}`)
+          } else {
+            alert('Subscription successful!')
+            fetchOrg()
+          }
+          setProcessing(false)
+        },
+        onClose: () => {
+          setProcessing(false)
+        },
+      })
+    } catch (error: any) {
+      console.error(error)
+      alert(error.message)
+      setProcessing(false)
     }
   }
 
@@ -134,6 +119,7 @@ export default function AgencyBillingPage() {
       }
 
       setOrg({ ...org, paystack_subaccount_code: data.subaccount_code })
+      alert('Settlement account linked successfully!')
     } catch (err: any) {
       setSubaccountError(err.message)
     } finally {
@@ -141,198 +127,175 @@ export default function AgencyBillingPage() {
     }
   }
 
-  if (loading) return <div>Loading...</div>
-  if (!org) return <div>No agency found for your profile. Please create one first.</div>
+  if (loading) return (
+    <div className="flex justify-center p-12">
+      <Loader2 className="animate-spin text-gray-400 w-8 h-8" />
+    </div>
+  )
 
-  const isFree = org.billing_plan === 'free' || !org.billing_plan
+  if (!org) return <div>Agency not found.</div>
+
+  const isPro = org.billing_plan !== 'free' && org.billing_status === 'active'
 
   return (
-    <>
-      <div className={styles.pageHeader}>
-        <div>
-          <h1 className={styles.pageTitle}>Billing & Subscription</h1>
-          <p className={styles.pageSubtitle}>Manage your agency subscription and payment settlement accounts.</p>
-        </div>
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 py-8 px-4">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Billing & Settlement</h1>
+        <p className="text-gray-500 mt-2">Manage your platform subscription and client payment settlements.</p>
       </div>
 
-      <div className={styles.content}>
-        {isFree && (
-          <div style={{ 
-            background: 'linear-gradient(135deg, var(--ink), #2563eb)', 
-            color: 'white', 
-            padding: '32px', 
-            borderRadius: 'var(--radius-lg)', 
-            marginBottom: '32px',
-            boxShadow: 'var(--shadow-lg)'
-          }}>
-            <h2 style={{ fontSize: '24px', fontWeight: 600, margin: '0 0 12px', color: 'white' }}>Start your 14-Day Free Trial ✨</h2>
-            <p style={{ margin: 0, opacity: 0.9, maxWidth: '700px', lineHeight: 1.6, fontSize: '15px' }}>
-              Experience the full power of the Case platform. We'll help you coordinate bookings, vet your workers, chase your invoices, and scale your client base in ways you wouldn't think possible. No commitment required.
-            </p>
-          </div>
-        )}
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-          
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Platform Subscription</h2>
-            <div style={{ background: 'var(--card)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--line)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <div>
-                  <p style={{ margin: '0 0 4px', fontSize: '13px', color: 'var(--ink-muted)' }}>Current Plan</p>
-                  <p style={{ margin: 0, fontWeight: 600, fontSize: '18px', textTransform: 'capitalize' }}>{org.billing_plan || 'Free'}</p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ margin: '0 0 4px', fontSize: '13px', color: 'var(--ink-muted)' }}>Status</p>
-                  <span style={{ 
-                    padding: '4px 10px', 
-                    borderRadius: '12px', 
-                    fontSize: '12px', 
-                    fontWeight: 600,
-                    background: org.billing_status === 'active' ? 'var(--verified-bg)' : 'var(--warning-bg)',
-                    color: org.billing_status === 'active' ? 'var(--verified)' : 'var(--warning)'
-                  }}>
-                    {org.billing_status || 'Inactive'}
-                  </span>
-                </div>
-              </div>
-              
-              {org.next_billing_date && (
-                <p style={{ fontSize: '14px', color: 'var(--ink-muted)', marginBottom: '24px' }}>
-                  Next Billing Date: <strong>{new Date(org.next_billing_date).toLocaleDateString()}</strong>
+      <div className="grid md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-6">
+          <div className="bg-white border rounded-xl p-6 shadow-sm">
+            <h2 className="text-lg font-semibold mb-4">Current Plan</h2>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-gray-900 capitalize">
+                  {org.billing_plan === 'free' ? 'Free Plan' : org.billing_plan.replace('_', ' ')}
                 </p>
-              )}
-
-              <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-                <div 
-                  onClick={() => setSelectedPlan('agency_monthly')}
-                  style={{ 
-                    border: selectedPlan === 'agency_monthly' ? '2px solid var(--ink)' : '1px solid var(--line)', 
-                    padding: '16px', 
-                    borderRadius: 'var(--radius)', 
-                    cursor: 'pointer', 
-                    flex: 1,
-                    background: selectedPlan === 'agency_monthly' ? 'var(--paper-light)' : 'transparent',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <h3 style={{ fontSize: '15px', margin: '0 0 8px' }}>Monthly</h3>
-                  <p style={{ fontSize: '14px', color: 'var(--ink-muted)', margin: 0 }}>1,000 KES / mo</p>
-                </div>
-                <div 
-                  onClick={() => setSelectedPlan('agency_yearly')}
-                  style={{ 
-                    border: selectedPlan === 'agency_yearly' ? '2px solid var(--ink)' : '1px solid var(--line)', 
-                    padding: '16px', 
-                    borderRadius: 'var(--radius)', 
-                    cursor: 'pointer', 
-                    flex: 1,
-                    background: selectedPlan === 'agency_yearly' ? 'var(--paper-light)' : 'transparent',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <h3 style={{ fontSize: '15px', margin: '0 0 8px' }}>Yearly</h3>
-                  <p style={{ fontSize: '14px', color: 'var(--ink-muted)', margin: 0 }}>10,000 KES / yr</p>
-                  <span style={{ fontSize: '11px', background: 'var(--verified-bg)', color: 'var(--verified)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Save 17%</span>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${isPro ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                    {isPro ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                    {org.billing_status?.toUpperCase() || 'INACTIVE'}
+                  </span>
+                  {org.next_billing_date && (
+                    <span className="text-sm text-gray-500 flex items-center gap-1">
+                      <CalendarDays className="w-4 h-4" />
+                      Renews: {new Date(org.next_billing_date).toLocaleDateString()}
+                    </span>
+                  )}
                 </div>
               </div>
+            </div>
+          </div>
 
+          <div className="bg-white border rounded-xl p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-semibold">Platform Payment Method</h2>
+            {org.paystack_auth_code ? (
+              <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border">
+                <CreditCard className="w-5 h-5 text-green-600" />
+                <div>
+                  <span className="block text-sm font-medium text-gray-900">Card on File (Active)</span>
+                  <span className="block text-xs text-gray-500">Used for automatic renewals</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 bg-gray-50 p-4 rounded-lg border">No payment method on file. Subscribe to a plan to add one.</p>
+            )}
+          </div>
+
+          <div className="bg-white border rounded-xl p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Landmark className="w-5 h-5 text-blue-600" />
+              <h2 className="text-lg font-semibold">Client Payments (Settlement)</h2>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-6">
+              Set up a Paystack Subaccount so clients can pay you directly. The platform automatically takes its commission, and the rest is settled directly to your bank account.
+            </p>
+            
+            {org.paystack_subaccount_code ? (
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <p className="text-green-700 font-semibold flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="w-5 h-5" /> Settlement Account Active
+                </p>
+                <p className="text-sm text-green-800">
+                  Subaccount Code: <code className="bg-white px-2 py-0.5 rounded font-mono border border-green-200">{org.paystack_subaccount_code}</code>
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleCreateSubaccount} className="space-y-4">
+                {subaccountError && (
+                  <div className="bg-red-50 text-red-700 p-3 rounded text-sm border border-red-200">
+                    {subaccountError}
+                  </div>
+                )}
+                
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Bank / Provider</label>
+                    <select 
+                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      value={bankName}
+                      onChange={e => setBankName(e.target.value)}
+                      required
+                    >
+                      <option value="">Select a Bank...</option>
+                      {banks.map((bank) => (
+                        <option key={bank.code} value={bank.code}>
+                          {bank.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Account / Phone Number</label>
+                    <input 
+                      type="text" 
+                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder={bankName === 'MPESA' ? '07XXXXXXXX' : 'e.g. 0123456789'}
+                      value={accountNumber}
+                      onChange={e => setAccountNumber(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  type="submit" 
+                  disabled={submittingSubaccount}
+                  className="bg-gray-900 text-white px-4 py-2 rounded-md font-medium text-sm hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                >
+                  {submittingSubaccount ? 'Creating...' : 'Create Settlement Account'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-gradient-to-b from-blue-50 to-white border border-blue-100 rounded-xl p-6 shadow-sm sticky top-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Upgrade to Pro</h3>
+            <p className="text-sm text-gray-600 mb-6">Unlock all premium agency features, advanced matchmaking, and remove platform limits.</p>
+            
+            <div className="space-y-4">
               <button 
-                onClick={isFree ? handleStartTrial : handleCheckout} 
-                className="btn btn--dark"
-                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => handleSubscribe('agency_monthly', 1000)}
+                disabled={processing || isPro}
+                className="w-full flex items-center justify-between px-4 py-3 bg-white border-2 border-blue-600 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isFree ? 'Start 14-Day Free Trial' : 'Renew Subscription'}
+                <div className="text-left">
+                  <div className="font-semibold text-gray-900">Monthly</div>
+                  <div className="text-sm text-gray-500">1,000 KES / mo</div>
+                </div>
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isPro && org.billing_plan === 'agency_monthly' ? 'border-blue-600' : 'border-gray-300'}`}>
+                  {isPro && org.billing_plan === 'agency_monthly' && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
+                </div>
               </button>
 
-              {paymentStatus === 'confirming' && <p style={{ color: 'var(--warning)', marginTop: '16px', fontSize: '14px', textAlign: 'center' }}>Processing...</p>}
-              {paymentStatus === 'error' && <p style={{ color: 'var(--danger)', marginTop: '16px', fontSize: '14px', textAlign: 'center' }}>Failed to process. Please try again.</p>}
-              {paymentStatus === 'success' && <p style={{ color: 'var(--verified)', marginTop: '16px', fontSize: '14px', textAlign: 'center', fontWeight: 600 }}>✨ Success!</p>}
-            </div>
-          </div>
-
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Client Payments (Settlement)</h2>
-            <div style={{ background: 'var(--card)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--line)', height: '100%' }}>
-              <p style={{ fontSize: '14px', color: 'var(--ink-muted)', margin: '0 0 24px', lineHeight: 1.5 }}>
-                Set up a Paystack Subaccount so clients can pay you directly. The platform automatically takes its commission, and the rest is settled directly to your bank account.
-              </p>
-              
-              {org.paystack_subaccount_code ? (
-                <div style={{ background: 'var(--verified-bg)', padding: '16px', borderRadius: 'var(--radius)', border: '1px solid var(--verified)' }}>
-                  <p style={{ color: 'var(--verified)', fontWeight: 600, margin: '0 0 8px' }}>✅ Settlement Account Active</p>
-                  <p style={{ fontSize: '13px', color: 'var(--ink)', margin: '0 0 16px' }}>Subaccount Code: <code style={{ background: 'rgba(255,255,255,0.5)', padding: '2px 6px', borderRadius: '4px' }}>{org.paystack_subaccount_code}</code></p>
-                  
-                  <div style={{ padding: '12px', background: 'var(--paper)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line)' }}>
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Public Payment Links</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <a href={`https://caseshow.info/agency/${org.slug}/pay`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        🔗 Generic Paywall (caseshow.info/agency/{org.slug}/pay)
-                      </a>
-                      <a href={`https://caseshow.info/agency/${org.slug}/subscribe`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        🔗 Recurring Subscription (caseshow.info/agency/{org.slug}/subscribe)
-                      </a>
-                    </div>
-                  </div>
+              <button 
+                onClick={() => handleSubscribe('agency_yearly', 10000)}
+                disabled={processing || isPro}
+                className="w-full flex items-center justify-between px-4 py-3 bg-white border rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed group"
+              >
+                <div className="text-left">
+                  <div className="font-semibold text-gray-900 group-hover:text-gray-900">Yearly <span className="text-xs ml-2 bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Save 17%</span></div>
+                  <div className="text-sm text-gray-500">10,000 KES / yr</div>
                 </div>
-              ) : (
-                <form onSubmit={handleCreateSubaccount} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {subaccountError && (
-                    <div className={`${styles.notice} ${styles.noticeDanger}`}>
-                      {subaccountError}
-                    </div>
-                  )}
-                  <h4 style={{ margin: '0 0 16px', fontSize: 16 }}>Set Up Settlement Account</h4>
-                  <p style={{ color: 'var(--ink-muted)', fontSize: 14, marginBottom: 20 }}>
-                    Choose your Bank or Mobile Money provider (like M-PESA) where your funds will be sent.
-                  </p>
-                  
-                  <div style={{ display: 'grid', gap: 16 }}>
-                    <div>
-                      <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 500 }}>Bank / Provider</label>
-                      <select 
-                        className={styles.input}
-                        value={bankName}
-                        onChange={e => setBankName(e.target.value)}
-                        required
-                      >
-                        <option value="">Select a Bank or Provider</option>
-                        {banks.map((bank) => (
-                          <option key={bank.code} value={bank.code}>
-                            {bank.name}
-                          </option>
-                        ))}
-                      </select>
-                      <p style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '4px' }}>M-PESA is fully supported.</p>
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 500 }}>Account Number / Phone Number</label>
-                      <input 
-                        type="text" 
-                        className={styles.input}
-                        placeholder={bankName === 'MPESA' ? '07XXXXXXXX' : 'e.g. 0123456789'}
-                        value={accountNumber}
-                        onChange={e => setAccountNumber(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <button 
-                    type="submit" 
-                    className="btn btn--dark"
-                    disabled={submittingSubaccount}
-                    style={{ marginTop: '8px' }}
-                  >
-                    {submittingSubaccount ? 'Creating...' : 'Create Settlement Account'}
-                  </button>
-                </form>
-              )}
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isPro && org.billing_plan === 'agency_yearly' ? 'border-blue-600' : 'border-gray-300'}`}>
+                  {isPro && org.billing_plan === 'agency_yearly' && <div className="w-2 h-2 rounded-full bg-blue-600"></div>}
+                </div>
+              </button>
             </div>
+            {isPro && (
+              <p className="text-xs text-center text-green-600 mt-4 font-medium">
+                You are currently subscribed to a Pro plan.
+              </p>
+            )}
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

@@ -7,7 +7,7 @@ export interface ContactVisibility {
   location?: boolean
 }
 
-export type Persona = 'service' | 'professional' | 'jobseeker'
+export type Persona = 'service' | 'professional' | 'jobseeker' | 'client'
 export type Pillar = 'did' | 'trained' | 'vouched' | 'aiming'
 export type EvidenceType = 'img' | 'pdf' | 'vid'
 export type Plan = 'free' | 'plus'

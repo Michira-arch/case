@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getDisplayDomain } from '@/lib/domain'
 import styles from './onboarding.module.css'
 
-type Persona = 'service' | 'professional' | 'jobseeker'
+type Persona = 'service' | 'professional' | 'jobseeker' | 'client'
 type Step = 'persona' | 'name' | 'handle' | 'tagline' | 'did' | 'trained' | 'final'
 
 interface ChatMessage {
@@ -43,6 +43,15 @@ const PERSONA_DATA = {
     trainedPrompt: "Excellent. Tell us the story behind your skills. Are you self-taught, formally educated, or did you learn by working with others?",
     placeholderDid: "e.g. Managed team of 4 customer support agents to hit 98% satisfaction",
     placeholderTrained: "e.g. Google Digital Marketing Certification",
+  },
+  client: {
+    label: 'Client (Just booking)',
+    emoji: '📅',
+    desc: 'You just want to book services, track past bookings, and manage invoices.',
+    didPrompt: "",
+    trainedPrompt: "",
+    placeholderDid: "",
+    placeholderTrained: "",
   },
 }
 
@@ -119,7 +128,9 @@ function OnboardingPageContent() {
           {
             id: `genie-name-${Date.now()}`,
             sender: 'genie',
-            text: `Excellent. A profile tailored for a ${PERSONA_DATA[selected].label.toLowerCase()} is perfect! Let's get your name. What should we display on your page?`
+            text: selected === 'client'
+              ? `Great! Let's get your name so providers know who they're working with.`
+              : `Excellent. A profile tailored for a ${PERSONA_DATA[selected].label.toLowerCase()} is perfect! Let's get your name. What should we display on your page?`
           }
         ]
       })
@@ -268,12 +279,22 @@ function OnboardingPageContent() {
     ])
 
     // Genie typing indicator
-    const typingId = `typing-tagline-${Date.now()}`
+    const typingId = `typing-next-${Date.now()}`
     setMessages(prev => [...prev, { id: typingId, sender: 'genie', text: '', isTyping: true }])
 
     setTimeout(() => {
       setMessages(prev => {
         const filtered = prev.filter(m => m.id !== typingId)
+        if (persona === 'client') {
+          return [
+            ...filtered,
+            {
+              id: `genie-final-${Date.now()}`,
+              sender: 'genie',
+              text: "All set! We have everything we need to set up your client account. Ready to go?"
+            }
+          ]
+        }
         return [
           ...filtered,
           {
@@ -289,7 +310,7 @@ function OnboardingPageContent() {
           }
         ]
       })
-      setStep('tagline')
+      setStep(persona === 'client' ? 'final' : 'tagline')
     }, 750)
   }
 
@@ -415,9 +436,14 @@ function OnboardingPageContent() {
       setStep('did')
       setMessages(prev => prev.slice(0, 9))
     } else if (step === 'final') {
-      setTrainedItem('')
-      setStep('trained')
-      setMessages(prev => prev.slice(0, 11))
+      if (persona === 'client') {
+        setStep('handle')
+        setMessages(prev => prev.slice(0, 5))
+      } else {
+        setTrainedItem('')
+        setStep('trained')
+        setMessages(prev => prev.slice(0, 11))
+      }
     }
   }
 
@@ -439,7 +465,9 @@ function OnboardingPageContent() {
           handle,
           persona,
           display_name: displayName,
-          role_line: roleLine,
+          role_line: persona === 'client' ? null : roleLine,
+          is_public: persona !== 'client',
+          discoverable: persona !== 'client',
         })
         .select()
         .single()
@@ -492,7 +520,7 @@ function OnboardingPageContent() {
         await supabase.from('proof_items').insert(seeds)
       }
 
-      router.push('/dashboard')
+      router.push(persona === 'client' ? '/dashboard/client' : '/dashboard')
     } catch (err: any) {
       setError(err.message || 'An error occurred while creating your profile.')
     } finally {
@@ -788,7 +816,7 @@ function OnboardingPageContent() {
                 onClick={handleCreateProfile}
                 disabled={loading}
               >
-                {loading ? 'Building your profile...' : 'Build My Case Profile 🚀'}
+                {loading ? 'Building your profile...' : persona === 'client' ? 'Go to Dashboard 🚀' : 'Build My Case Profile 🚀'}
               </button>
             </div>
           )}

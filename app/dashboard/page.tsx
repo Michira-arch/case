@@ -16,6 +16,10 @@ export default async function DashboardPage() {
 
   // Fetch active subscription for first profile
   const firstProfile = profiles?.[0]
+
+  if (firstProfile?.persona === 'client') {
+    redirect('/dashboard/client')
+  }
   let subscription = null
   let proofItems: any[] = []
   let monthlyViews = 0

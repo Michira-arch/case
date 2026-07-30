@@ -5,12 +5,21 @@ import { usePathname } from 'next/navigation'
 import styles from './dashboard.module.css'
 import NotificationsBell from '@/components/NotificationsBell'
 
-const navItems = [
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { Persona } from '@/lib/types'
+
+const defaultNavItems = [
   { href: '/dashboard',                     label: 'Case',      icon: '◆' },
   { href: '/dashboard/agency/nanny',        label: 'Agency',    icon: '🏥' },
   { href: '/dashboard/analytics',           label: 'Analytics', icon: '↗' },
   { href: '/dashboard/billing',             label: 'Billing',   icon: '★' },
   { href: '/dashboard/affiliate',           label: 'Affiliate', icon: '🤝' },
+  { href: '/dashboard/settings',            label: 'Settings',  icon: '⚙' },
+]
+
+const clientNavItems = [
+  { href: '/dashboard/client',              label: 'Dashboard', icon: '◆' },
   { href: '/dashboard/settings',            label: 'Settings',  icon: '⚙' },
 ]
 
@@ -20,6 +29,27 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const [persona, setPersona] = useState<Persona | null>(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function loadPersona() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('persona')
+          .eq('owner_id', user.id)
+          .maybeSingle()
+        if (data) {
+          setPersona(data.persona)
+        }
+      }
+    }
+    loadPersona()
+  }, [])
+
+  const navItems = persona === 'client' ? clientNavItems : defaultNavItems
 
   if (pathname.startsWith('/dashboard/agency')) {
     return <>{children}</>
@@ -49,9 +79,11 @@ export default function DashboardLayout({
           ))}
         </ul>
         <div className={styles.navFooter}>
-          <Link href="/dashboard/proof/new" className={styles.addBtn}>
-            + Add proof
-          </Link>
+          {persona !== 'client' && (
+            <Link href="/dashboard/proof/new" className={styles.addBtn}>
+              + Add proof
+            </Link>
+          )}
         </div>
       </nav>
 

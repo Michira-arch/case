@@ -25,6 +25,11 @@ export interface NannyOrg {
   seo_title: string | null
   seo_description: string | null
   page_config: NannyPageConfig
+  billing_plan: string
+  billing_status: string
+  next_billing_date: string | null
+  paystack_auth_code: string | null
+  billing_email: string | null
   created_at: string
   updated_at: string
 }
@@ -189,6 +194,9 @@ export interface NannyClient {
   details: ClientDetails
   preferred_worker_ids: string[]
   notes: string | null
+  paystack_auth_code: string | null
+  next_billing_date: string | null
+  billing_plan: string | null
   created_at: string
   updated_at: string
 }
