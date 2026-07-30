@@ -8,9 +8,8 @@ interface Props {
 
 export default async function AgencySubscribePage({ params }: Props) {
   const p = await params
-  const handle = (p?.handle || '').startsWith('%40')
-    ? decodeURIComponent(p.handle).slice(1)
-    : (p?.handle || '')
+  const rawHandle = decodeURIComponent(p?.handle || '');
+  const handle = rawHandle.startsWith('@') ? rawHandle.slice(1) : rawHandle;
 
   const supabase = createClient()
 
