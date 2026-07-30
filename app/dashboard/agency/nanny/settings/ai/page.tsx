@@ -50,7 +50,7 @@ export default function AgencyAICustomizationPage() {
       const { data: orgData } = await supabase
         .from('nanny_orgs')
         .select('*')
-        .eq('owner_id', profile.id)
+        .eq('owner_profile_id', profile.id)
         .limit(1)
         .single()
 

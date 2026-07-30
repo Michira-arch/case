@@ -79,6 +79,65 @@ export default function CopilotWidget({ orgId }: { orgId: string }) {
     }
   }
 
+  const executeSequenceFeedback = async (feedbackText: string, currentMessages: Message[]) => {
+    const tempMessages = [...currentMessages, { role: 'user' as const, content: `[System Update]: ${feedbackText}` }];
+    setMessages(tempMessages);
+    setLoading(true);
+
+    const h1s = Array.from(document.querySelectorAll('h1')).map(el => el.innerText).join(', ');
+    const uiContext = `User is currently on path: ${window.location.pathname}` + (h1s ? `. Visible Headings: ${h1s}` : '');
+
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: tempMessages, orgId, uiContext })
+      })
+      const data = await res.json()
+      if (res.ok && data.message) {
+        const finalMessages = [...tempMessages, { role: 'assistant' as const, content: data.message.content }];
+        setMessages(finalMessages);
+        
+        if (data.uiAction) {
+          handleUiAction(data.uiAction, finalMessages);
+        }
+      } else {
+        throw new Error(data.error || 'Failed to get response')
+      }
+    } catch (err: any) {
+      setMessages([...tempMessages, { role: 'assistant', content: `**Error:** ${err.message}` }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUiAction = (uiAction: any, currentMessages: Message[]) => {
+    const { action, selector, value, url } = uiAction;
+    if (action === 'redirect' && url) {
+      router.push(url);
+      // Wait for router push, but state might be lost on full reload. We assume SPA navigation.
+      setTimeout(() => executeSequenceFeedback(`Successfully redirected to: ${url}. You may need to wait for the page to load or proceed with the next step.`, currentMessages), 1500);
+    } else if (action === 'click' && selector) {
+      const el = document.querySelector(selector) as HTMLElement;
+      if (el) {
+        el.click();
+        setTimeout(() => executeSequenceFeedback(`Successfully clicked element: ${selector}. Proceed with the next step if necessary.`, currentMessages), 1000);
+      } else {
+        setTimeout(() => executeSequenceFeedback(`Failed to find element to click: ${selector}.`, currentMessages), 1000);
+      }
+    } else if (action === 'fill' && selector && value !== undefined) {
+      const el = document.querySelector(selector) as HTMLInputElement;
+      if (el) {
+        el.value = value;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        setTimeout(() => executeSequenceFeedback(`Successfully filled form field: ${selector} with value: ${value}. Proceed with the next step if necessary.`, currentMessages), 1000);
+      } else {
+        setTimeout(() => executeSequenceFeedback(`Failed to find form field to fill: ${selector}.`, currentMessages), 1000);
+      }
+    }
+  }
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim()) return
@@ -99,23 +158,11 @@ export default function CopilotWidget({ orgId }: { orgId: string }) {
       })
       const data = await res.json()
       if (res.ok && data.message) {
-        setMessages([...newMessages, { role: 'assistant', content: data.message.content }])
+        const finalMessages = [...newMessages, { role: 'assistant' as const, content: data.message.content }];
+        setMessages(finalMessages)
         
         if (data.uiAction) {
-          const { action, selector, value, url } = data.uiAction;
-          if (action === 'redirect' && url) {
-            router.push(url);
-          } else if (action === 'click' && selector) {
-            const el = document.querySelector(selector) as HTMLElement;
-            if (el) el.click();
-          } else if (action === 'fill' && selector && value !== undefined) {
-            const el = document.querySelector(selector) as HTMLInputElement;
-            if (el) {
-              el.value = value;
-              el.dispatchEvent(new Event('input', { bubbles: true }));
-              el.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-          }
+          handleUiAction(data.uiAction, finalMessages);
         }
       } else {
         throw new Error(data.error || 'Failed to get response')
