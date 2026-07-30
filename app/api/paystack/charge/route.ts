@@ -14,9 +14,13 @@ export async function POST(req: Request) {
     // Paystack expects amount in smallest currency unit. For KES it's 100 subunits = 1 KES.
     const amountSubunits = Math.round(Number(amountKes) * 100)
 
-    // 2. Format phone number (Paystack prefers valid formats, e.g. 07XXXXXXXX or 2547XXXXXXXX or +2547XXXXXXXX)
-    // We'll pass it exactly as user entered, but we can do basic cleanup
-    const cleanPhone = phone.replace(/\s+/g, '')
+    // 2. Format phone number for Paystack (requires international format e.g. 2547XXXXXXXX)
+    let cleanPhone = phone.replace(/[\s+]/g, '')
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = '254' + cleanPhone.substring(1)
+    } else if (cleanPhone.startsWith('7') || cleanPhone.startsWith('1')) {
+      cleanPhone = '254' + cleanPhone
+    }
 
     const payload: any = {
       email,
