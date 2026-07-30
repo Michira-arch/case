@@ -6,16 +6,23 @@ import styles from './pay.module.css'
 export default function PayClient({
   handle,
   initialAmount,
-  isLocked
+  isLocked,
+  isKenya = true,
+  subaccount
 }: {
   handle: string
   initialAmount: string
   isLocked: boolean
+  isKenya?: boolean
+  subaccount?: string
 }) {
   const [amount, setAmount] = useState(initialAmount)
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [chargeStatus, setChargeStatus] = useState<'idle' | 'loading' | 'stk_pushed' | 'success' | 'error'>('idle')
+  const [chargeMessage, setChargeMessage] = useState('')
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,8 +57,56 @@ export default function PayClient({
     }
   }
 
+  const handleMpesaDirect = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!phone || phone.length < 9 || !amount || !email) {
+      setChargeStatus('error')
+      setChargeMessage('Please fill all fields correctly')
+      return
+    }
+
+    setChargeStatus('loading')
+    setChargeMessage('')
+
+    try {
+      const reference = `PAY-${handle}-${Date.now()}`
+
+      const res = await fetch('/api/paystack/charge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          amountKes: amount,
+          phone,
+          reference,
+          subaccount
+        })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to initiate STK push')
+      }
+
+      setChargeStatus('stk_pushed')
+      setChargeMessage('Check your phone! An M-Pesa PIN prompt has been sent to ' + phone)
+      
+      // Auto-refresh after 15s to check for success (or they can manually refresh)
+      setTimeout(() => {
+        window.location.reload()
+      }, 15000)
+
+    } catch (err: any) {
+      console.error(err)
+      setChargeStatus('error')
+      setChargeMessage(err.message || 'Something went wrong.')
+    }
+  }
+
   return (
-    <form onSubmit={handlePay} className={styles.form}>
+    <form className={styles.form}>
       {error && <div className={styles.errorAlert}>{error}</div>}
       
       <div className={styles.field}>
@@ -87,8 +142,61 @@ export default function PayClient({
         <p className={styles.hint}>Your receipt will be sent here.</p>
       </div>
 
-      <button type="submit" className={styles.payBtn} disabled={loading || !amount || !email}>
-        {loading ? 'Processing...' : `Pay KES ${amount || '0'}`}
+      {isKenya && (
+        <div style={{ marginTop: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+          <h4 style={{ fontWeight: 600, marginBottom: '0.5rem', color: '#0f172a' }}>Pay with M-Pesa</h4>
+          <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1rem' }}>Enter your M-Pesa number to receive a payment prompt instantly.</p>
+          
+          <div className={styles.field}>
+            <input 
+              type="tel" 
+              placeholder="e.g. 0712345678"
+              className={styles.input}
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              disabled={chargeStatus === 'loading' || chargeStatus === 'stk_pushed'}
+            />
+          </div>
+
+          {chargeStatus === 'error' && (
+            <p style={{ fontSize: '0.875rem', color: '#ef4444', marginTop: '0.5rem' }}>{chargeMessage}</p>
+          )}
+          {chargeStatus === 'stk_pushed' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', color: '#15803d', background: '#f0fdf4', padding: '0.75rem', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+              <div className="animate-spin" style={{ width: '16px', height: '16px', border: '2px solid #15803d', borderTopColor: 'transparent', borderRadius: '50%' }} />
+              <p style={{ fontSize: '0.875rem', fontWeight: 500, margin: 0 }}>{chargeMessage}</p>
+            </div>
+          )}
+
+          <button 
+            type="button" 
+            onClick={handleMpesaDirect}
+            className={styles.payBtn} 
+            style={{ marginTop: '1rem', background: '#16a34a' }}
+            disabled={chargeStatus === 'loading' || chargeStatus === 'stk_pushed' || !amount || !email || !phone}
+          >
+            {chargeStatus === 'loading' ? 'Sending Prompt...' : `Pay KES ${amount || '0'}`}
+          </button>
+        </div>
+      )}
+
+      {isKenya && (
+        <div style={{ margin: '2rem 0', position: 'relative', textAlign: 'center' }}>
+          <hr style={{ borderColor: '#e2e8f0', margin: 0 }} />
+          <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', padding: '0 8px', fontSize: '0.875rem', color: '#94a3b8' }}>
+            Or use another method
+          </span>
+        </div>
+      )}
+
+      <button 
+        type="button" 
+        onClick={handlePay}
+        className={styles.payBtn} 
+        disabled={loading || !amount || !email || chargeStatus === 'loading' || chargeStatus === 'stk_pushed'}
+        style={isKenya ? { background: '#fff', color: '#334155', border: '1px solid #cbd5e1' } : {}}
+      >
+        {loading ? 'Processing...' : (isKenya ? 'Pay with Card / Other' : `Pay KES ${amount || '0'} Now`)}
       </button>
     </form>
   )

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import styles from './pay.module.css'
 import PayClient from './PayClient'
+import { headers } from 'next/headers'
 
 export const metadata = {
   robots: { index: false, follow: false },
@@ -50,6 +51,10 @@ export default async function PaywallPage({
   const initialAmount = searchParams.amount ? searchParams.amount : ''
   const isLocked = !!searchParams.amount
 
+  const headersList = headers()
+  const countryCode = headersList.get('x-vercel-ip-country')
+  const isKenya = !countryCode || countryCode === 'KE'
+
   return (
     <div className={styles.container}>
       <div className={styles.card}>
@@ -73,6 +78,8 @@ export default async function PaywallPage({
           handle={profile.handle} 
           initialAmount={initialAmount} 
           isLocked={isLocked}
+          isKenya={isKenya}
+          subaccount={profile.paystack_subaccount_code}
         />
         
         <div className={styles.footer}>
