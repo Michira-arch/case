@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { openPaystackCheckout } from '@/lib/paystack'
 import { useRouter } from 'next/navigation'
 
-export default function InvoiceClient({ invoice }: { invoice: any }) {
+export default function InvoiceClient({ invoice, isKenya = true }: { invoice: any, isKenya?: boolean }) {
   const router = useRouter()
   const [isPaying, setIsPaying] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -149,63 +149,69 @@ export default function InvoiceClient({ invoice }: { invoice: any }) {
             </div>
           ) : (
             <div className="space-y-6 max-w-md mx-auto">
-              
-              {/* Primary Fast Path: M-Pesa Direct */}
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <h4 className="text-lg font-medium text-gray-900 mb-2">Pay with M-Pesa</h4>
-                <p className="text-sm text-gray-500 mb-4">Enter your M-Pesa number to receive a payment prompt on your phone immediately.</p>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="phone" className="sr-only">Phone Number</label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      placeholder="e.g. 0712345678"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      disabled={chargeStatus === 'loading' || chargeStatus === 'stk_pushed'}
-                    />
+              {isKenya && (
+                <>
+                  {/* Primary Fast Path: M-Pesa Direct */}
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <h4 className="text-lg font-medium text-gray-900 mb-2">Pay with M-Pesa</h4>
+                    <p className="text-sm text-gray-500 mb-4">Enter your M-Pesa number to receive a payment prompt on your phone immediately.</p>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="phone" className="sr-only">Phone Number</label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          placeholder="e.g. 0712345678"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          disabled={chargeStatus === 'loading' || chargeStatus === 'stk_pushed'}
+                        />
+                      </div>
+
+                      {chargeStatus === 'error' && (
+                        <p className="text-sm text-red-600">{chargeMessage}</p>
+                      )}
+                      {chargeStatus === 'stk_pushed' && (
+                        <div className="flex items-center space-x-2 text-green-700 bg-green-50 p-3 rounded-md border border-green-200">
+                          <div className="animate-spin h-4 w-4 border-2 border-green-700 border-t-transparent rounded-full" />
+                          <p className="text-sm font-medium">{chargeMessage}</p>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={handleMpesaDirect}
+                        disabled={chargeStatus === 'loading' || chargeStatus === 'stk_pushed' || !phone}
+                        className="w-full inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
+                      >
+                        {chargeStatus === 'loading' ? 'Sending Prompt...' : `Pay KES ${Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      </button>
+                    </div>
                   </div>
 
-                  {chargeStatus === 'error' && (
-                    <p className="text-sm text-red-600">{chargeMessage}</p>
-                  )}
-                  {chargeStatus === 'stk_pushed' && (
-                    <div className="flex items-center space-x-2 text-green-700 bg-green-50 p-3 rounded-md border border-green-200">
-                      <div className="animate-spin h-4 w-4 border-2 border-green-700 border-t-transparent rounded-full" />
-                      <p className="text-sm font-medium">{chargeMessage}</p>
+                  {/* Secondary Catch-All: Paystack Popup */}
+                  <div className="relative my-8">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                      <div className="w-full border-t border-gray-300" />
                     </div>
-                  )}
-
-                  <button
-                    onClick={handleMpesaDirect}
-                    disabled={chargeStatus === 'loading' || chargeStatus === 'stk_pushed' || !phone}
-                    className="w-full inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
-                  >
-                    {chargeStatus === 'loading' ? 'Sending Prompt...' : `Pay KES ${Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                  </button>
-                </div>
-              </div>
-
-              {/* Secondary Catch-All: Paystack Popup */}
-              <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="px-2 bg-white text-sm text-gray-500">Or use another method</span>
-                </div>
-              </div>
+                    <div className="relative flex justify-center">
+                      <span className="px-2 bg-white text-sm text-gray-500">Or use another method</span>
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="text-center">
                 <button
                   onClick={handlePaymentPopup}
                   disabled={isPaying || chargeStatus === 'loading' || chargeStatus === 'stk_pushed'}
-                  className="w-full inline-flex items-center justify-center px-4 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+                  className={isKenya 
+                    ? "w-full inline-flex items-center justify-center px-4 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+                    : "w-full inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+                  }
                 >
-                  {isPaying ? 'Loading...' : 'Pay with Card / Other'}
+                  {isPaying ? (isKenya ? 'Loading...' : 'Processing...') : (isKenya ? 'Pay with Card / Other' : `Pay KES ${Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Now`)}
                 </button>
               </div>
 
