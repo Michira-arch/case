@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styles from './pay.module.css'
 
 export default function PayClient({
@@ -23,6 +23,13 @@ export default function PayClient({
   const [error, setError] = useState('')
   const [chargeStatus, setChargeStatus] = useState<'idle' | 'loading' | 'stk_pushed' | 'success' | 'error'>('idle')
   const [chargeMessage, setChargeMessage] = useState('')
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('paywall_email')
+    if (savedEmail) setEmail(savedEmail)
+    const savedPhone = localStorage.getItem('mpesa_phone')
+    if (savedPhone) setPhone(savedPhone)
+  }, [])
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -135,7 +142,10 @@ export default function PayClient({
           required
           className={styles.input}
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={e => {
+            setEmail(e.target.value)
+            localStorage.setItem('paywall_email', e.target.value)
+          }}
           disabled={loading}
           placeholder="email@example.com"
         />
@@ -153,7 +163,10 @@ export default function PayClient({
               placeholder="e.g. 0712345678"
               className={styles.input}
               value={phone}
-              onChange={e => setPhone(e.target.value)}
+              onChange={e => {
+                setPhone(e.target.value)
+                localStorage.setItem('mpesa_phone', e.target.value)
+              }}
               disabled={chargeStatus === 'loading' || chargeStatus === 'stk_pushed'}
             />
           </div>

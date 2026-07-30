@@ -14,6 +14,10 @@ export default function InvoiceClient({ invoice, isKenya = true }: { invoice: an
 
   useEffect(() => {
     setMounted(true)
+    const savedPhone = localStorage.getItem('mpesa_phone')
+    if (savedPhone) {
+      setPhone(savedPhone)
+    }
   }, [])
 
   // Poll for success if STK was pushed
@@ -164,7 +168,11 @@ export default function InvoiceClient({ invoice, isKenya = true }: { invoice: an
                           id="phone"
                           placeholder="e.g. 0712345678"
                           value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value
+                            setPhone(val)
+                            localStorage.setItem('mpesa_phone', val)
+                          }}
                           className="block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                           disabled={chargeStatus === 'loading' || chargeStatus === 'stk_pushed'}
                         />
