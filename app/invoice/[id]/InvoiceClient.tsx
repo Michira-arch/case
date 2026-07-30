@@ -190,7 +190,7 @@ export default function InvoiceClient({ invoice, isKenya = true }: { invoice: an
 
                       <button
                         onClick={handleMpesaDirect}
-                        disabled={chargeStatus === 'loading' || chargeStatus === 'stk_pushed' || !phone}
+                        disabled={chargeStatus === 'loading' || chargeStatus === 'stk_pushed'}
                         className="w-full inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
                       >
                         {chargeStatus === 'loading' ? 'Sending Prompt...' : `Pay KES ${Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}

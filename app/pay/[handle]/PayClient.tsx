@@ -33,6 +33,16 @@ export default function PayClient({
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!amount || parseFloat(amount) < 10) {
+      setError('Please enter a valid amount (minimum KES 10).')
+      return
+    }
+    if (!email) {
+      setError('Please enter your email address.')
+      return
+    }
+
     setLoading(true)
     setError('')
 
@@ -67,9 +77,19 @@ export default function PayClient({
   const handleMpesaDirect = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!phone || phone.length < 9 || !amount || !email) {
+    if (!amount || parseFloat(amount) < 10) {
       setChargeStatus('error')
-      setChargeMessage('Please fill all fields correctly')
+      setChargeMessage('Please enter a valid amount (minimum KES 10).')
+      return
+    }
+    if (!email) {
+      setChargeStatus('error')
+      setChargeMessage('Please enter your email address.')
+      return
+    }
+    if (!phone || phone.length < 9) {
+      setChargeStatus('error')
+      setChargeMessage('Please enter a valid M-Pesa phone number.')
       return
     }
 
@@ -186,7 +206,7 @@ export default function PayClient({
             onClick={handleMpesaDirect}
             className={styles.payBtn} 
             style={{ marginTop: '1rem', background: '#16a34a' }}
-            disabled={chargeStatus === 'loading' || chargeStatus === 'stk_pushed' || !amount || !email || !phone}
+            disabled={chargeStatus === 'loading' || chargeStatus === 'stk_pushed'}
           >
             {chargeStatus === 'loading' ? 'Sending Prompt...' : `Pay KES ${amount || '0'}`}
           </button>
@@ -206,7 +226,7 @@ export default function PayClient({
         type="button" 
         onClick={handlePay}
         className={styles.payBtn} 
-        disabled={loading || !amount || !email || chargeStatus === 'loading' || chargeStatus === 'stk_pushed'}
+        disabled={loading || chargeStatus === 'loading' || chargeStatus === 'stk_pushed'}
         style={isKenya ? { background: '#fff', color: '#334155', border: '1px solid #cbd5e1' } : {}}
       >
         {loading ? 'Processing...' : (isKenya ? 'Pay with Card / Other' : `Pay KES ${amount || '0'} Now`)}
