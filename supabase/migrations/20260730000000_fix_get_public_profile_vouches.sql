@@ -1,5 +1,5 @@
 -- RPC: get_public_profile
--- Update to include custom_html and is_custom_page
+-- Update to remove vouches which do not exist
 create or replace function public.get_public_profile(p_handle text)
 returns jsonb
 language plpgsql security definer
