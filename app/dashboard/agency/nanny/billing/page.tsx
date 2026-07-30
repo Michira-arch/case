@@ -29,10 +29,21 @@ export default function AgencyBillingPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    const { data: profile, error: profileErr } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('owner_id', user.id)
+      .single()
+      
+    if (!profile) {
+      setLoading(false)
+      return
+    }
+
     const { data: orgData } = await supabase
       .from('nanny_orgs')
       .select('*')
-      .eq('owner_profile_id', user.id)
+      .eq('owner_profile_id', profile.id)
       .single()
     
     if (orgData) {
@@ -90,6 +101,23 @@ export default function AgencyBillingPage() {
     } catch (error: any) {
       console.error(error)
       alert(error.message)
+      setProcessing(false)
+    }
+  }
+
+  const handleStartTrial = async () => {
+    setProcessing(true)
+    try {
+      const res = await fetch('/api/billing/start-trial', { method: 'POST' })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to start trial')
+      }
+      alert('14-day free trial started successfully!')
+      fetchOrg()
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
       setProcessing(false)
     }
   }
@@ -260,6 +288,16 @@ export default function AgencyBillingPage() {
             <p className="text-sm text-gray-600 mb-6">Unlock all premium agency features, advanced matchmaking, and remove platform limits.</p>
             
             <div className="space-y-4">
+              {org.billing_plan === 'free' && org.billing_status !== 'trial' && (
+                <button 
+                  onClick={handleStartTrial}
+                  disabled={processing}
+                  className="w-full flex items-center justify-center px-4 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 shadow-sm font-medium"
+                >
+                  Start 14-Day Free Trial
+                </button>
+              )}
+
               <button 
                 onClick={() => handleSubscribe('agency_monthly', 1000)}
                 disabled={processing || isPro}
