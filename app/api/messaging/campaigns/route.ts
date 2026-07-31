@@ -170,7 +170,9 @@ export async function POST(request: NextRequest) {
               .from('fcm_tokens')
               .delete()
               .in('token', invalidTokens)
-              .catch((err: any) => console.error('Failed to prune stale tokens:', err))
+              .then(({ error }: any) => {
+                if (error) console.error('Failed to prune stale tokens:', error)
+              })
           }
         }).catch((err: any) => {
           console.error(`Failed to send campaign notification to profile ${profileId}:`, err)

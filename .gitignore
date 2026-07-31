@@ -61,3 +61,6 @@ case-pow-99-firebase-adminsdk.json
 
 .vercel
 .env*
+
+# OpenCode local state
+.opencode/
