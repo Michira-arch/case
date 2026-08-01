@@ -52,11 +52,39 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await req.json()
     const { org_id, ...delta } = body
 
     if (!org_id) {
       return NextResponse.json({ error: 'org_id is required' }, { status: 400 })
+    }
+
+    // Authorization: only the org owner may update it
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('owner_id', user.id)
+      .maybeSingle()
+
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 403 })
+    }
+
+    const { data: org } = await supabase
+      .from('nanny_orgs')
+      .select('id')
+      .eq('id', org_id)
+      .eq('owner_profile_id', profile.id)
+      .maybeSingle()
+
+    if (!org) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { error } = await updateNannyOrg(org_id, delta)

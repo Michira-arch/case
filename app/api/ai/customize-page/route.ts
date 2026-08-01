@@ -26,12 +26,37 @@ Return ONLY valid JSON.
 
 export async function POST(req: Request) {
   try {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { prompt, orgId, org_id } = await req.json();
     let finalOrgId = orgId || org_id;
     if (finalOrgId === 'undefined') finalOrgId = undefined;
-    
+
     if (!finalOrgId || !prompt) {
       return NextResponse.json({ error: 'Missing orgId or prompt' }, { status: 400 });
+    }
+
+    // Ownership check: the caller must own the org whose page they're editing
+    const { data: callerProfiles } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('owner_id', user.id)
+    const callerProfileIds = (callerProfiles || []).map((p: any) => p.id)
+    if (callerProfileIds.length === 0) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    const { data: ownedOrg } = await supabase
+      .from('nanny_orgs')
+      .select('id')
+      .eq('id', finalOrgId)
+      .in('owner_profile_id', callerProfileIds)
+      .maybeSingle()
+    if (!ownedOrg) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { client, model } = await getAiClient(finalOrgId);
@@ -52,11 +77,10 @@ export async function POST(req: Request) {
 
     const newConfig = JSON.parse(content);
 
-    const supabase = createClient();
     const { error } = await supabase
       .from('nanny_orgs')
       .update({ page_config: newConfig, updated_at: new Date().toISOString() })
-      .eq('id', orgId);
+      .eq('id', finalOrgId);
 
     if (error) {
       throw new Error(error.message);

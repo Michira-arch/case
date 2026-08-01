@@ -9,13 +9,17 @@ interface ChatUIProps {
   orgId: string
   senderType: 'agency' | 'client'
   senderId?: string
+  token?: string
+  invoiceId?: string
 }
 
-export default function ChatUI({ 
-  clientId, 
-  orgId, 
-  senderType, 
-  senderId 
+export default function ChatUI({
+  clientId,
+  orgId,
+  senderType,
+  senderId,
+  token,
+  invoiceId
 }: ChatUIProps): JSX.Element {
   const [messages, setMessages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -25,7 +29,7 @@ export default function ChatUI({
 
   const fetchMessages = async () => {
     try {
-      const data = await getChatMessages(clientId)
+      const data = await getChatMessages(clientId, { token, invoiceId })
       setMessages(data)
     } catch (err) {
       console.error(err)
@@ -62,7 +66,9 @@ export default function ChatUI({
         orgId,
         message: newMessage,
         senderType,
-        senderId
+        senderId,
+        token,
+        invoiceId
       })
       setNewMessage('')
       fetchMessages()

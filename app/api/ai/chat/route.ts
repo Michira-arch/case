@@ -7,11 +7,16 @@ import { cookies } from 'next/headers';
 
 export async function GET(req: Request) {
   try {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const orgId = searchParams.get('orgId');
     if (!orgId) return NextResponse.json({ error: 'Missing orgId' }, { status: 400 });
 
-    const supabase = createClient();
     const { data: history, error } = await supabase
       .from('nanny_ai_chat_history')
       .select('role, content')
@@ -30,13 +35,18 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { messages, orgId, uiContext } = await req.json();
     if (!orgId) {
       return NextResponse.json({ error: 'Missing orgId' }, { status: 400 });
     }
 
-    const supabase = createClient();
-    
+
     // Fetch org details for the system prompt
     const { data: org } = await supabase
       .from('nanny_orgs')

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 export async function POST(req: Request) {
   try {
-    const { email, amountKes, phone, invoiceId, reference, subaccount } = await req.json()
+    const { email, amountKes, phone, invoiceId, reference, subaccount, handle, isAgency } = await req.json()
 
     if (!email || !amountKes || !phone || !reference) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
@@ -15,11 +16,60 @@ export async function POST(req: Request) {
     const amountSubunits = Math.round(Number(amountKes) * 100)
 
     // 2. Format phone number for Paystack (requires international format e.g. 2547XXXXXXXX)
-    let cleanPhone = phone.replace(/[\s+]/g, '')
+    // Strip non-digit characters other than a leading '+' (e.g. spaces, dashes, parens)
+    let cleanPhone = phone.replace(/[^\d+]/g, '')
+    cleanPhone = cleanPhone.replace(/^\+/, '')
     if (cleanPhone.startsWith('0')) {
       cleanPhone = '254' + cleanPhone.substring(1)
     } else if (cleanPhone.startsWith('7') || cleanPhone.startsWith('1')) {
       cleanPhone = '254' + cleanPhone
+    }
+
+    // 2b. Resolve the subaccount server-side when it isn't provided by the client
+    let resolvedSubaccount = subaccount
+    let profileId = null
+    if (!resolvedSubaccount && handle) {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+      if (isAgency) {
+        const { data: org } = await supabase
+          .from('nanny_orgs')
+          .select('id, paystack_subaccount_code')
+          .eq('slug', handle)
+          .single()
+        if (org) {
+          resolvedSubaccount = org.paystack_subaccount_code
+          profileId = org.id
+        }
+      } else {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, paystack_subaccount_code')
+          .eq('handle', handle)
+          .single()
+        if (profile) {
+          resolvedSubaccount = profile.paystack_subaccount_code
+          profileId = profile.id
+        }
+      }
+    }
+
+    const customFields: any[] = [
+      {
+        display_name: "Invoice ID",
+        variable_name: "invoice_id",
+        value: invoiceId || "N/A"
+      }
+    ]
+
+    if (profileId) {
+      customFields.push({
+        display_name: isAgency ? "Org ID" : "Profile ID",
+        variable_name: isAgency ? "org_id" : "profile_id",
+        value: profileId
+      })
     }
 
     const payload: any = {
@@ -32,18 +82,12 @@ export async function POST(req: Request) {
         provider: 'mpesa'
       },
       metadata: {
-        custom_fields: [
-          {
-            display_name: "Invoice ID",
-            variable_name: "invoice_id",
-            value: invoiceId || "N/A"
-          }
-        ]
+        custom_fields: customFields
       }
     }
 
-    if (subaccount) {
-      payload.subaccount = subaccount
+    if (resolvedSubaccount) {
+      payload.subaccount = resolvedSubaccount
     }
 
     const response = await fetch('https://api.paystack.co/charge', {

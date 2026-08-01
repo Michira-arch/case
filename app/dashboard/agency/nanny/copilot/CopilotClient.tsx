@@ -14,17 +14,24 @@ export default function CopilotClient({ org, initialInbox }: { org: any, initial
   const handleAction = async (id: string, action: 'approve' | 'reject') => {
     // Optimistic update
     setInbox(prev => prev.filter(item => item.id !== id))
-    
+
     // Server call
     try {
-      await fetch(`/api/nanny/action-inbox/${id}`, {
+      const res = await fetch(`/api/nanny/action-inbox/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action })
       })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || 'Action failed')
+        router.refresh() // restore the item from the server
+        return
+      }
       router.refresh()
     } catch (e) {
       console.error(e)
+      router.refresh()
     }
   }
 
@@ -52,7 +59,7 @@ export default function CopilotClient({ org, initialInbox }: { org: any, initial
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          org_id: org.id,
+          orgId: org.id,
           subscription
         })
       })

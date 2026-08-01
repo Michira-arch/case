@@ -34,10 +34,12 @@ export default function PwaManager({ profileId }: PwaManagerProps) {
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
 
+    let pushTimer: ReturnType<typeof setTimeout> | undefined
+
     // 1. Check current notification permission
     if ('Notification' in window) {
       setPermissionState(Notification.permission)
-      
+
       if (Notification.permission === 'granted') {
         // Auto-sync token to Supabase if permission is already granted
         const syncToken = async () => {
@@ -59,9 +61,9 @@ export default function PwaManager({ profileId }: PwaManagerProps) {
       } else {
         const dismissed = localStorage.getItem('push_prompt_dismissed')
         if (Notification.permission === 'default' && dismissed !== 'true') {
-          // Show soft prompt after 3 seconds
-          const timer = setTimeout(() => setShowPushPrompt(true), 3000)
-          return () => clearTimeout(timer)
+          // Show soft prompt after 3 seconds (DO NOT early-return here — that
+          // previously skipped SW registration and the install banner entirely)
+          pushTimer = setTimeout(() => setShowPushPrompt(true), 3000)
         }
       }
     }
@@ -125,6 +127,7 @@ export default function PwaManager({ profileId }: PwaManagerProps) {
     window.addEventListener('appinstalled', handleAppInstalled)
 
     return () => {
+      if (pushTimer) clearTimeout(pushTimer)
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)

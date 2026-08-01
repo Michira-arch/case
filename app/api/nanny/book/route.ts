@@ -70,9 +70,12 @@ export async function POST(req: NextRequest) {
     if (result?.booking_id) {
       fetch(new URL('/api/ai/webhooks/booking', req.url).toString(), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          booking_id: result.booking_id, 
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        },
+        body: JSON.stringify({
+          booking_id: result.booking_id,
           org_slug,
           client_name,
           service_code,

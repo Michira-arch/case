@@ -64,14 +64,21 @@ export async function POST(req: NextRequest) {
     if (org) {
       const { data: ownerProfile } = await supabase
         .from('profiles')
-        .select('email')
+        .select('owner_id')
         .eq('id', org.owner_profile_id)
         .single();
 
-      if (ownerProfile?.email) {
+      // email isn't a column on profiles; resolve it from auth.users via the owner's owner_id
+      let ownerEmail = null;
+      if (ownerProfile?.owner_id) {
+        const { data: authOwner } = await adminSupabase.auth.admin.getUserById(ownerProfile.owner_id);
+        ownerEmail = authOwner?.user?.email || null;
+      }
+
+      if (ownerEmail) {
         const emailResult = await sendAgencyEmail({
           orgId: org_id,
-          to: ownerProfile.email,
+          to: ownerEmail,
           subject: `New Request to Join ${org.name}`,
           htmlBody: `
             <h2>New Join Request</h2>

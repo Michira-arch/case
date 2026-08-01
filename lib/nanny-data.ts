@@ -222,6 +222,10 @@ const DEFAULT_DEMO_SERVICES: NannyServiceType[] = [
   },
 ]
 
+// Only these slugs may fall back to the demo org (to avoid fabricating agencies
+// for arbitrary slugs, which previously let anyone squat/impersonate)
+const DEMO_ORG_SLUGS = new Set(['sunny-smiles', 'nanny', 'caregiving'])
+
 export async function getNannyOrgBySlug(slug: string): Promise<NannyOrg | null> {
   try {
     const supabase = createClient()
@@ -230,19 +234,20 @@ export async function getNannyOrgBySlug(slug: string): Promise<NannyOrg | null> 
       .select('*')
       .eq('slug', slug)
       .eq('is_public', true)
-      .single()
+      .maybeSingle()
     if (data) return data as NannyOrg
   } catch (err) {
-    // ignore query errors and fallback to demo org
+    // ignore query errors and fall through to demo-org fallback below
   }
-  // Fallback demo org if requested slug is sunny-smiles, nanny, caregiving, or any unseeded slug
-  return {
-    ...DEFAULT_DEMO_ORG,
-    slug: slug || 'sunny-smiles',
-    name: slug && slug !== 'sunny-smiles'
-      ? `${slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ')} Caregiving Agency`
-      : DEFAULT_DEMO_ORG.name,
+  // Demo fallback is restricted to known demo slugs only
+  if (slug && DEMO_ORG_SLUGS.has(slug)) {
+    return {
+      ...DEFAULT_DEMO_ORG,
+      slug,
+      name: DEFAULT_DEMO_ORG.name,
+    }
   }
+  return null
 }
 
 export async function getNannyOrgsByOwner(ownerProfileId: string): Promise<NannyOrg[]> {
@@ -833,24 +838,31 @@ export async function createAnonBooking(payload: {
     .single()
 
   if (!existingOrg) {
-    // Find or pick a profile to act as owner
+    // Only the well-known demo slugs may auto-create their org (preserves the
+    // demo booking experience). Arbitrary slugs are rejected to stop org
+    // squatting + attributing orgs to random profiles.
+    if (!payload.org_slug || !DEMO_ORG_SLUGS.has(payload.org_slug)) {
+      return { result: null, error: 'Agency not found for this booking link' }
+    }
+
     const { data: firstProfile } = await supabase.from('profiles').select('id').limit(1).single()
     const ownerId = firstProfile?.id
-
-    if (ownerId) {
-      await supabase.from('nanny_orgs').insert({
-        owner_profile_id: ownerId,
-        slug: payload.org_slug,
-        name: payload.org_slug === 'sunny-smiles' ? DEFAULT_DEMO_ORG.name : `${payload.org_slug} Caregiving Agency`,
-        tagline: DEFAULT_DEMO_ORG.tagline,
-        description: DEFAULT_DEMO_ORG.description,
-        vertical: DEFAULT_DEMO_ORG.vertical,
-        status: 'active',
-        is_public: true,
-        contact_email: payload.client_email || DEFAULT_DEMO_ORG.contact_email,
-        contact_phone: payload.client_phone || DEFAULT_DEMO_ORG.contact_phone,
-      })
+    if (!ownerId) {
+      return { result: null, error: 'No owner available for demo org' }
     }
+
+    await supabase.from('nanny_orgs').insert({
+      owner_profile_id: ownerId,
+      slug: payload.org_slug,
+      name: DEFAULT_DEMO_ORG.name,
+      tagline: DEFAULT_DEMO_ORG.tagline,
+      description: DEFAULT_DEMO_ORG.description,
+      vertical: DEFAULT_DEMO_ORG.vertical,
+      status: 'active',
+      is_public: true,
+      contact_email: payload.client_email || DEFAULT_DEMO_ORG.contact_email,
+      contact_phone: payload.client_phone || DEFAULT_DEMO_ORG.contact_phone,
+    })
   }
 
   const { data, error } = await supabase.rpc('nanny_create_anon_booking', {

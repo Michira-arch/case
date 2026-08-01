@@ -15,6 +15,7 @@ export async function POST(req: Request) {
     )
 
     let subaccountCode = null;
+    let profileId = null;
     if (isAgency) {
       const { data: org } = await supabase
         .from('nanny_orgs')
@@ -23,6 +24,7 @@ export async function POST(req: Request) {
         .single()
       if (org) {
         subaccountCode = org.paystack_subaccount_code
+        profileId = org.id
       }
     } else {
       const { data: profile } = await supabase
@@ -32,6 +34,7 @@ export async function POST(req: Request) {
         .single()
       if (profile) {
         subaccountCode = profile.paystack_subaccount_code
+        profileId = profile.id
       }
     }
 
@@ -71,6 +74,11 @@ export async function POST(req: Request) {
               display_name: isAgency ? "Agency Slug" : "Profile Handle",
               variable_name: isAgency ? "agency_slug" : "profile_handle",
               value: handle
+            },
+            {
+              display_name: "Profile ID",
+              variable_name: "profile_id",
+              value: profileId || "N/A"
             }
           ]
         }

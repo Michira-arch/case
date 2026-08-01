@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { openPaystackCheckout } from '@/lib/paystack'
 import { CreditCard, Loader2 } from 'lucide-react'
 
-export default function ClientBillingPanel({ client }: { client: any }) {
+export default function ClientBillingPanel({ client, token }: { client: any; token?: string }) {
   const [processing, setProcessing] = useState(false)
 
   const handleAddCard = () => {
@@ -19,11 +19,12 @@ export default function ClientBillingPanel({ client }: { client: any }) {
         const res = await fetch('/api/billing/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            reference: ref, 
-            isClient: true, 
+          body: JSON.stringify({
+            reference: ref,
+            isClient: true,
             clientId: client.id,
-            plan: 'client_saved_card'
+            plan: 'client_saved_card',
+            portalToken: token,
           }),
         })
 

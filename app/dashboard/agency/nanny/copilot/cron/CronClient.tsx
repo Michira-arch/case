@@ -43,7 +43,12 @@ export default function CronClient({ org, initialJobs }: { org: any, initialJobs
 
   const handleDeleteJob = async (id: string) => {
     try {
-      await fetch(`/api/nanny/cron/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/nanny/cron/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Failed to delete job')
+        return
+      }
       setJobs(jobs.filter(j => j.id !== id))
       router.refresh()
     } catch (e) {

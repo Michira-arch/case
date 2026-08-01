@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     // 1. Verify authorization (similar to send/route.ts)
     const authHeader = request.headers.get('Authorization')
     const secretKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (process.env.NODE_ENV === 'production' && authHeader !== `Bearer ${secretKey}`) {
+    if (authHeader !== `Bearer ${secretKey}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

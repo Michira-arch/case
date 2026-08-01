@@ -24,6 +24,27 @@ export async function POST(req: Request) {
     const nextBillingDate = new Date()
     nextBillingDate.setDate(nextBillingDate.getDate() + 14)
 
+    // Only allow starting a trial when the org is not already paying or trialing.
+    // NOTE: billing_status defaults to 'active' for new orgs, so we must NOT gate
+    // on it — gate on the paid plan instead.
+    const { data: existingOrg, error: fetchError } = await supabase
+      .from('nanny_orgs')
+      .select('billing_status, billing_plan')
+      .eq('owner_profile_id', profile.id)
+      .maybeSingle()
+
+    if (fetchError) {
+      return NextResponse.json({ error: 'Failed to load org' }, { status: 500 })
+    }
+
+    if (existingOrg) {
+      const alreadyTrialing = existingOrg.billing_status === 'trial'
+      const onPaidPlan = !!existingOrg.billing_plan && existingOrg.billing_plan !== 'free'
+      if (alreadyTrialing || onPaidPlan) {
+        return NextResponse.json({ error: 'Trial only available for orgs not already paying or trialing' }, { status: 400 })
+      }
+    }
+
     const { error } = await supabase
       .from('nanny_orgs')
       .update({
@@ -32,8 +53,6 @@ export async function POST(req: Request) {
         next_billing_date: nextBillingDate.toISOString()
       })
       .eq('owner_profile_id', profile.id)
-      // Only allow starting trial if they are currently free or don't have a plan
-      .in('billing_status', ['free', 'active', 'inactive', 'suspended']) // Actually let's just make it simple, if they call this and it's their first time. We can just check it on the client, but let's be safe. Wait, if we use .in('billing_plan', ['free', null]) it will fail because null doesn't work well with .in in supabase sometimes. Let's just update.
 
     if (error) {
       console.error('Error starting trial:', error)

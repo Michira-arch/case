@@ -1,5 +1,11 @@
--- RPC: get_public_profile
--- Update to remove vouches which do not exist
+-- Fix get_public_profile:
+-- 1. The previous migration referenced a non-existent column (proof_items.is_hidden);
+--    the column is actually named `visible`. This made every real public profile 404.
+-- 2. Stop leaking account email unconditionally — only return it when the owner
+--    opted in via contact_visibility (same semantics the UI already uses).
+-- 3. Stop exposing financial configuration (paystack_subaccount_code,
+--    subscription_amount_kes, subscription_interval) to anonymous visitors.
+
 create or replace function public.get_public_profile(p_handle text)
 returns jsonb
 language plpgsql security definer
@@ -27,6 +33,11 @@ begin
   select email into v_email
   from auth.users
   where id = v_profile.owner_id;
+
+  -- Only expose the account email when the owner has not opted out
+  if coalesce((v_profile.contact_visibility ->> 'email')::boolean, true) = false then
+    v_email := null;
+  end if;
 
   select jsonb_build_object(
     'id',           v_profile.id,
@@ -78,13 +89,10 @@ begin
       )
       from public.proof_items pi
       where pi.profile_id = v_profile.id
-        and pi.is_hidden = false
+        and pi.visible = true
     ),
     'contact_visibility', v_profile.contact_visibility,
-    'claim_text', v_profile.claim_text,
-    'paystack_subaccount_code', v_profile.paystack_subaccount_code,
-    'subscription_amount_kes', v_profile.subscription_amount_kes,
-    'subscription_interval', v_profile.subscription_interval
+    'claim_text', v_profile.claim_text
   ) into result;
 
   return result;

@@ -1,8 +1,11 @@
 import OpenAI from 'openai';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 
 export async function getAiClient(orgId: string) {
-  const supabase = createClient();
+  // Service client so this also works in background contexts (cron, webhooks)
+  // where there is no cookie session — previously billing_status silently
+  // defaulted to 'trial' and paid orgs got the trial model there.
+  const supabase = createServiceClient();
   const { data: org, error } = await supabase
     .from('nanny_orgs')
     .select('billing_status')

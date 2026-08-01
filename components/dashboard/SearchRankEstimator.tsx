@@ -290,7 +290,7 @@ export default function SearchRankEstimator({
       {!isPlus ? (
         <div className={styles.ctaBanner}>
           <p className={styles.ctaText}>
-            <b>You are currently on the Free plan.</b> Your profile's discoverability is hitting the <b>logarithmic cliff</b>. Even at 100% completion, you can't break past the free-tier ranking limit. Upgrading to Case+ pushes you onto the gold curve immediately.
+            <b>You are currently on the Free plan.</b> Your profile&apos;s discoverability is hitting the <b>logarithmic cliff</b>. Even at 100% completion, you can&apos;t break past the free-tier ranking limit. Upgrading to Case+ pushes you onto the gold curve immediately.
           </p>
           <Link href="/dashboard/billing" style={{ width: '100%' }}>
             <button className={styles.ctaBtn}>

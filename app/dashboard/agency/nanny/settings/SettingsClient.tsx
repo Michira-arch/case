@@ -21,6 +21,9 @@ export default function SettingsClient({ org }: Props) {
   const [aiSuccess, setAiSuccess] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
 
+  const policy = org.policy ?? {}
+  const pageConfig = org.page_config ?? {}
+
   const [form, setForm] = useState({
     name: org.name,
     logo_url: org.logo_url ?? '',
@@ -31,28 +34,28 @@ export default function SettingsClient({ org }: Props) {
     address: org.address ?? '',
     location_area: org.location_area ?? '',
     // Policy
-    matching_mode: org.policy.matching_mode || 'manual',
-    cancellation_grace_hours: org.policy.cancellation_grace_hours,
-    overtime_threshold_hours: org.policy.overtime_threshold_hours,
-    overtime_multiplier: org.policy.overtime_multiplier,
-    emergency_surcharge_pct: org.policy.emergency_surcharge_pct,
-    holiday_pay_rate: org.policy.holiday_pay_rate,
-    payout_cadence: org.policy.payout_cadence,
-    auto_invoice: org.policy.auto_invoice,
-    require_timelog: org.policy.require_timelog,
-    continuity_preference: org.policy.continuity_preference,
-    agency_cut_pct: org.policy.agency_cut_pct,
+    matching_mode: policy.matching_mode || 'manual',
+    cancellation_grace_hours: policy.cancellation_grace_hours,
+    overtime_threshold_hours: policy.overtime_threshold_hours,
+    overtime_multiplier: policy.overtime_multiplier,
+    emergency_surcharge_pct: policy.emergency_surcharge_pct,
+    holiday_pay_rate: policy.holiday_pay_rate,
+    payout_cadence: policy.payout_cadence,
+    auto_invoice: policy.auto_invoice,
+    require_timelog: policy.require_timelog,
+    continuity_preference: policy.continuity_preference,
+    agency_cut_pct: policy.agency_cut_pct,
     is_public: org.is_public,
     // Page Config
-    hero_headline: org.page_config.hero_headline ?? '',
-    hero_subtitle: org.page_config.hero_subtitle ?? '',
-    pitch_title: org.page_config.pitch_title ?? '',
-    pitch_body: org.page_config.pitch_body ?? '',
-    cta_text: org.page_config.cta_text ?? '',
-    cta_subtext: org.page_config.cta_subtext ?? '',
-    show_workers: org.page_config.show_workers,
-    show_services: org.page_config.show_services,
-    hero_pattern: org.page_config.hero_pattern,
+    hero_headline: pageConfig.hero_headline ?? '',
+    hero_subtitle: pageConfig.hero_subtitle ?? '',
+    pitch_title: pageConfig.pitch_title ?? '',
+    pitch_body: pageConfig.pitch_body ?? '',
+    cta_text: pageConfig.cta_text ?? '',
+    cta_subtext: pageConfig.cta_subtext ?? '',
+    show_workers: pageConfig.show_workers,
+    show_services: pageConfig.show_services,
+    hero_pattern: pageConfig.hero_pattern,
   })
 
   const set = (k: keyof typeof form, v: any) =>
@@ -79,7 +82,7 @@ export default function SettingsClient({ org }: Props) {
           location_area: form.location_area,
           is_public: form.is_public,
           policy: {
-            ...org.policy,
+            ...policy,
             matching_mode: form.matching_mode,
             cancellation_grace_hours: Number(form.cancellation_grace_hours),
             overtime_threshold_hours: Number(form.overtime_threshold_hours),
@@ -93,7 +96,7 @@ export default function SettingsClient({ org }: Props) {
             agency_cut_pct: Number(form.agency_cut_pct),
           },
           page_config: {
-            ...org.page_config,
+            ...pageConfig,
             hero_headline: form.hero_headline || null,
             hero_subtitle: form.hero_subtitle || null,
             pitch_title: form.pitch_title || 'Why choose us?',

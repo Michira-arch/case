@@ -72,7 +72,7 @@ export async function GET(req: Request) {
         // Notify that cron job finished
         const { data: subs } = await supabase
           .from('nanny_push_subscriptions')
-          .select('subscription_json')
+          .select('endpoint, keys')
           .eq('org_id', job.org_id);
 
         if (subs && subs.length > 0) {
@@ -83,7 +83,10 @@ export async function GET(req: Request) {
 
           for (const sub of subs) {
             try {
-              await webpush.sendNotification(sub.subscription_json, payload);
+              await webpush.sendNotification(
+                { endpoint: sub.endpoint, keys: sub.keys },
+                payload
+              );
             } catch (pushErr) {
               console.error('Push notification failed for sub', pushErr);
             }

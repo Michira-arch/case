@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import { getNannyOrgBySlug, getServiceTypes, getPublicWorkers } from '@/lib/nanny-data'
 import BookingWizard from './BookingWizard'
@@ -56,12 +57,14 @@ export default async function BookingPage({ params }: Props) {
         </a>
       </div>
 
-      <BookingWizard
-        services={services}
-        workers={workers}
-        orgSlug={params.handle}
-        orgName={org.name}
-      />
+      <Suspense fallback={<div style={{ textAlign: 'center', padding: 48, color: 'var(--ink-muted)' }}>Loading booking form…</div>}>
+        <BookingWizard
+          services={services}
+          workers={workers}
+          orgSlug={params.handle}
+          orgName={org.name}
+        />
+      </Suspense>
     </div>
   )
 }

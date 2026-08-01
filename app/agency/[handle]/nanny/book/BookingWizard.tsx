@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import styles from '@/app/dashboard/agency/nanny/nanny-dashboard.module.css'
 import type { NannyWorker } from '@/lib/nanny-types'
@@ -83,6 +83,12 @@ export default function BookingWizard({
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [minDate, setMinDate] = useState('2020-01-01')
+
+  // Compute the real minimum date only on the client to avoid server/client hydration mismatch
+  useEffect(() => {
+    setMinDate(new Date().toISOString().split('T')[0])
+  }, [])
   const [result, setResult] = useState<{
     reference: string
     token: string | null
@@ -209,7 +215,7 @@ export default function BookingWizard({
                     fontWeight: 600,
                   }}
                 >
-                  {selectedWorker.profile?.display_name.charAt(0)}
+                  {selectedWorker.profile?.display_name?.charAt(0)}
                 </div>
               )}
               <div>
@@ -341,7 +347,7 @@ export default function BookingWizard({
                 type="date"
                 className={styles.input}
                 value={form.date}
-                min={new Date().toISOString().split('T')[0]}
+                min={minDate}
                 onChange={(e) => set('date', e.target.value)}
                 required
               />

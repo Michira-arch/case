@@ -4,6 +4,13 @@ import { getAiClient } from '@/lib/ai/client'
 
 export async function POST(req: Request) {
   try {
+    // Internal-only endpoint: require the service-role key as a bearer token
+    const authHeader = req.headers.get('authorization')
+    const expected = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!expected || authHeader !== `Bearer ${expected}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await req.json()
     const { booking_id, org_slug, client_name, service_code, worker_id } = body
 
@@ -30,6 +37,11 @@ export async function POST(req: Request) {
       .single()
 
     if (!booking) return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
+
+    // 3. Cross-org guard: the booking must belong to the org in the payload
+    if (booking.org_id !== org.id) {
+      return NextResponse.json({ error: 'Booking does not belong to this org' }, { status: 403 })
+    }
 
     // 3. Fetch active vetted workers
     const { data: workers } = await supabase
@@ -133,20 +145,28 @@ If no workers are available, return:
       .select()
       .single()
 
-    // Dispatch Push Notification to org members
-    await fetch(new URL('/api/messaging/send', req.url).toString(), {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
-      },
-      body: JSON.stringify({
-        org_id: org.id,
-        title: actionTitle,
-        body: actionDesc,
-        data: { url: '/dashboard/agency/nanny/copilot' }
-      })
-    }).catch(() => {})
+    // Dispatch Push Notification to the org owner (FCM tokens are keyed by profile_id)
+    const { data: ownerProfile } = await supabase
+      .from('nanny_orgs')
+      .select('owner_profile_id')
+      .eq('id', org.id)
+      .single()
+
+    if (ownerProfile?.owner_profile_id) {
+      await fetch(new URL('/api/messaging/send', req.url).toString(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+        },
+        body: JSON.stringify({
+          profileId: ownerProfile.owner_profile_id,
+          title: actionTitle,
+          body: actionDesc,
+          data: { url: '/dashboard/agency/nanny/copilot' }
+        })
+      }).catch((e) => console.error('Push dispatch failed:', e))
+    }
 
     return NextResponse.json({ success: true, inboxItem })
   } catch (error: any) {

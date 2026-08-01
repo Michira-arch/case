@@ -78,7 +78,7 @@ export default function VouchForm({ vouchRequest }: Props) {
         {/* Header */}
         <div className={styles.header}>
           <span className={styles.wordmark}>Case</span>
-          <p className={styles.headerSub}>You've been asked for a recommendation</p>
+          <p className={styles.headerSub}>You&apos;ve been asked for a recommendation</p>
         </div>
 
         {/* Who asked */}
@@ -95,7 +95,7 @@ export default function VouchForm({ vouchRequest }: Props) {
         {vouchRequest.message && (
           <div className={styles.message}>
             <p className={styles.messageLabel}>Their ask</p>
-            <p className={styles.messageText}>"{vouchRequest.message}"</p>
+            <p className={styles.messageText}>&quot;{vouchRequest.message}&quot;</p>
           </div>
         )}
 
@@ -151,7 +151,7 @@ export default function VouchForm({ vouchRequest }: Props) {
 
           <div className={styles.consentNote}>
             <p>
-              By submitting, you agree that this testimonial may be displayed publicly on {profile?.display_name}'s Case profile.
+              By submitting, you agree that this testimonial may be displayed publicly on {profile?.display_name}&apos;s Case profile.
               Your name and relationship will be shown alongside your quote.
             </p>
           </div>

@@ -84,8 +84,11 @@ export async function POST(request: NextRequest) {
 
     // Handle Subscription Payment
     if (!profileId || !planPeriod) {
-      console.error('Missing profile_id, plan_period, or invoice_id in Paystack metadata', metadata)
-      return NextResponse.json({ error: 'Missing metadata' }, { status: 400 })
+      // No invoice_id and no subscription metadata — e.g. a paywall/tip payment
+      // that settles via the owner's Paystack subaccount. Nothing to apply to a
+      // subscription; acknowledge so Paystack stops retrying.
+      console.warn('Unmatched payment acknowledged (no profile_id+plan_period or invoice_id)', event.event, data.reference, metadata)
+      return NextResponse.json({ received: true })
     }
 
     if (planPeriod === 'auth_charge') {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { sendAgencyEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     // Get the request and verify the user is the owner of the agency
     const { data: joinRequest } = await supabase
       .from('agency_join_requests')
-      .select('*, nanny_orgs(id, name, owner_profile_id), profiles(id, owner_id, email, full_name, display_name)')
+      .select('*, nanny_orgs(id, name, owner_profile_id), profiles(id, owner_id, display_name)')
       .eq('id', requestId)
       .single();
 
@@ -75,7 +75,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const targetEmail = joinRequest.profiles?.email;
+    // email isn't a column on profiles; resolve it from auth.users via the requestor's owner_id
+    let targetEmail = joinRequest.profiles?.owner_id
+      ? (await createServiceClient().auth.admin.getUserById(joinRequest.profiles.owner_id)).data?.user?.email || null
+      : null;
     if (targetEmail) {
       const emailResult = await sendAgencyEmail({
         orgId: joinRequest.nanny_orgs.id,

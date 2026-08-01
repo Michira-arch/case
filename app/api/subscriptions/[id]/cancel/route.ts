@@ -14,13 +14,16 @@ export async function POST(
 
   const supabase = createClient()
 
-  // First verify auth
+  // Require an authenticated session
   const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-  // Get subscription
+  // Only the provider who owns the subscription may cancel it (RLS enforces this too)
   const { data: subscription, error: fetchError } = await supabase
     .from('profile_subscriptions')
-    .select('*, profiles!inner(owner_id)')
+    .select('id')
     .eq('id', subscriptionId)
     .single()
 
@@ -28,22 +31,6 @@ export async function POST(
     return NextResponse.json({ error: 'Subscription not found' }, { status: 404 })
   }
 
-  // Allow cancellation if user is the provider OR client provided matching email
-  const body = await request.json().catch(() => ({}))
-  const clientEmail = body.client_email
-
-  let authorized = false
-  if (user && subscription.profiles.owner_id === user.id) {
-    authorized = true
-  } else if (clientEmail && subscription.client_email === clientEmail) {
-    authorized = true
-  }
-
-  if (!authorized) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
-  // Update status
   const { error: updateError } = await supabase
     .from('profile_subscriptions')
     .update({ status: 'canceled', updated_at: new Date().toISOString() })

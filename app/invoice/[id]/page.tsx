@@ -47,10 +47,11 @@ export default async function InvoicePage({ params }: { params: { id: string } }
         {invoice.client_id && invoice.org_id && (
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-bold mb-4">Contact {invoice.nanny_orgs?.name}</h2>
-            <ChatUI 
+            <ChatUI
               clientId={invoice.client_id}
               orgId={invoice.org_id}
               senderType="client"
+              invoiceId={invoice.id}
             />
           </div>
         )}
