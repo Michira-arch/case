@@ -15,8 +15,9 @@ export async function POST(req: Request) {
     // Paystack expects amount in smallest currency unit. For KES it's 100 subunits = 1 KES.
     const amountSubunits = Math.round(Number(amountKes) * 100)
 
-    // 2. Format phone number for Paystack (requires international format e.g. 2547XXXXXXXX)
-    // Strip non-digit characters other than a leading '+' (e.g. spaces, dashes, parens)
+    // 2. Format phone number for Paystack M-Pesa. Paystack expects the
+    // international format WITH the leading '+' (e.g. +254712345678).
+    // Strip everything except digits (and tolerate a leading '+').
     let cleanPhone = phone.replace(/[^\d+]/g, '')
     cleanPhone = cleanPhone.replace(/^\+/, '')
     if (cleanPhone.startsWith('0')) {
@@ -24,6 +25,11 @@ export async function POST(req: Request) {
     } else if (cleanPhone.startsWith('7') || cleanPhone.startsWith('1')) {
       cleanPhone = '254' + cleanPhone
     }
+    // Ensure the country code is present, then restore the '+' prefix
+    if (!cleanPhone.startsWith('254')) {
+      cleanPhone = '254' + cleanPhone
+    }
+    cleanPhone = '+' + cleanPhone
 
     // 2b. Resolve the subaccount server-side when it isn't provided by the client
     let resolvedSubaccount = subaccount
